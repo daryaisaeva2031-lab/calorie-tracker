@@ -12,7 +12,11 @@
       padding: 2px 8px; border-radius: 10px; margin-left: 8px;
       background: var(--sage-light); color: var(--sage-dark);
     }
-    .food-item { cursor: pointer; }
+    .food-item { cursor: pointer; position: relative; }
+    .product-id-corner {
+      position: absolute; top: 8px; right: 10px;
+      font-size: 11px; color: var(--text-light);
+    }
   </style>
 </head>
 <body>
@@ -63,6 +67,7 @@
         };
         const icon = icons[p.category] || '🥗';
         list.innerHTML += `<div class="card food-item" onclick="location.href='add-product.html?id=${p.id}'">
+          <div class="product-id-corner">ID: ${p.id}</div>
           <div class="food-icon">${icon}</div>
           <div class="food-info">
             <div class="food-name">${p.name} <span class="cat-badge">${p.category || ''}</span></div>
