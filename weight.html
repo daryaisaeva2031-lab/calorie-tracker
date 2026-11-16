@@ -35,6 +35,10 @@
     .add-box {
       background: var(--cream); border-radius: 20px; padding: 24px; width: 80%; max-width: 320px;
     }
+    .weight-input {
+      width: 100%; padding: 14px; border-radius: 12px; border: 1px solid var(--sage-light);
+      font-size: 20px; text-align: center; margin-bottom: 12px; font-family: inherit;
+    }
   </style>
 </head>
 <body>
@@ -87,7 +91,7 @@
   <div class="add-modal" id="addModal" onclick="if(event.target===this) closeAdd()">
     <div class="add-box">
       <div style="font-weight:700; margin-bottom:16px; text-align:center;">Добавить вес</div>
-      <input type="number" step="0.1" id="newWeight" placeholder="77.4" style="width:100%; padding:12px; border-radius:12px; border:1px solid var(--sage-light); font-size:18px; text-align:center; margin-bottom:12px;">
+      <input type="text" inputmode="decimal" id="newWeight" class="weight-input" placeholder="Например 69.5">
       <button onclick="addWeight()" style="width:100%; padding:12px; border:none; border-radius:12px; background:var(--sage); color:white; font-family:inherit; font-size:15px; font-weight:600;">Добавить</button>
     </div>
   </div>
@@ -102,12 +106,20 @@
     let target = parseFloat(localStorage.getItem('target-weight')) || 65;
     const start = 81;
 
-    function openAdd() { document.getElementById('addModal').classList.add('show'); }
+    function openAdd() {
+      document.getElementById('newWeight').value = '';
+      document.getElementById('addModal').classList.add('show');
+      document.getElementById('newWeight').focus();
+    }
     function closeAdd() { document.getElementById('addModal').classList.remove('show'); }
 
     function addWeight() {
-      const val = parseFloat(document.getElementById('newWeight').value);
-      if (!val) return;
+      const raw = document.getElementById('newWeight').value.replace(',', '.');
+      const val = parseFloat(raw);
+      if (!val || val < 30 || val > 200) {
+        alert('Введи реальный вес, например 69.5');
+        return;
+      }
       const today = new Date().toISOString().slice(0,10);
       weights.push({date: today, value: val});
       weights.sort((a,b) => a.date.localeCompare(b.date));
@@ -156,7 +168,6 @@
       const toX = i => (i / (weights.length - 1)) * (w - 40) + 20;
       const toY = v => h - 20 - ((v - min) / (max - min)) * (h - 40);
 
-      // Target line
       ctx.strokeStyle = '#a8c4a5';
       ctx.setLineDash([4,4]);
       ctx.beginPath();
@@ -168,7 +179,6 @@
       ctx.font = '12px Nunito';
       ctx.fillText(target, w-35, toY(target)-4);
 
-      // Weight line
       ctx.strokeStyle = '#4e6b4c';
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -179,7 +189,6 @@
       });
       ctx.stroke();
 
-      // Dots
       weights.forEach((p, i) => {
         ctx.beginPath();
         ctx.arc(toX(i), toY(p.value), 4, 0, Math.PI*2);
