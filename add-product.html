@@ -30,7 +30,7 @@
     }
     .view-mode .form-input, .view-mode .form-select { background: var(--sage-light); pointer-events: none; }
     .view-mode .portion-card { pointer-events: none; opacity: 0.7; }
-    .data-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--sage-light); }
+    .product-id { font-size: 12px; color: var(--text-light); margin-top: -8px; margin-bottom: 12px; }
   </style>
 </head>
 <body>
@@ -43,9 +43,15 @@
 
     <div id="formContainer">
       <div class="card">
+        <div id="productIdDisplay" class="product-id" style="display:none;"></div>
         <div class="form-group">
           <label class="form-label">Название продукта</label>
           <input type="text" class="form-input" id="name" placeholder="Например: Сыр пармезан">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Марка</label>
+          <input type="text" class="form-input" id="brand" placeholder="Компания производитель">
         </div>
 
         <div class="form-group">
@@ -130,7 +136,11 @@
         document.getElementById('formContainer').classList.add('view-mode');
         document.getElementById('saveBtn').style.display = 'none';
 
+        document.getElementById('productIdDisplay').style.display = 'block';
+        document.getElementById('productIdDisplay').textContent = 'ID: ' + p.id;
+
         document.getElementById('name').value = p.name || '';
+        document.getElementById('brand').value = p.brand || '';
         document.getElementById('category').value = p.category || '';
         document.getElementById('calories').value = p.calories || 0;
         document.getElementById('protein').value = p.protein || 0;
@@ -167,6 +177,7 @@
       const product = {
         id: editId || (Math.max(0, ...products.map(p => p.id || 0)) + 1),
         name: document.getElementById('name').value,
+        brand: document.getElementById('brand').value,
         category: document.getElementById('category').value,
         calories: +document.getElementById('calories').value || 0,
         protein: +document.getElementById('protein').value || 0,
