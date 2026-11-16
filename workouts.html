@@ -36,6 +36,9 @@
       display: flex; align-items: center; gap: 10px; padding: 10px 0;
       border-bottom: 1px solid var(--sage-light);
     }
+    .workout-details {
+      font-size: 12px; color: var(--text-light);
+    }
     .modal-overlay {
       display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
       z-index: 100; justify-content: center; align-items: center;
@@ -238,6 +241,7 @@
     let stepsKey = '';
 
     const kgOptions = ['4 кг', '5 кг', '6 кг', '7 кг', '8 кг'];
+    const loadNames = ['', 'легко', 'средне', 'трудно'];
     let blockData = {};
     let editingWorkoutId = null;
     let tempKg = 0;
@@ -283,13 +287,22 @@
       if (!workouts.length) {
         list.innerHTML = '<div style="color:var(--text-light); text-align:center; padding:12px;">Пока пусто</div>';
       } else {
-        list.innerHTML = workouts.map((w, i) =>
-          `<div class="workout-item">
+        list.innerHTML = workouts.map((w, i) => {
+          let details = '';
+          if (w.week && w.day) {
+            details = `Нед. ${w.week}, трен. ${w.day}`;
+            if (w.kg) details += ` · ${w.kg}`;
+            if (w.load) details += ` · ${w.load}`;
+          }
+          return `<div class="workout-item">
             <span>${w.icon || '💜'}</span>
-            <div style="flex:1;">${w.name}</div>
+            <div style="flex:1;">
+              <div>${w.name}</div>
+              ${details ? `<div class="workout-details">${details}</div>` : ''}
+            </div>
             <button onclick="removeWorkout(${i})" style="border:none; background:none; color:#c00; cursor:pointer;">×</button>
-          </div>`
-        ).join('');
+          </div>`;
+        }).join('');
       }
       document.getElementById('stepsDisplay').textContent = steps ? 'Шаги: ' + steps : '';
       document.getElementById('stepsInput').value = steps;
@@ -401,12 +414,43 @@
       const blockName = document.getElementById('blockSelect').selectedOptions[0].text;
       localStorage.setItem('familyBlock-' + block, JSON.stringify(blockData));
 
-      workouts.push({
-        type: 'family',
-        name: blockName,
-        icon: '💜',
-        block: block
-      });
+      const doneWorkouts = [];
+      for (let w = 1; w <= 4; w++) {
+        for (let d = 1; d <= 3; d++) {
+          const id = `w${w}d${d}`;
+          const data = blockData.workouts[id];
+          if (data && data.done) {
+            doneWorkouts.push({
+              week: w,
+              day: d,
+              kg: data.kg >= 0 ? kgOptions[data.kg] : '',
+              load: loadNames[data.load] || ''
+            });
+          }
+        }
+      }
+
+      if (doneWorkouts.length) {
+        doneWorkouts.forEach(dw => {
+          workouts.push({
+            type: 'family',
+            name: blockName,
+            icon: '💜',
+            block: block,
+            week: dw.week,
+            day: dw.day,
+            kg: dw.kg,
+            load: dw.load
+          });
+        });
+      } else {
+        workouts.push({
+          type: 'family',
+          name: blockName,
+          icon: '💜',
+          block: block
+        });
+      }
       save();
       closeModal('familyModal');
     }
