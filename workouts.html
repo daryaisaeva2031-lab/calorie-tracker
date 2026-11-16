@@ -33,7 +33,8 @@
     .block-select { width: 100%; padding: 12px; border-radius: 14px; border: 1px solid var(--sage-light); font-family: inherit; font-size: 15px; margin-bottom: 12px; background: white; }
     .week-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; background: white; border-radius: 12px; padding: 8px; }
     .week-label { padding: 8px 10px; border-radius: 10px; background: var(--sage); color: white; font-size: 12px; font-weight: 600; min-width: 70px; text-align: center; }
-    .workout-plaque { flex: 1; padding: 8px 4px; border-radius: 10px; border: 2px solid var(--sage-light); background: white; cursor: pointer; font-size: 12px; font-family: inherit; font-weight: 600; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 40px; }
+    .workout-plaque { flex: 1; padding: 10px 6px; border-radius: 10px; border: 2px solid var(--sage-light); background: white; cursor: pointer; font-size: 12px; font-family: inherit; font-weight: 600; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 56px; position: relative; }
+    .workout-plaque:hover { border-color: var(--sage); }
     .workout-plaque.done { background: var(--sage); border-color: var(--sage); color: white; }
     .plaque-top { display: flex; align-items: center; gap: 4px; }
     .plaque-date { font-size: 10px; opacity: 0.8; }
@@ -113,7 +114,7 @@
     </div>
   </div>
 
-  <div class="modal-overlay" id="workoutDetailModal" style="z-index:110;" onclick="if(event.target===this) closeModal('workoutDetailModal')">
+  <div class="modal-overlay" id="workoutDetailModal" style="z-index:200;" onclick="if(event.target===this) closeModal('workoutDetailModal')">
     <div class="modal-box" style="max-width:340px;" onclick="event.stopPropagation()">
       <div style="font-weight:700; text-align:center; margin-bottom:12px;" id="workoutDetailTitle">Тренировка</div>
       <div style="font-size:13px; color:var(--text-light); margin-bottom:6px;">Дата</div>
@@ -225,17 +226,18 @@
           const dateText = formatDate(data.dateStr);
           html += `<div class="workout-plaque ${doneClass}" data-id="${id}" data-week="${w}" data-day="${d}">`;
           html += `<div class="plaque-top">${mark ? mark + ' ' : ''}${kgText}${dot}</div>`;
-          if (dateText) html += `<div class="plaque-date">${dateText}</div>`;
+          html += `<div class="plaque-date">${dateText || '&nbsp;'}</div>`;
           html += `</div>`;
         }
         html += '</div>';
       }
       container.innerHTML = html;
       container.querySelectorAll('.workout-plaque').forEach(el => {
-        el.addEventListener('click', function(e) {
+        el.onclick = function(e) {
           e.stopPropagation();
+          e.preventDefault();
           openWorkoutDetail(this.dataset.id, parseInt(this.dataset.week), parseInt(this.dataset.day));
-        });
+        };
       });
     }
     function openProgress() {
@@ -267,14 +269,16 @@
       editingWorkoutId = id;
       const data = getWorkout(id);
       tempKg = data.kg || '';
-      tempLoad = data.load;
+      tempLoad = data.load || 0;
       document.getElementById('workoutDetailTitle').textContent = `Неделя ${week}, трен. ${day}`;
-      document.getElementById('workoutDone').checked = data.done;
+      document.getElementById('workoutDone').checked = !!data.done;
       document.getElementById('workoutComment').value = data.comment || '';
       document.getElementById('workoutDate').value = data.dateStr || '';
       renderKgBtns();
       updateLoadBtns();
-      document.getElementById('workoutDetailModal').classList.add('show');
+      setTimeout(() => {
+        document.getElementById('workoutDetailModal').classList.add('show');
+      }, 50);
     }
     function renderKgBtns() {
       const container = document.getElementById('kgBtns');
