@@ -12,30 +12,15 @@
     <header class="header">
       <a href="products.html"><button class="icon-btn">←</button></a>
       <h1>Продукты</h1>
-      <button class="icon-btn">+</button>
+      <a href="add-product.html"><button class="icon-btn">+</button></a>
     </header>
 
     <div class="search-box">
       <span>🔍</span>
-      <input type="text" placeholder="Поиск продуктов...">
+      <input type="text" id="search" placeholder="Поиск продуктов..." oninput="render()">
     </div>
 
-    <div class="card food-item">
-      <div class="food-icon">🧀</div>
-      <div class="food-info"><div class="food-name">Сыр пармезан</div><div class="food-kcal">Домашнее</div></div>
-    </div>
-    <div class="card food-item">
-      <div class="food-icon">🍞</div>
-      <div class="food-info"><div class="food-name">Хлеб цельнозерновой</div><div class="food-kcal">1 кусок</div></div>
-    </div>
-    <div class="card food-item">
-      <div class="food-icon">🥛</div>
-      <div class="food-info"><div class="food-name">Творог 5%</div><div class="food-kcal">Пачка</div></div>
-    </div>
-    <div class="card food-item">
-      <div class="food-icon">🥚</div>
-      <div class="food-info"><div class="food-name">Яйцо</div><div class="food-kcal">1 шт</div></div>
-    </div>
+    <div id="productsList"></div>
 
     <nav class="bottom-nav">
       <a href="index.html" class="nav-item">🏠<span>Сегодня</span></a>
@@ -45,5 +30,38 @@
       <a href="workouts.html" class="nav-item">💪<span>Тренировки</span></a>
     </nav>
   </div>
+
+  <script>
+    const defaultProducts = [
+      {name: 'Сыр пармезан', category: 'Молочные', calories: 392, portionType: 'кусок'},
+      {name: 'Хлеб цельнозерновой', category: 'Выпечка', calories: 250, portionType: 'кусок'},
+      {name: 'Творог 5%', category: 'Молочные', calories: 121, portionType: 'пачка'},
+      {name: 'Яйцо', category: 'Другое', calories: 157, portionType: 'штука'}
+    ];
+
+    let products = JSON.parse(localStorage.getItem('products') || 'null') || defaultProducts;
+
+    function render() {
+      const q = (document.getElementById('search').value || '').toLowerCase();
+      const list = document.getElementById('productsList');
+      list.innerHTML = '';
+      products.filter(p => p.name.toLowerCase().includes(q)).forEach(p => {
+        const icons = {
+          'Молочные': '🧀', 'Выпечка': '🍞', 'Мясо и рыба': '🍗',
+          'Овощи': '🥦', 'Фрукты и ягоды': '🍎', 'Крупы': '🌾',
+          'Сладости': '🍫', 'Домашнее': '🏠', 'Другое': '📦'
+        };
+        const icon = icons[p.category] || '🥗';
+        list.innerHTML += `<div class="card food-item">
+          <div class="food-icon">${icon}</div>
+          <div class="food-info">
+            <div class="food-name">${p.name}</div>
+            <div class="food-kcal">${p.portionType || (p.calories + ' ккал/100г')}</div>
+          </div>
+        </div>`;
+      });
+    }
+    render();
+  </script>
 </body>
 </html>
