@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Вес — Калории</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <a href="index.html"><button class="icon-btn">←</button></a>
+      <h1>Вес</h1>
+      <button class="icon-btn">⚙️</button>
+    </header>
+
+    <div class="card weight-card">
+      <div style="font-size:36px;">⚖️</div>
+      <div style="font-size:12px; color:var(--text-light); letter-spacing:1px;">ТЕКУЩИЙ ВЕС</div>
+      <div class="weight-value">77,4 кг</div>
+      <div class="weight-controls">
+        <button class="weight-btn">−</button>
+        <button class="weight-btn">+</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="font-weight:600; margin-bottom:12px;">История</div>
+      <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--text-light);">
+        <span>79,1</span><span>78,2</span><span style="color:var(--sage-dark); font-weight:700;">77,4</span><span>—</span><span>—</span>
+      </div>
+      <div style="margin-top:12px; background:var(--sage-light); border-radius:12px; padding:10px; text-align:center; font-size:14px;">
+        −1,7 кг за 4 недели
+      </div>
+    </div>
+
+    <nav class="bottom-nav">
+      <a href="index.html" class="nav-item">🏠<span>Сегодня</span></a>
+      <a href="menu.html" class="nav-item">📋<span>Меню</span></a>
+      <a href="recipes.html" class="nav-item">📖<span>Рецепты</span></a>
+      <a href="shopping.html" class="nav-item">🛒<span>Покупки</span></a>
+      <a href="weight.html" class="nav-item active">⚖️<span>Вес</span></a>
+    </nav>
+  </div>
+</body>
+</html>
