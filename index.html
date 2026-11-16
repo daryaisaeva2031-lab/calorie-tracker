@@ -51,6 +51,12 @@
     }
     .day-stat { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--sage-light); font-size: 14px; }
     .day-info { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--sage-light); }
+    .workout-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--sage-light); font-size: 13px; }
+    .kg-badge { background: var(--sage); color: white; padding: 2px 6px; border-radius: 6px; font-size: 10px; font-weight: 600; }
+    .load-sq { width: 10px; height: 10px; border-radius: 2px; }
+    .load-easy { background: #a8d5a2; }
+    .load-mid { background: #f5d76e; }
+    .load-hard { background: #e8a0a0; }
   </style>
 </head>
 <body>
@@ -164,6 +170,7 @@
     const meals = ['Завтрак', 'Обед', 'Ужин', 'Перекус'];
     const mealIcons = {'Завтрак': '🥣', 'Обед': '🍽️', 'Ужин': '🥗', 'Перекус': '🍎'};
     const typeIcons = { pool: '💧', family: '💜', warmup: '💚', own: '🌿' };
+    const loadClasses = ['','load-easy','load-mid','load-hard'];
 
     function changeDay(delta) {
       dayOffset += delta;
@@ -242,6 +249,24 @@
       }
     }
 
+    function formatWorkout(w) {
+      let html = `<div class="workout-row">`;
+      html += `<span>${w.icon || ''}</span>`;
+      html += `<div style="flex:1;"><div>${w.name}</div>`;
+      if (w.week || w.kg || w.load) {
+        html += `<div style="display:flex; align-items:center; gap:6px; margin-top:2px; font-size:11px; color:var(--text-light);">`;
+        if (w.week) html += `<span>Нед.${w.week} трен.${w.day}</span>`;
+        if (w.kg) html += `<span class="kg-badge">${w.kg}</span>`;
+        if (w.load) {
+          const lc = w.loadIdx ? loadClasses[w.loadIdx] : '';
+          html += `<span style="display:flex; align-items:center; gap:3px;"><span class="load-sq ${lc}"></span>${w.load}</span>`;
+        }
+        html += `</div>`;
+      }
+      html += `</div></div>`;
+      return html;
+    }
+
     function showDayInfo(day) {
       selectedCalDay = day;
       renderCalendar();
@@ -267,9 +292,7 @@
 
       if (wData.length) {
         html += `<div style="font-weight:600; margin-top:10px;">Тренировки</div>`;
-        wData.forEach(w => {
-          html += `<div class="food-entry"><span>${w.icon || ''} ${w.name}</span></div>`;
-        });
+        wData.forEach(w => { html += formatWorkout(w); });
       } else {
         html += `<div style="color:var(--text-light); margin-top:10px; text-align:center; font-size:13px;">Тренировок нет</div>`;
       }
@@ -366,9 +389,7 @@
       const wData = JSON.parse(localStorage.getItem(wKey) || '[]');
       if (wData.length) {
         html += `<div style="font-weight:600; margin-top:12px;">Тренировки</div>`;
-        wData.forEach(w => {
-          html += `<div class="food-entry"><span>${w.icon || ''} ${w.name}</span></div>`;
-        });
+        wData.forEach(w => { html += formatWorkout(w); });
       }
       content.innerHTML = html || '<div style="text-align:center; color:var(--text-light); padding:20px;">День пустой</div>';
       document.getElementById('mealModal').classList.add('show');
