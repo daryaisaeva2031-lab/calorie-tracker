@@ -9,13 +9,35 @@
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#7d9b7a">
   <link rel="apple-touch-icon" href="icon.png">
+  <style>
+    .calendar-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+      z-index: 100; justify-content: center; align-items: flex-end;
+    }
+    .calendar-overlay.show { display: flex; }
+    .calendar-modal {
+      background: var(--cream); border-radius: 24px 24px 0 0; width: 100%; max-width: 400px;
+      padding: 20px 16px 30px; box-shadow: 0 -4px 30px rgba(0,0,0,0.1);
+    }
+    .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .cal-title { font-size: 18px; font-weight: 700; color: var(--sage-dark); }
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; }
+    .cal-weekday { font-size: 12px; color: var(--text-light); padding: 6px 0; }
+    .cal-day {
+      aspect-ratio: 1; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+      font-size: 14px; cursor: pointer; background: transparent;
+    }
+    .cal-day.today { background: var(--sage); color: white; font-weight: 700; }
+    .cal-day.other { color: #ccc; }
+    .cal-day:hover { background: var(--sage-light); }
+  </style>
 </head>
 <body>
   <div class="app">
     <header class="header">
       <div style="display:flex; align-items:center; gap:6px;">
         <button class="icon-btn" onclick="changeDay(-1)">←</button>
-        <button class="icon-btn">📅</button>
+        <button class="icon-btn" onclick="openCalendar()">📅</button>
         <button class="icon-btn" onclick="changeDay(1)">→</button>
       </div>
       <div style="text-align:center;">
@@ -102,16 +124,89 @@
     </nav>
   </div>
 
+  <div class="calendar-overlay" id="calOverlay" onclick="if(event.target===this) closeCalendar()">
+    <div class="calendar-modal">
+      <div class="cal-header">
+        <button class="icon-btn" onclick="changeMonth(-1)">←</button>
+        <div class="cal-title" id="calMonthTitle">Ноябрь 2026</div>
+        <button class="icon-btn" onclick="changeMonth(1)">→</button>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+      <button onclick="closeCalendar()" style="margin-top:16px; width:100%; padding:12px; border:none; border-radius:14px; background:var(--sage); color:white; font-family:inherit; font-size:15px; font-weight:600;">Закрыть</button>
+    </div>
+  </div>
+
   <script>
     let dayOffset = 0;
+    let calMonth = new Date().getMonth();
+    let calYear = new Date().getFullYear();
     const months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+    const monthsNom = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+    const weekdays = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+
     function changeDay(delta) {
       dayOffset += delta;
+      updateDate();
+    }
+    function updateDate() {
       const date = new Date();
       date.setDate(date.getDate() + dayOffset);
-      const dateEl = document.getElementById('day-date');
-      dateEl.textContent = date.getDate() + ' ' + months[date.getMonth()];
+      document.getElementById('day-date').textContent = date.getDate() + ' ' + months[date.getMonth()];
     }
+
+    function openCalendar() {
+      renderCalendar();
+      document.getElementById('calOverlay').classList.add('show');
+    }
+    function closeCalendar() {
+      document.getElementById('calOverlay').classList.remove('show');
+    }
+    function changeMonth(delta) {
+      calMonth += delta;
+      if (calMonth > 11) { calMonth = 0; calYear++; }
+      if (calMonth < 0) { calMonth = 11; calYear--; }
+      renderCalendar();
+    }
+    function renderCalendar() {
+      document.getElementById('calMonthTitle').textContent = monthsNom[calMonth] + ' ' + calYear;
+      const grid = document.getElementById('calGrid');
+      grid.innerHTML = '';
+      weekdays.forEach(d => {
+        const el = document.createElement('div');
+        el.className = 'cal-weekday';
+        el.textContent = d;
+        grid.appendChild(el);
+      });
+      const first = new Date(calYear, calMonth, 1);
+      let start = first.getDay() - 1;
+      if (start < 0) start = 6;
+      const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+      const today = new Date();
+      for (let i = 0; i < start; i++) {
+        const el = document.createElement('div');
+        el.className = 'cal-day other';
+        grid.appendChild(el);
+      }
+      for (let d = 1; d <= daysInMonth; d++) {
+        const el = document.createElement('div');
+        el.className = 'cal-day';
+        if (d === today.getDate() && calMonth === today.getMonth() && calYear === today.getFullYear()) {
+          el.classList.add('today');
+        }
+        el.textContent = d;
+        el.onclick = () => selectDay(d);
+        grid.appendChild(el);
+      }
+    }
+    function selectDay(day) {
+      const selected = new Date(calYear, calMonth, day);
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      dayOffset = Math.round((selected - today) / 86400000);
+      updateDate();
+      closeCalendar();
+    }
+    updateDate();
   </script>
 </body>
 </html>
