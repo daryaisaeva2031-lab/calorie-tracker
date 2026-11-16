@@ -99,7 +99,7 @@
       {date: '2026-10-03', value: 77.0},
       {date: '2026-10-09', value: 77.4}
     ];
-    const target = 65;
+    let target = parseFloat(localStorage.getItem('target-weight')) || 65;
     const start = 81;
 
     function openAdd() { document.getElementById('addModal').classList.add('show'); }
@@ -117,12 +117,14 @@
     }
 
     function render() {
+      target = parseFloat(localStorage.getItem('target-weight')) || 65;
+      document.getElementById('targetWeight').textContent = target.toFixed(1).replace('.', ',');
+
       const current = weights[weights.length-1]?.value || 77.4;
       document.getElementById('currentWeight').textContent = current.toFixed(1).replace('.', ',') + ' кг';
       document.getElementById('lost').textContent = (start - current).toFixed(1).replace('.', ',') + ' кг';
       document.getElementById('left').textContent = (current - target).toFixed(1).replace('.', ',') + ' кг';
 
-      // History
       const list = document.getElementById('historyList');
       list.innerHTML = '';
       [...weights].reverse().forEach((w, i, arr) => {
