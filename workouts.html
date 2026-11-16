@@ -153,6 +153,18 @@
     let blockData = {}, editingWorkoutId = null, tempKg = '', tempLoad = 0;
     const warmups = ['Грудной отдел — круги руками','Грудной отдел — растяжка','Шея — наклоны','Спина — кошка','Ноги — махи','Плечи — круги'];
 
+    function resetBrokenWorkouts() {
+      if (localStorage.getItem('resetDone')) return;
+      const block = JSON.parse(localStorage.getItem('familyBlock-zhivaya') || '{}');
+      if (block.workouts) {
+        delete block.workouts['w1d2'];
+        delete block.workouts['w1d3'];
+        localStorage.setItem('familyBlock-zhivaya', JSON.stringify(block));
+      }
+      localStorage.setItem('resetDone', '1');
+    }
+    resetBrokenWorkouts();
+
     function changeDay(delta) { dayOffset += delta; loadDay(); }
     function loadDay() {
       const date = new Date(); date.setDate(date.getDate() + dayOffset);
