@@ -24,12 +24,14 @@
     .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; }
     .cal-weekday { font-size: 12px; color: var(--text-light); padding: 6px 0; }
     .cal-day {
-      aspect-ratio: 1; border-radius: 12px; display: flex; align-items: center; justify-content: center;
-      font-size: 14px; cursor: pointer; background: transparent;
+      aspect-ratio: 1; border-radius: 12px; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; font-size: 14px; cursor: pointer;
+      background: transparent; position: relative;
     }
     .cal-day.today { background: var(--sage); color: white; font-weight: 700; }
     .cal-day.other { color: #ccc; }
     .cal-day:hover { background: var(--sage-light); }
+    .cal-icons { font-size: 9px; line-height: 1; margin-top: 1px; }
     .meal-header { display: flex; justify-content: space-between; align-items: center; margin: 16px 0 10px; }
     .day-btn {
       padding: 6px 12px; border-radius: 12px; border: none;
@@ -78,7 +80,7 @@
       <div class="side-stat">
         <div class="icon-circle">👟</div>
         <div class="label">Шаги</div>
-        <div class="value">—</div>
+        <div class="value" id="stepsValue">—</div>
       </div>
     </section>
 
@@ -155,6 +157,7 @@
     const weekdays = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
     const meals = ['Завтрак', 'Обед', 'Ужин', 'Перекус'];
     const mealIcons = {'Завтрак': '🥣', 'Обед': '🍽️', 'Ужин': '🥗', 'Перекус': '🍎'};
+    const typeIcons = { pool: '💧', family: '💪', warmup: '🤸', own: '🌿' };
 
     function changeDay(delta) {
       dayOffset += delta;
@@ -206,7 +209,15 @@
         if (d === today.getDate() && calMonth === today.getMonth() && calYear === today.getFullYear()) {
           el.classList.add('today');
         }
-        el.textContent = d;
+        const dateStr = calYear + '-' + String(calMonth+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+        const wKey = 'workouts-' + dateStr;
+        const wData = JSON.parse(localStorage.getItem(wKey) || '[]');
+        let icons = '';
+        if (wData.length) {
+          const types = [...new Set(wData.map(w => w.type))];
+          icons = types.map(t => typeIcons[t] || '').join('');
+        }
+        el.innerHTML = d + (icons ? `<div class="cal-icons">${icons}</div>` : '');
         el.onclick = () => selectDay(d);
         grid.appendChild(el);
       }
@@ -224,8 +235,13 @@
     function loadDiary() {
       const date = new Date();
       date.setDate(date.getDate() + dayOffset);
-      const key = 'diary-' + date.toISOString().slice(0,10);
+      const dateStr = date.toISOString().slice(0,10);
+      const key = 'diary-' + dateStr;
       currentDiary = JSON.parse(localStorage.getItem(key) || '{}');
+
+      const stepsKey = 'steps-' + dateStr;
+      const steps = localStorage.getItem(stepsKey);
+      document.getElementById('stepsValue').textContent = steps || '—';
 
       let totalK = 0, totalP = 0, totalF = 0, totalC = 0;
       const container = document.getElementById('mealsContainer');
@@ -285,6 +301,16 @@
           });
         }
       });
+      const date = new Date();
+      date.setDate(date.getDate() + dayOffset);
+      const wKey = 'workouts-' + date.toISOString().slice(0,10);
+      const wData = JSON.parse(localStorage.getItem(wKey) || '[]');
+      if (wData.length) {
+        html += `<div style="font-weight:600; margin-top:12px;">Тренировки</div>`;
+        wData.forEach(w => {
+          html += `<div class="food-entry"><span>${w.icon || ''} ${w.name}</span></div>`;
+        });
+      }
       content.innerHTML = html || '<div style="text-align:center; color:var(--text-light); padding:20px;">День пустой</div>';
       document.getElementById('mealModal').classList.add('show');
     }
