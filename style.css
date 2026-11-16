@@ -174,3 +174,14 @@ body {
 .day-tab.active { background: var(--sage); color: white; }
 
 .checkbox { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--sage); }
+
+/* Hide number input spinners and prevent wheel change */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
