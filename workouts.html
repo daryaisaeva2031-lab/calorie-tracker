@@ -50,6 +50,14 @@
       background: var(--sage); color: white; font-family: inherit;
       font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 10px;
     }
+    .day-nav {
+      display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 12px;
+    }
+    .day-nav button {
+      width: 36px; height: 36px; border-radius: 50%; border: none;
+      background: var(--sage-light); color: var(--sage-dark);
+      font-size: 16px; cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -58,7 +66,14 @@
       <h1>Тренировки</h1>
     </header>
 
-    <div style="text-align:center; font-size:15px; color:var(--text-light); margin-bottom:12px;" id="todayDate"></div>
+    <div class="day-nav">
+      <button onclick="changeDay(-1)">←</button>
+      <div style="text-align:center;">
+        <div id="dayTitle" style="font-weight:700; color:var(--sage-dark);">Сегодня</div>
+        <div id="todayDate" style="font-size:13px; color:var(--text-light);"></div>
+      </div>
+      <button onclick="changeDay(1)">→</button>
+    </div>
 
     <div class="steps-row">
       <input type="number" class="steps-input" id="stepsInput" placeholder="Шаги">
@@ -88,7 +103,7 @@
     </div>
 
     <div class="card">
-      <div style="font-weight:600; margin-bottom:8px;">На сегодня</div>
+      <div style="font-weight:600; margin-bottom:8px;" id="listTitle">На сегодня</div>
       <div id="todayList"></div>
     </div>
 
@@ -128,11 +143,12 @@
   </div>
 
   <script>
-    const today = new Date();
-    const key = 'workouts-' + today.toISOString().slice(0,10);
-    const stepsKey = 'steps-' + today.toISOString().slice(0,10);
-    let workouts = JSON.parse(localStorage.getItem(key) || '[]');
-    let steps = localStorage.getItem(stepsKey) || '';
+    let dayOffset = 0;
+    const months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+    let workouts = [];
+    let steps = '';
+    let key = '';
+    let stepsKey = '';
 
     const warmups = [
       'Грудной отдел — круги руками',
@@ -143,7 +159,31 @@
       'Плечи — круги'
     ];
 
-    document.getElementById('todayDate').textContent = today.getDate() + ' ' + ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'][today.getMonth()];
+    function changeDay(delta) {
+      dayOffset += delta;
+      loadDay();
+    }
+
+    function loadDay() {
+      const date = new Date();
+      date.setDate(date.getDate() + dayOffset);
+      const dateStr = date.toISOString().slice(0,10);
+      key = 'workouts-' + dateStr;
+      stepsKey = 'steps-' + dateStr;
+      workouts = JSON.parse(localStorage.getItem(key) || '[]');
+      steps = localStorage.getItem(stepsKey) || '';
+
+      document.getElementById('todayDate').textContent = date.getDate() + ' ' + months[date.getMonth()];
+
+      let title = 'Сегодня';
+      if (dayOffset === -1) title = 'Вчера';
+      else if (dayOffset === 1) title = 'Завтра';
+      else if (dayOffset !== 0) title = date.getDate() + ' ' + months[date.getMonth()];
+      document.getElementById('dayTitle').textContent = title;
+      document.getElementById('listTitle').textContent = dayOffset === 0 ? 'На сегодня' : 'Тренировки';
+
+      render();
+    }
 
     function render() {
       const list = document.getElementById('todayList');
@@ -229,7 +269,7 @@
       document.getElementById(id).classList.remove('show');
     }
 
-    render();
+    loadDay();
   </script>
 </body>
 </html>
