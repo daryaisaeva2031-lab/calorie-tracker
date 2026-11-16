@@ -15,8 +15,14 @@
     .steps-row { display: flex; gap: 8px; margin-bottom: 16px; }
     .steps-input { flex: 1; padding: 12px; border-radius: 12px; border: 1px solid var(--sage-light); font-family: inherit; font-size: 15px; }
     .steps-btn { padding: 12px 16px; border: none; border-radius: 12px; background: var(--sage); color: white; font-family: inherit; font-weight: 600; cursor: pointer; }
-    .workout-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--sage-light); }
-    .workout-details { font-size: 12px; color: var(--text-light); }
+    .workout-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--sage-light); }
+    .workout-details { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 4px; font-size: 12px; color: var(--text-light); }
+    .kg-badge { background: var(--sage); color: white; padding: 2px 8px; border-radius: 8px; font-size: 11px; font-weight: 600; }
+    .load-badge { display: flex; align-items: center; gap: 4px; }
+    .load-sq { width: 12px; height: 12px; border-radius: 3px; }
+    .load-easy { background: #a8d5a2; }
+    .load-mid { background: #f5d76e; }
+    .load-hard { background: #e8a0a0; }
     .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; justify-content: center; align-items: center; }
     .modal-overlay.show { display: flex; }
     .modal-box { background: var(--cream); border-radius: 20px; width: 90%; max-width: 400px; padding: 20px 16px; max-height: 85vh; overflow-y: auto; }
@@ -29,9 +35,6 @@
     .workout-plaque { flex: 1; padding: 8px 6px; border-radius: 10px; border: 2px solid var(--sage-light); background: white; cursor: pointer; font-size: 12px; font-family: inherit; font-weight: 600; text-align: center; display: flex; align-items: center; justify-content: center; gap: 4px; }
     .workout-plaque.done { background: var(--sage); border-color: var(--sage); color: white; }
     .load-dot { width: 12px; height: 12px; border-radius: 3px; }
-    .load-easy { background: #a8d5a2; }
-    .load-mid { background: #f5d76e; }
-    .load-hard { background: #e8a0a0; }
     .kg-btns, .day-btns { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
     .kg-btn, .day-btn-sel { padding: 8px 12px; border-radius: 10px; border: 2px solid var(--sage-light); background: white; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 13px; }
     .kg-btn.selected, .day-btn-sel.selected { background: var(--sage); border-color: var(--sage); color: white; }
@@ -129,6 +132,7 @@
     let workouts = [], steps = '', key = '', stepsKey = '';
     const kgOptions = ['4 кг','5 кг','6 кг','7 кг','8 кг'];
     const loadNames = ['','легко','средне','трудно'];
+    const loadClasses = ['','load-easy','load-mid','load-hard'];
     let blockData = {}, editingWorkoutId = null, tempKg = 0, tempLoad = 0, tempWeekday = -1;
     const warmups = ['Грудной отдел — круги руками','Грудной отдел — растяжка','Шея — наклоны','Спина — кошка','Ноги — махи','Плечи — круги'];
 
@@ -153,14 +157,21 @@
       if (!workouts.length) { list.innerHTML = '<div style="color:var(--text-light); text-align:center; padding:12px;">Пока пусто</div>'; }
       else {
         list.innerHTML = workouts.map((w, i) => {
-          let details = '';
+          let detailsHtml = '';
           if (w.week && w.day) {
-            details = `Нед. ${w.week}, трен. ${w.day}`;
-            if (w.weekday >= 0) details += ` · ${weekdays[w.weekday]}`;
-            if (w.kg) details += ` · ${w.kg}`;
-            if (w.load) details += ` · ${w.load}`;
+            let parts = [`Нед. ${w.week}, трен. ${w.day}`];
+            if (w.weekday >= 0) parts.push(weekdays[w.weekday]);
+            detailsHtml = `<div class="workout-details">`;
+            detailsHtml += parts.join(' · ');
+            if (w.kg) detailsHtml += ` <span class="kg-badge">${w.kg}</span>`;
+            if (w.load) {
+              const loadIdx = loadNames.indexOf(w.load);
+              const lc = loadClasses[loadIdx] || '';
+              detailsHtml += ` <span class="load-badge"><span class="load-sq ${lc}"></span>${w.load}</span>`;
+            }
+            detailsHtml += `</div>`;
           }
-          return `<div class="workout-item"><span>${w.icon || '💜'}</span><div style="flex:1;"><div>${w.name}</div>${details ? `<div class="workout-details">${details}</div>` : ''}</div><button onclick="removeWorkout(${i})" style="border:none; background:none; color:#c00; cursor:pointer;">×</button></div>`;
+          return `<div class="workout-item"><span>${w.icon || '💜'}</span><div style="flex:1;"><div>${w.name}</div>${detailsHtml}</div><button onclick="removeWorkout(${i})" style="border:none; background:none; color:#c00; cursor:pointer;">×</button></div>`;
         }).join('');
       }
       document.getElementById('stepsDisplay').textContent = steps ? 'Шаги: ' + steps : '';
@@ -236,11 +247,11 @@
       for (let w = 1; w <= 4; w++) {
         for (let d = 1; d <= 3; d++) {
           const id = `w${w}d${d}`, data = blockData.workouts[id];
-          if (data && data.done) doneWorkouts.push({ week: w, day: d, kg: data.kg >= 0 ? kgOptions[data.kg] : '', load: loadNames[data.load] || '', weekday: data.weekday });
+          if (data && data.done) doneWorkouts.push({ week: w, day: d, kg: data.kg >= 0 ? kgOptions[data.kg] : '', load: loadNames[data.load] || '', loadIdx: data.load, weekday: data.weekday });
         }
       }
       if (doneWorkouts.length) {
-        doneWorkouts.forEach(dw => workouts.push({ type: 'family', name: blockName, icon: '💜', block, week: dw.week, day: dw.day, kg: dw.kg, load: dw.load, weekday: dw.weekday }));
+        doneWorkouts.forEach(dw => workouts.push({ type: 'family', name: blockName, icon: '💜', block, week: dw.week, day: dw.day, kg: dw.kg, load: dw.load, loadIdx: dw.loadIdx, weekday: dw.weekday }));
       } else { workouts.push({ type: 'family', name: blockName, icon: '💜', block }); }
       save(); closeModal('familyModal');
     }
