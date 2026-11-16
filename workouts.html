@@ -32,9 +32,10 @@
     .block-select { width: 100%; padding: 12px; border-radius: 14px; border: 1px solid var(--sage-light); font-family: inherit; font-size: 15px; margin-bottom: 12px; background: white; }
     .week-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; background: white; border-radius: 12px; padding: 8px; }
     .week-label { padding: 8px 10px; border-radius: 10px; background: var(--sage); color: white; font-size: 12px; font-weight: 600; min-width: 70px; text-align: center; }
-    .workout-plaque { flex: 1; padding: 6px 4px; border-radius: 10px; border: 2px solid var(--sage-light); background: white; cursor: pointer; font-size: 11px; font-family: inherit; font-weight: 600; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+    .workout-plaque { flex: 1; padding: 8px 4px; border-radius: 10px; border: 2px solid var(--sage-light); background: white; cursor: pointer; font-size: 12px; font-family: inherit; font-weight: 600; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 50px; }
     .workout-plaque.done { background: var(--sage); border-color: var(--sage); color: white; }
-    .plaque-date { font-size: 9px; opacity: 0.7; }
+    .plaque-top { display: flex; align-items: center; gap: 4px; }
+    .plaque-date { font-size: 10px; opacity: 0.8; }
     .load-dot { width: 10px; height: 10px; border-radius: 2px; }
     .kg-btns { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
     .kg-btn { padding: 8px 12px; border-radius: 10px; border: 2px solid var(--sage-light); background: white; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 13px; }
@@ -101,7 +102,7 @@
   </div>
 
   <div class="modal-overlay" id="workoutDetailModal" style="z-index:110;" onclick="if(event.target===this) closeModal('workoutDetailModal')">
-    <div class="modal-box" style="max-width:340px;">
+    <div class="modal-box" style="max-width:340px;" onclick="event.stopPropagation()">
       <div style="font-weight:700; text-align:center; margin-bottom:12px;" id="workoutDetailTitle">Тренировка</div>
       <div style="font-size:13px; color:var(--text-light); margin-bottom:6px;">Дата</div>
       <input type="date" class="date-input" id="workoutDate">
@@ -193,7 +194,8 @@
     function formatDate(dateStr) {
       if (!dateStr) return '';
       const d = new Date(dateStr);
-      return String(d.getDate()).padStart(2,'0') + '.' + String(d.getMonth()+1).padStart(2,'0');
+      const yy = String(d.getFullYear()).slice(-2);
+      return String(d.getDate()).padStart(2,'0') + '.' + String(d.getMonth()+1).padStart(2,'0') + '.' + yy;
     }
     function renderWeeks() {
       const container = document.getElementById('weeksContainer');
@@ -202,11 +204,16 @@
         html += `<div class="week-row"><div class="week-label">Неделя ${w}</div>`;
         for (let d = 1; d <= 3; d++) {
           const id = `w${w}d${d}`, data = getWorkout(id);
-          const doneClass = data.done ? 'done' : '', mark = data.done ? '✓ ' : '';
+          const doneClass = data.done ? 'done' : '';
+          const mark = data.done ? '✓' : '';
           const kgText = data.kg || '—';
-          const lc = loadClass(data.load), dot = lc ? `<div class="load-dot ${lc}"></div>` : '';
+          const lc = loadClass(data.load);
+          const dot = lc ? `<span class="load-dot ${lc}"></span>` : '';
           const dateText = formatDate(data.dateStr);
-          html += `<div class="workout-plaque ${doneClass}" onclick="openWorkoutDetail('${id}', ${w}, ${d})"><div>${mark}${kgText}${dot}</div>${dateText ? `<div class="plaque-date">${dateText}</div>` : ''}</div>`;
+          html += `<div class="workout-plaque ${doneClass}" onclick="openWorkoutDetail('${id}', ${w}, ${d})">`;
+          html += `<div class="plaque-top">${mark ? mark + ' ' : ''}${kgText}${dot}</div>`;
+          if (dateText) html += `<div class="plaque-date">${dateText}</div>`;
+          html += `</div>`;
         }
         html += '</div>';
       }
