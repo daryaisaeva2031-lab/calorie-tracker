@@ -20,6 +20,7 @@
       background: var(--sage-light); color: var(--sage-dark);
     }
     .brand-name { font-size: 12px; color: var(--text-light); margin-top: 1px; }
+    .portion-hint { font-size: 12px; color: var(--sage); margin-top: 2px; }
     .modal-overlay {
       display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
       z-index: 100; justify-content: center; align-items: flex-end;
@@ -36,7 +37,7 @@
     }
     .unit-select {
       padding: 14px; border-radius: 12px; border: 1px solid var(--sage-light);
-      font-family: inherit; font-size: 15px; background: white; min-width: 100px;
+      font-family: inherit; font-size: 15px; background: white; min-width: 110px;
     }
     .add-btn-modal {
       width: 100%; padding: 14px; border: none; border-radius: 14px;
@@ -79,8 +80,8 @@
       <div style="font-weight:700; text-align:center; font-size:18px;" id="modalName">Продукт</div>
       <div style="text-align:center; font-size:13px; color:var(--text-light); margin-top:4px;" id="modalKcal">0 ккал / 100 г</div>
       <div class="amount-row">
-        <input type="number" class="amount-input" id="amountInput" value="1">
-        <select class="unit-select" id="unitSelect">
+        <input type="number" class="amount-input" id="amountInput" value="100">
+        <select class="unit-select" id="unitSelect" onchange="onUnitChange()">
           <option value="grams">г</option>
         </select>
       </div>
@@ -143,12 +144,16 @@
         }
         items.forEach(p => {
           const icon = getIcon(p.name, p.category);
+          const portionHint = (p.portionType && p.portionGrams)
+            ? `<div class="portion-hint">Есть порция: ${p.portionType} (${p.portionGrams} г)</div>`
+            : '';
           list.innerHTML += `<div class="card food-item item" onclick="openModal('product', ${p.id})">
             <div class="food-icon">${icon}</div>
             <div class="food-info">
               <div class="food-name">${p.name} <span class="cat-badge">${p.category || ''}</span></div>
               ${p.brand ? `<div class="brand-name">${p.brand}</div>` : ''}
               <div class="food-kcal">${p.calories || 0} ккал / 100 г</div>
+              ${portionHint}
             </div>
             <button class="add-btn">+</button>
           </div>`;
@@ -160,16 +165,25 @@
           return;
         }
         items.forEach(r => {
+          const portionHint = r.portionGrams
+            ? `<div class="portion-hint">Есть порция (${r.portionGrams} г)</div>`
+            : '';
           list.innerHTML += `<div class="card food-item item" onclick="openModal('recipe', ${r.id})">
             <div class="food-icon">🥘</div>
             <div class="food-info">
               <div class="food-name">${r.name}</div>
               <div class="food-kcal">${r.per100?.calories || 0} ккал / 100 г</div>
+              ${portionHint}
             </div>
             <button class="add-btn">+</button>
           </div>`;
         });
       }
+    }
+
+    function onUnitChange() {
+      const unit = document.getElementById('unitSelect').value;
+      document.getElementById('amountInput').value = unit === 'portion' ? 1 : 100;
     }
 
     function openModal(type, id) {
