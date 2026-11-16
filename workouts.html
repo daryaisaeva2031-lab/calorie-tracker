@@ -104,8 +104,7 @@
     <div class="modal-box" onclick="event.stopPropagation()" style="max-width:420px;">
       <div style="font-weight:700; text-align:center; margin-bottom:12px;">💜 СЕМЬЯ силовые</div>
       <div id="familyContent"></div>
-      <button class="modal-btn" onclick="saveFamily()">Сохранить</button>
-      <button onclick="closeModal('familyModal')" style="margin-top:8px; width:100%; padding:10px; border:none; border-radius:14px; background:var(--sage-light); color:var(--sage-dark); font-family:inherit; font-size:14px; font-weight:600;">Закрыть</button>
+      <button onclick="closeModal('familyModal')" style="margin-top:12px; width:100%; padding:10px; border:none; border-radius:14px; background:var(--sage); color:white; font-family:inherit; font-size:14px; font-weight:600;">Закрыть</button>
     </div>
   </div>
 
@@ -304,6 +303,7 @@
         }
       }
       allBlockData[editingBlockId].workouts[editingWorkoutId] = { done: false, kg: '', load: 0, comment: '', dateStr: '' };
+      localStorage.setItem('familyBlock-' + editingBlockId, JSON.stringify(allBlockData[editingBlockId]));
       closeModal('workoutDetailModal');
       renderAllBlocks();
       loadDay();
@@ -317,33 +317,27 @@
       data.dateStr = document.getElementById('workoutDate').value;
       data.done = document.getElementById('workoutDone').checked;
       data.comment = document.getElementById('workoutComment').value;
-      closeModal('workoutDetailModal');
-      renderAllBlocks();
-    }
-    function saveFamily() {
-      blocks.forEach(block => {
-        localStorage.setItem('familyBlock-' + block.id, JSON.stringify(allBlockData[block.id]));
-        const blockData = allBlockData[block.id];
-        for (let w = 1; w <= 4; w++) {
-          for (let d = 1; d <= 3; d++) {
-            const id = `w${w}d${d}`, data = blockData.workouts[id];
-            if (data && data.done && data.dateStr) {
-              const targetKey = 'workouts-' + data.dateStr;
-              let targetWorkouts = JSON.parse(localStorage.getItem(targetKey) || '[]');
-              const exists = targetWorkouts.some(tw => tw.block === block.id && tw.week === w && tw.day === d);
-              if (!exists) {
-                targetWorkouts.push({
-                  type: 'family', name: block.name, icon: '💜', block: block.id,
-                  week: w, day: d, kg: data.kg || '', load: loadNames[data.load] || '', loadIdx: data.load
-                });
-                localStorage.setItem(targetKey, JSON.stringify(targetWorkouts));
-              }
-            }
+      localStorage.setItem('familyBlock-' + editingBlockId, JSON.stringify(allBlockData[editingBlockId]));
+      if (data.done && data.dateStr) {
+        const block = blocks.find(b => b.id === editingBlockId);
+        const match = editingWorkoutId.match(/w(\d+)d(\d+)/);
+        if (match) {
+          const week = parseInt(match[1]), day = parseInt(match[2]);
+          const targetKey = 'workouts-' + data.dateStr;
+          let targetWorkouts = JSON.parse(localStorage.getItem(targetKey) || '[]');
+          const exists = targetWorkouts.some(tw => tw.block === editingBlockId && tw.week === week && tw.day === day);
+          if (!exists) {
+            targetWorkouts.push({
+              type: 'family', name: block.name, icon: '💜', block: editingBlockId,
+              week, day, kg: data.kg || '', load: loadNames[data.load] || '', loadIdx: data.load
+            });
+            localStorage.setItem(targetKey, JSON.stringify(targetWorkouts));
           }
         }
-      });
+      }
+      closeModal('workoutDetailModal');
+      renderAllBlocks();
       loadDay();
-      closeModal('familyModal');
     }
     function openWarmup() { filterWarmups(); document.getElementById('warmupModal').classList.add('show'); }
     function filterWarmups() {
