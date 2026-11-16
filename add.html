@@ -14,6 +14,12 @@
     }
     .tab.active { background: var(--sage); color: white; }
     .item { cursor: pointer; }
+    .cat-badge {
+      display: inline-block; font-size: 11px; font-weight: 600;
+      padding: 2px 8px; border-radius: 10px; margin-left: 8px;
+      background: var(--sage-light); color: var(--sage-dark);
+    }
+    .brand-name { font-size: 12px; color: var(--text-light); margin-top: 1px; }
     .modal-overlay {
       display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
       z-index: 100; justify-content: center; align-items: flex-end;
@@ -83,6 +89,29 @@
     let pendingType = null;
     let pendingId = null;
 
+    const nameIcons = {
+      'морков': '🥕', 'яблок': '🍎', 'банан': '🍌', 'огурец': '🥒',
+      'помидор': '🍅', 'картош': '🥔', 'лук': '🧅', 'чеснок': '🧄',
+      'яйц': '🥚', 'хлеб': '🍞', 'сыр': '🧀', 'творог': '🧀',
+      'молок': '🥛', 'куриц': '🍗', 'рыб': '🐟', 'мяс': '🥩',
+      'свинин': '🥩', 'говяд': '🥩', 'рис': '🍚', 'греч': '🍚',
+      'овс': '🥣', 'масл': '🧈', 'шоколад': '🍫', 'конфет': '🍬',
+      'ягод': '🍓', 'клубник': '🍓', 'авокад': '🥑', 'броккол': '🥦',
+      'салат': '🥗', 'тунец': '🍣', 'кревет': '🦀', 'кофе': '☕'
+    };
+    const categoryIcons = {
+      'Молочные': '🧀', 'Выпечка': '🍞', 'Мясо и рыба': '🍗',
+      'Овощи': '🥦', 'Фрукты и ягоды': '🍎', 'Крупы': '🌾',
+      'Сладости': '🍫', 'Домашнее': '🏠', 'Другое': '📦', 'Масло': '🧈'
+    };
+    function getIcon(name, category) {
+      const n = (name || '').toLowerCase();
+      for (const [key, icon] of Object.entries(nameIcons)) {
+        if (n.includes(key)) return icon;
+      }
+      return categoryIcons[category] || '🥗';
+    }
+
     function setTab(tab, el) {
       currentTab = tab;
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -102,10 +131,12 @@
           return;
         }
         items.forEach(p => {
+          const icon = getIcon(p.name, p.category);
           list.innerHTML += `<div class="card food-item item" onclick="openModal('product', ${p.id})">
-            <div class="food-icon">🥗</div>
+            <div class="food-icon">${icon}</div>
             <div class="food-info">
-              <div class="food-name">${p.name}</div>
+              <div class="food-name">${p.name} <span class="cat-badge">${p.category || ''}</span></div>
+              ${p.brand ? `<div class="brand-name">${p.brand}</div>` : ''}
               <div class="food-kcal">${p.calories || 0} ккал / 100 г</div>
             </div>
             <button class="add-btn">+</button>
