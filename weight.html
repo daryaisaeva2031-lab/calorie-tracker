@@ -35,9 +35,16 @@
     .add-box {
       background: var(--cream); border-radius: 20px; padding: 24px; width: 80%; max-width: 320px;
     }
-    .weight-input {
-      width: 100%; padding: 14px; border-radius: 12px; border: 1px solid var(--sage-light);
-      font-size: 20px; text-align: center; margin-bottom: 12px; font-family: inherit;
+    .weight-controls {
+      display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 16px;
+    }
+    .weight-controls input {
+      width: 120px; padding: 14px; border-radius: 12px; border: 1px solid var(--sage-light);
+      font-size: 22px; text-align: center; font-family: inherit; font-weight: 700;
+    }
+    .arrow-btn {
+      width: 44px; height: 44px; border-radius: 12px; border: none;
+      background: var(--sage-light); font-size: 20px; cursor: pointer;
     }
   </style>
 </head>
@@ -90,9 +97,13 @@
 
   <div class="add-modal" id="addModal" onclick="if(event.target===this) closeAdd()">
     <div class="add-box">
-      <div style="font-weight:700; margin-bottom:16px; text-align:center;">Добавить вес</div>
-      <input type="text" inputmode="decimal" id="newWeight" class="weight-input" placeholder="Например 69.5">
-      <button onclick="addWeight()" style="width:100%; padding:12px; border:none; border-radius:12px; background:var(--sage); color:white; font-family:inherit; font-size:15px; font-weight:600;">Добавить</button>
+      <div style="font-weight:700; margin-bottom:16px; text-align:center;">Текущий вес</div>
+      <div class="weight-controls">
+        <button class="arrow-btn" onclick="adjustWeight(-0.1)">−</button>
+        <input type="text" inputmode="decimal" id="newWeight" value="77.4">
+        <button class="arrow-btn" onclick="adjustWeight(0.1)">+</button>
+      </div>
+      <button onclick="addWeight()" style="width:100%; padding:12px; border:none; border-radius:12px; background:var(--sage); color:white; font-family:inherit; font-size:15px; font-weight:600;">Сохранить</button>
     </div>
   </div>
 
@@ -107,17 +118,24 @@
     const start = 81;
 
     function openAdd() {
-      document.getElementById('newWeight').value = '';
+      const current = weights[weights.length-1]?.value || 77.4;
+      document.getElementById('newWeight').value = current.toFixed(1);
       document.getElementById('addModal').classList.add('show');
-      document.getElementById('newWeight').focus();
     }
     function closeAdd() { document.getElementById('addModal').classList.remove('show'); }
+
+    function adjustWeight(delta) {
+      const input = document.getElementById('newWeight');
+      let val = parseFloat(input.value.replace(',', '.')) || 77.4;
+      val = Math.round((val + delta) * 10) / 10;
+      input.value = val.toFixed(1);
+    }
 
     function addWeight() {
       const raw = document.getElementById('newWeight').value.replace(',', '.');
       const val = parseFloat(raw);
       if (!val || val < 30 || val > 200) {
-        alert('Введи реальный вес, например 69.5');
+        alert('Введи реальный вес');
         return;
       }
       const today = new Date().toISOString().slice(0,10);
