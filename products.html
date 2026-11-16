@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Продукты — Калории</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#7d9b7a">
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <h1>Продукты</h1>
+    </header>
+
+    <a href="products-list.html" style="text-decoration:none; color:inherit;">
+      <div class="card" style="padding:20px; margin-bottom:14px; display:flex; align-items:center; gap:16px;">
+        <div style="width:56px; height:56px; border-radius:16px; background:var(--sage-light); display:flex; align-items:center; justify-content:center; font-size:28px;">🥦</div>
+        <div>
+          <div style="font-size:18px; font-weight:700;">Продукты</div>
+          <div style="font-size:13px; color:var(--text-light);">База своих продуктов</div>
+        </div>
+      </div>
+    </a>
+
+    <a href="recipes.html" style="text-decoration:none; color:inherit;">
+      <div class="card" style="padding:20px; display:flex; align-items:center; gap:16px;">
+        <div style="width:56px; height:56px; border-radius:16px; background:var(--sage-light); display:flex; align-items:center; justify-content:center; font-size:28px;">📖</div>
+        <div>
+          <div style="font-size:18px; font-weight:700;">Рецепты</div>
+          <div style="font-size:13px; color:var(--text-light);">Свои и любимые рецепты</div>
+        </div>
+      </div>
+    </a>
+
+    <nav class="bottom-nav">
+      <a href="index.html" class="nav-item">🏠<span>Сегодня</span></a>
+      <a href="menu.html" class="nav-item">📋<span>Меню</span></a>
+      <a href="products.html" class="nav-item active">🥦<span>Продукты</span></a>
+      <a href="shopping.html" class="nav-item">🛒<span>Покупки</span></a>
+      <a href="weight.html" class="nav-item">⚖️<span>Вес</span></a>
+    </nav>
+  </div>
+</body>
+</html>
