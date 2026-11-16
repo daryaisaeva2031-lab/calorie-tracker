@@ -42,8 +42,8 @@
     }
     .modal-overlay.show { display: flex; }
     .modal-box {
-      background: var(--cream); border-radius: 20px; width: 90%; max-width: 340px;
-      padding: 20px 16px;
+      background: var(--cream); border-radius: 20px; width: 90%; max-width: 380px;
+      padding: 20px 16px; max-height: 85vh; overflow-y: auto;
     }
     .modal-btn {
       width: 100%; padding: 12px; border: none; border-radius: 14px;
@@ -57,6 +57,32 @@
       width: 36px; height: 36px; border-radius: 50%; border: none;
       background: var(--sage-light); color: var(--sage-dark);
       font-size: 16px; cursor: pointer;
+    }
+    .block-select {
+      width: 100%; padding: 12px; border-radius: 14px; border: 1px solid var(--sage-light);
+      font-family: inherit; font-size: 15px; margin-bottom: 12px;
+      background: white;
+    }
+    .kg-badge {
+      display: inline-block; padding: 6px 14px; border-radius: 20px;
+      background: var(--sage); color: white; font-size: 13px; font-weight: 600;
+      margin-bottom: 16px; cursor: pointer;
+    }
+    .week-row {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+      background: white; border-radius: 12px; padding: 8px;
+    }
+    .week-label {
+      padding: 8px 12px; border-radius: 10px; background: var(--sage);
+      color: white; font-size: 13px; font-weight: 600; min-width: 80px; text-align: center;
+    }
+    .check-btn {
+      width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--sage-light);
+      background: white; cursor: pointer; font-size: 16px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .check-btn.done {
+      background: var(--sage); border-color: var(--sage); color: white;
     }
   </style>
 </head>
@@ -128,8 +154,23 @@
   <div class="modal-overlay" id="familyModal" onclick="if(event.target===this) closeModal('familyModal')">
     <div class="modal-box">
       <div style="font-weight:700; text-align:center; margin-bottom:12px;">Семья — силовые</div>
-      <div style="text-align:center; color:var(--text-light); margin-bottom:12px;">Блок и тренировки — скоро</div>
-      <button class="modal-btn" onclick="addSimple('family')">Отметить тренировку</button>
+
+      <select class="block-select" id="blockSelect" onchange="loadBlock()">
+        <option value="zhivaya">Живая сила</option>
+        <option value="sila">Сила</option>
+        <option value="vynoslivost">Выносливость</option>
+      </select>
+
+      <div style="text-align:center;">
+        <span class="kg-badge" id="kgBadge" onclick="cycleKg()">4-5 кг</span>
+      </div>
+
+      <div id="weeksContainer"></div>
+
+      <textarea class="steps-input" id="familyComment" placeholder="Комментарий" style="width:100%; height:50px; margin-top:12px;"></textarea>
+
+      <button class="modal-btn" onclick="saveFamily()">Сохранить</button>
+      <button onclick="closeModal('familyModal')" style="margin-top:8px; width:100%; padding:12px; border:none; border-radius:14px; background:var(--sage-light); color:var(--sage-dark); font-family:inherit; font-size:15px; font-weight:600;">Закрыть</button>
     </div>
   </div>
 
@@ -149,6 +190,10 @@
     let steps = '';
     let key = '';
     let stepsKey = '';
+
+    const kgOptions = ['2-3 кг', '4-5 кг', '6-7 кг', '8-10 кг'];
+    let currentKgIndex = 1;
+    let blockChecks = {};
 
     const warmups = [
       'Грудной отдел — круги руками',
@@ -208,15 +253,73 @@
     }
 
     function addSimple(type) {
-      const names = { pool: 'Бассейн', family: 'Семья — силовые' };
-      const icons = { pool: '💧', family: '💜' };
+      const names = { pool: 'Бассейн' };
+      const icons = { pool: '💧' };
       workouts.push({ type, name: names[type], icon: icons[type] });
       save();
-      closeModal('familyModal');
     }
 
     function openFamily() {
+      loadBlock();
       document.getElementById('familyModal').classList.add('show');
+    }
+
+    function loadBlock() {
+      const block = document.getElementById('blockSelect').value;
+      const saved = JSON.parse(localStorage.getItem('familyBlock-' + block) || '{}');
+      blockChecks = saved.checks || {};
+      currentKgIndex = saved.kgIndex !== undefined ? saved.kgIndex : 1;
+      document.getElementById('kgBadge').textContent = kgOptions[currentKgIndex];
+      document.getElementById('familyComment').value = saved.comment || '';
+      renderWeeks();
+    }
+
+    function cycleKg() {
+      currentKgIndex = (currentKgIndex + 1) % kgOptions.length;
+      document.getElementById('kgBadge').textContent = kgOptions[currentKgIndex];
+    }
+
+    function renderWeeks() {
+      const container = document.getElementById('weeksContainer');
+      let html = '';
+      for (let w = 1; w <= 4; w++) {
+        html += `<div class="week-row"><div class="week-label">Неделя ${w}</div>`;
+        for (let d = 1; d <= 3; d++) {
+          const id = `w${w}d${d}`;
+          const done = blockChecks[id] ? 'done' : '';
+          const mark = blockChecks[id] ? '✓' : '';
+          html += `<button class="check-btn ${done}" onclick="toggleCheck('${id}')">${mark}</button>`;
+        }
+        html += '</div>';
+      }
+      container.innerHTML = html;
+    }
+
+    function toggleCheck(id) {
+      blockChecks[id] = !blockChecks[id];
+      renderWeeks();
+    }
+
+    function saveFamily() {
+      const block = document.getElementById('blockSelect').value;
+      const blockName = document.getElementById('blockSelect').selectedOptions[0].text;
+      const comment = document.getElementById('familyComment').value;
+
+      localStorage.setItem('familyBlock-' + block, JSON.stringify({
+        checks: blockChecks,
+        kgIndex: currentKgIndex,
+        comment: comment
+      }));
+
+      workouts.push({
+        type: 'family',
+        name: blockName + ' (' + kgOptions[currentKgIndex] + ')',
+        icon: '💜',
+        block: block,
+        kg: kgOptions[currentKgIndex]
+      });
+      save();
+      closeModal('familyModal');
     }
 
     function openWarmup() {
