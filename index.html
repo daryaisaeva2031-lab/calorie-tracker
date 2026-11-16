@@ -13,16 +13,17 @@
 <body>
   <div class="app">
     <header class="header">
-      <button class="icon-btn">📅</button>
-      <h1>Сегодня</h1>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <button class="icon-btn" onclick="changeDay(-1)">←</button>
+        <button class="icon-btn">📅</button>
+        <button class="icon-btn" onclick="changeDay(1)">→</button>
+      </div>
+      <div style="text-align:center;">
+        <h1>Сегодня</h1>
+        <div id="day-date" style="font-size:13px; color:var(--text-light); margin-top:2px;">16 ноября</div>
+      </div>
       <a href="profile.html"><button class="icon-btn">👤</button></a>
     </header>
-
-    <div style="display:flex; justify-content:center; align-items:center; gap:16px; margin-bottom:20px;">
-      <button class="icon-btn" onclick="changeDay(-1)">←</button>
-      <div id="day-title" style="font-size:16px; font-weight:600; color:var(--sage-dark);">Сегодня</div>
-      <button class="icon-btn" onclick="changeDay(1)">→</button>
-    </div>
 
     <section class="summary">
       <div class="side-stat">
@@ -103,13 +104,13 @@
 
   <script>
     let dayOffset = 0;
+    const months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
     function changeDay(delta) {
       dayOffset += delta;
-      const title = document.getElementById('day-title');
-      if (dayOffset === 0) title.textContent = 'Сегодня';
-      else if (dayOffset === -1) title.textContent = 'Вчера';
-      else if (dayOffset === 1) title.textContent = 'Завтра';
-      else title.textContent = dayOffset > 0 ? '+' + dayOffset + ' дня' : dayOffset + ' дня';
+      const date = new Date();
+      date.setDate(date.getDate() + dayOffset);
+      const dateEl = document.getElementById('day-date');
+      dateEl.textContent = date.getDate() + ' ' + months[date.getMonth()];
     }
   </script>
 </body>
