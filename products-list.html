@@ -6,6 +6,14 @@
   <title>Список продуктов — Калории</title>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    .cat-badge {
+      display: inline-block; font-size: 11px; font-weight: 600;
+      padding: 2px 8px; border-radius: 10px; margin-left: 8px;
+      background: var(--sage-light); color: var(--sage-dark);
+    }
+    .food-item { cursor: pointer; }
+  </style>
 </head>
 <body>
   <div class="app">
@@ -33,13 +41,15 @@
 
   <script>
     const defaultProducts = [
-      {name: 'Сыр пармезан', category: 'Молочные', calories: 392, portionType: 'кусок'},
-      {name: 'Хлеб цельнозерновой', category: 'Выпечка', calories: 250, portionType: 'кусок'},
-      {name: 'Творог 5%', category: 'Молочные', calories: 121, portionType: 'пачка'},
-      {name: 'Яйцо', category: 'Другое', calories: 157, portionType: 'штука'}
+      {id: 1, name: 'Сыр пармезан', category: 'Молочные', calories: 392},
+      {id: 2, name: 'Хлеб цельнозерновой', category: 'Выпечка', calories: 250},
+      {id: 3, name: 'Творог 5%', category: 'Молочные', calories: 121},
+      {id: 4, name: 'Яйцо', category: 'Другое', calories: 157}
     ];
 
     let products = JSON.parse(localStorage.getItem('products') || 'null') || defaultProducts;
+    products.forEach((p, i) => { if (!p.id) p.id = i + 1; });
+    localStorage.setItem('products', JSON.stringify(products));
 
     function render() {
       const q = (document.getElementById('search').value || '').toLowerCase();
@@ -52,11 +62,11 @@
           'Сладости': '🍫', 'Домашнее': '🏠', 'Другое': '📦'
         };
         const icon = icons[p.category] || '🥗';
-        list.innerHTML += `<div class="card food-item">
+        list.innerHTML += `<div class="card food-item" onclick="location.href='add-product.html?id=${p.id}'">
           <div class="food-icon">${icon}</div>
           <div class="food-info">
-            <div class="food-name">${p.name}</div>
-            <div class="food-kcal">${p.portionType || (p.calories + ' ккал/100г')}</div>
+            <div class="food-name">${p.name} <span class="cat-badge">${p.category || ''}</span></div>
+            <div class="food-kcal">${p.calories || 0} ккал / 100 г</div>
           </div>
         </div>`;
       });
