@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Добавить продукт — Калории</title>
+  <title>Продукт — Калории</title>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
@@ -28,78 +28,82 @@
       background: var(--sage); color: white; font-family: inherit;
       font-size: 15px; font-weight: 600; margin-top: 16px; cursor: pointer;
     }
+    .view-mode .form-input, .view-mode .form-select { background: var(--sage-light); pointer-events: none; }
+    .view-mode .portion-card { pointer-events: none; opacity: 0.7; }
+    .data-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--sage-light); }
   </style>
 </head>
 <body>
   <div class="app">
     <header class="header">
       <a href="products-list.html"><button class="icon-btn">←</button></a>
-      <h1 id="pageTitle">Добавить продукт</h1>
-      <div style="width:42px"></div>
+      <h1 id="pageTitle">Продукт</h1>
+      <button class="icon-btn" id="editBtn" style="display:none;" onclick="enableEdit()">✏️</button>
     </header>
 
-    <div class="card">
-      <div class="form-group">
-        <label class="form-label">Название продукта</label>
-        <input type="text" class="form-input" id="name" placeholder="Например: Сыр пармезан">
+    <div id="formContainer">
+      <div class="card">
+        <div class="form-group">
+          <label class="form-label">Название продукта</label>
+          <input type="text" class="form-input" id="name" placeholder="Например: Сыр пармезан">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Категория</label>
+          <select class="form-select" id="category">
+            <option value="">Выбери категорию</option>
+            <option>Молочные</option>
+            <option>Мясо и рыба</option>
+            <option>Овощи</option>
+            <option>Фрукты и ягоды</option>
+            <option>Выпечка</option>
+            <option>Крупы</option>
+            <option>Масло</option>
+            <option>Сладости</option>
+            <option>Домашнее</option>
+            <option>Другое</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Калории на 100 г</label>
+          <input type="number" class="form-input" id="calories" placeholder="0">
+        </div>
+
+        <div class="macros-row">
+          <div class="form-group">
+            <label class="form-label">Белки</label>
+            <input type="number" step="0.1" class="form-input" id="protein" placeholder="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Жиры</label>
+            <input type="number" step="0.1" class="form-input" id="fat" placeholder="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Углеводы</label>
+            <input type="number" step="0.1" class="form-input" id="carbs" placeholder="0">
+          </div>
+        </div>
       </div>
 
-      <div class="form-group">
-        <label class="form-label">Категория</label>
-        <select class="form-select" id="category">
-          <option value="">Выбери категорию</option>
-          <option>Молочные</option>
-          <option>Мясо и рыба</option>
-          <option>Овощи</option>
-          <option>Фрукты и ягоды</option>
-          <option>Выпечка</option>
-          <option>Крупы</option>
-          <option>Масло</option>
-          <option>Сладости</option>
-          <option>Домашнее</option>
-          <option>Другое</option>
-        </select>
+      <div class="card">
+        <div style="font-weight:700; margin-bottom:8px; color:var(--sage-dark);">Размер порции</div>
+        <div class="portion-types">
+          <div class="portion-card" onclick="selectPortion(this, 'штука')">🥚<br>штука</div>
+          <div class="portion-card" onclick="selectPortion(this, 'кусок')">🥩<br>кусок</div>
+          <div class="portion-card" onclick="selectPortion(this, 'чашка')">☕<br>чашка</div>
+          <div class="portion-card" onclick="selectPortion(this, 'упаковка')">📦<br>упаковка</div>
+          <div class="portion-card" onclick="selectPortion(this, 'порция')">🥣<br>порция</div>
+          <div class="portion-card" onclick="selectPortion(this, 'банка')">🥫<br>банка</div>
+        </div>
+        <div id="portionGrams" style="display:none; margin-top:12px;">
+          <label class="form-label">Сколько грамм в этой порции?</label>
+          <input type="number" class="form-input" id="portionSize" placeholder="Например 50">
+        </div>
       </div>
 
-      <div class="form-group">
-        <label class="form-label">Калории на 100 г</label>
-        <input type="number" class="form-input" id="calories" placeholder="0">
-      </div>
-
-      <div class="macros-row">
-        <div class="form-group">
-          <label class="form-label">Белки</label>
-          <input type="number" step="0.1" class="form-input" id="protein" placeholder="0">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Жиры</label>
-          <input type="number" step="0.1" class="form-input" id="fat" placeholder="0">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Углеводы</label>
-          <input type="number" step="0.1" class="form-input" id="carbs" placeholder="0">
-        </div>
-      </div>
+      <button class="save-btn" id="saveBtn" onclick="saveProduct()">Сохранить</button>
     </div>
-
-    <div class="card">
-      <div style="font-weight:700; margin-bottom:8px; color:var(--sage-dark);">Размер порции</div>
-      <div style="font-size:13px; color:var(--text-light); margin-bottom:10px;">Можно добавить другой размер (штука, кусок, чашка...)</div>
-      <div class="portion-types">
-        <div class="portion-card" onclick="selectPortion(this, 'штука')">🥚<br>штука</div>
-        <div class="portion-card" onclick="selectPortion(this, 'кусок')">🥩<br>кусок</div>
-        <div class="portion-card" onclick="selectPortion(this, 'чашка')">☕<br>чашка</div>
-        <div class="portion-card" onclick="selectPortion(this, 'упаковка')">📦<br>упаковка</div>
-        <div class="portion-card" onclick="selectPortion(this, 'порция')">🥣<br>порция</div>
-        <div class="portion-card" onclick="selectPortion(this, 'банка')">🥫<br>банка</div>
-      </div>
-      <div id="portionGrams" style="display:none; margin-top:12px;">
-        <label class="form-label">Сколько грамм в этой порции?</label>
-        <input type="number" class="form-input" id="portionSize" placeholder="Например 50">
-      </div>
-    </div>
-
-    <button class="save-btn" onclick="saveProduct()">Сохранить</button>
 
     <nav class="bottom-nav">
       <a href="index.html" class="nav-item">🏠<span>Сегодня</span></a>
@@ -115,29 +119,44 @@
     const editId = params.get('id') ? +params.get('id') : null;
     let selectedPortion = null;
     let products = JSON.parse(localStorage.getItem('products') || '[]');
+    let isViewMode = false;
 
     if (editId) {
       const p = products.find(x => x.id === editId);
       if (p) {
-        document.getElementById('pageTitle').textContent = 'Редактировать';
+        isViewMode = true;
+        document.getElementById('pageTitle').textContent = p.name;
+        document.getElementById('editBtn').style.display = 'block';
+        document.getElementById('formContainer').classList.add('view-mode');
+        document.getElementById('saveBtn').style.display = 'none';
+
         document.getElementById('name').value = p.name || '';
         document.getElementById('category').value = p.category || '';
-        document.getElementById('calories').value = p.calories || '';
-        document.getElementById('protein').value = p.protein || '';
-        document.getElementById('fat').value = p.fat || '';
-        document.getElementById('carbs').value = p.carbs || '';
+        document.getElementById('calories').value = p.calories || 0;
+        document.getElementById('protein').value = p.protein || 0;
+        document.getElementById('fat').value = p.fat || 0;
+        document.getElementById('carbs').value = p.carbs || 0;
         if (p.portionType) {
           selectedPortion = p.portionType;
           document.querySelectorAll('.portion-card').forEach(c => {
-            if (c.textContent.includes(p.portionType)) c.classList.add('selected');
+            if (c.textContent.toLowerCase().includes(p.portionType.toLowerCase())) c.classList.add('selected');
           });
           document.getElementById('portionGrams').style.display = 'block';
-          document.getElementById('portionSize').value = p.portionGrams || '';
+          document.getElementById('portionSize').value = p.portionGrams || 0;
         }
       }
     }
 
+    function enableEdit() {
+      isViewMode = false;
+      document.getElementById('formContainer').classList.remove('view-mode');
+      document.getElementById('saveBtn').style.display = 'block';
+      document.getElementById('editBtn').style.display = 'none';
+      document.getElementById('pageTitle').textContent = 'Редактировать';
+    }
+
     function selectPortion(el, type) {
+      if (isViewMode) return;
       document.querySelectorAll('.portion-card').forEach(c => c.classList.remove('selected'));
       el.classList.add('selected');
       selectedPortion = type;
