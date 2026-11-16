@@ -29,9 +29,14 @@
       background: var(--cream); border-radius: 20px 20px 0 0; width: 100%; max-width: 400px;
       padding: 20px 16px 30px;
     }
-    .grams-input {
-      width: 100%; padding: 14px; border-radius: 12px; border: 1px solid var(--sage-light);
-      font-size: 20px; text-align: center; font-family: inherit; margin: 12px 0;
+    .amount-row { display: flex; gap: 8px; margin: 12px 0; }
+    .amount-input {
+      flex: 1; padding: 14px; border-radius: 12px; border: 1px solid var(--sage-light);
+      font-size: 20px; text-align: center; font-family: inherit;
+    }
+    .unit-select {
+      padding: 14px; border-radius: 12px; border: 1px solid var(--sage-light);
+      font-family: inherit; font-size: 15px; background: white; min-width: 100px;
     }
     .add-btn-modal {
       width: 100%; padding: 14px; border: none; border-radius: 14px;
@@ -73,7 +78,12 @@
     <div class="modal-box">
       <div style="font-weight:700; text-align:center; font-size:18px;" id="modalName">Продукт</div>
       <div style="text-align:center; font-size:13px; color:var(--text-light); margin-top:4px;" id="modalKcal">0 ккал / 100 г</div>
-      <input type="number" class="grams-input" id="gramsInput" value="100" placeholder="Граммы">
+      <div class="amount-row">
+        <input type="number" class="amount-input" id="amountInput" value="1">
+        <select class="unit-select" id="unitSelect">
+          <option value="grams">г</option>
+        </select>
+      </div>
       <button class="add-btn-modal" onclick="confirmAdd()">Добавить</button>
     </div>
   </div>
@@ -88,6 +98,7 @@
     let recipes = JSON.parse(localStorage.getItem('recipes') || '[]');
     let pendingType = null;
     let pendingId = null;
+    let pendingItem = null;
 
     const nameIcons = {
       'морков': '🥕', 'яблок': '🍎', 'банан': '🍌', 'огурец': '🥒',
@@ -165,18 +176,35 @@
       pendingType = type;
       pendingId = id;
       let name = '', kcal = 0;
+      const unitSelect = document.getElementById('unitSelect');
+      unitSelect.innerHTML = '<option value="grams">г</option>';
+
       if (type === 'product') {
         const p = products.find(x => x.id == id);
-        if (p) { name = p.name; kcal = p.calories || 0; }
+        if (p) {
+          name = p.name;
+          kcal = p.calories || 0;
+          pendingItem = p;
+          if (p.portionType && p.portionGrams) {
+            unitSelect.innerHTML += `<option value="portion">${p.portionType} (${p.portionGrams} г)</option>`;
+          }
+        }
       } else {
         const r = recipes.find(x => x.id == id);
-        if (r) { name = r.name; kcal = r.per100?.calories || 0; }
+        if (r) {
+          name = r.name;
+          kcal = r.per100?.calories || 0;
+          pendingItem = r;
+          if (r.portionGrams) {
+            unitSelect.innerHTML += `<option value="portion">порция (${r.portionGrams} г)</option>`;
+          }
+        }
       }
       document.getElementById('modalName').textContent = name;
       document.getElementById('modalKcal').textContent = kcal + ' ккал / 100 г';
-      document.getElementById('gramsInput').value = 100;
+      document.getElementById('amountInput').value = 100;
       document.getElementById('gramsModal').classList.add('show');
-      document.getElementById('gramsInput').focus();
+      document.getElementById('amountInput').focus();
     }
 
     function closeModal() {
@@ -184,13 +212,18 @@
     }
 
     function confirmAdd() {
-      const grams = +document.getElementById('gramsInput').value;
-      if (!grams || grams <= 0) { alert('Введи граммы'); return; }
+      const amount = +document.getElementById('amountInput').value;
+      const unit = document.getElementById('unitSelect').value;
+      if (!amount || amount <= 0) { alert('Введи количество'); return; }
+
+      let grams = amount;
+      if (unit === 'portion' && pendingItem) {
+        grams = amount * (pendingItem.portionGrams || 0);
+      }
 
       let entry;
       if (pendingType === 'product') {
-        const p = products.find(x => x.id == pendingId);
-        if (!p) return;
+        const p = pendingItem;
         entry = {
           type: 'product', id: p.id, name: p.name, grams,
           calories: Math.round((p.calories || 0) * grams / 100),
@@ -199,8 +232,7 @@
           carbs: +((p.carbs || 0) * grams / 100).toFixed(1)
         };
       } else {
-        const r = recipes.find(x => x.id == pendingId);
-        if (!r) return;
+        const r = pendingItem;
         entry = {
           type: 'recipe', id: r.id, name: r.name, grams,
           calories: Math.round((r.per100?.calories || 0) * grams / 100),
