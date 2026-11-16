@@ -48,6 +48,7 @@
       width: 110px; height: 110px; border-radius: 50%; background: var(--cream);
       display: flex; flex-direction: column; align-items: center; justify-content: center;
     }
+    .day-stat { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--sage-light); }
   </style>
 </head>
 <body>
@@ -138,6 +139,15 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="dayDetailModal" onclick="if(event.target===this) closeDayDetail()">
+    <div class="modal-box">
+      <div style="font-weight:700; font-size:18px; margin-bottom:12px; text-align:center;" id="dayDetailTitle">16 ноября</div>
+      <div id="dayDetailContent"></div>
+      <button onclick="goToDay()" style="margin-top:12px; width:100%; padding:12px; border:none; border-radius:14px; background:var(--sage-light); color:var(--sage-dark); font-family:inherit; font-size:15px; font-weight:600;">Перейти к дню</button>
+      <button onclick="closeDayDetail()" style="margin-top:8px; width:100%; padding:12px; border:none; border-radius:14px; background:var(--sage); color:white; font-family:inherit; font-size:15px; font-weight:600;">Закрыть</button>
+    </div>
+  </div>
+
   <div class="modal-overlay" id="mealModal" onclick="if(event.target===this) closeMealModal()">
     <div class="modal-box">
       <div style="font-weight:700; font-size:18px; margin-bottom:12px;" id="mealModalTitle">Завтрак</div>
@@ -151,6 +161,7 @@
     let calMonth = new Date().getMonth();
     let calYear = new Date().getFullYear();
     let currentDiary = {};
+    let selectedCalDay = null;
     const goal = 1700;
     const months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
     const monthsNom = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
@@ -218,17 +229,61 @@
           icons = types.map(t => typeIcons[t] || '').join('');
         }
         el.innerHTML = d + (icons ? `<div class="cal-icons">${icons}</div>` : '');
-        el.onclick = () => selectDay(d);
+        el.onclick = () => showDayDetail(d);
         grid.appendChild(el);
       }
     }
-    function selectDay(day) {
-      const selected = new Date(calYear, calMonth, day);
-      const today = new Date();
-      today.setHours(0,0,0,0);
-      dayOffset = Math.round((selected - today) / 86400000);
-      updateDate();
-      loadDiary();
+
+    function showDayDetail(day) {
+      selectedCalDay = day;
+      const dateStr = calYear + '-' + String(calMonth+1).padStart(2,'0') + '-' + String(day).padStart(2,'0');
+      document.getElementById('dayDetailTitle').textContent = day + ' ' + months[calMonth];
+
+      const diary = JSON.parse(localStorage.getItem('diary-' + dateStr) || '{}');
+      let totalK = 0;
+      Object.values(diary).forEach(items => {
+        if (Array.isArray(items)) items.forEach(i => totalK += i.calories || 0);
+      });
+
+      const steps = localStorage.getItem('steps-' + dateStr) || '—';
+      const weightHistory = JSON.parse(localStorage.getItem('weightHistory') || '[]');
+      const dayWeight = weightHistory.find(w => w.date === dateStr);
+      const weight = dayWeight ? dayWeight.weight + ' кг' : '—';
+
+      const wData = JSON.parse(localStorage.getItem('workouts-' + dateStr) || '[]');
+
+      let html = '';
+      html += `<div class="day-stat"><span>Калории</span><b>${totalK} ккал</b></div>`;
+      html += `<div class="day-stat"><span>Шаги</span><b>${steps}</b></div>`;
+      html += `<div class="day-stat"><span>Вес</span><b>${weight}</b></div>`;
+
+      if (wData.length) {
+        html += `<div style="font-weight:600; margin-top:12px;">Тренировки</div>`;
+        wData.forEach(w => {
+          html += `<div class="food-entry"><span>${w.icon || ''} ${w.name}</span></div>`;
+        });
+      } else {
+        html += `<div style="color:var(--text-light); margin-top:12px; text-align:center;">Тренировок нет</div>`;
+      }
+
+      document.getElementById('dayDetailContent').innerHTML = html;
+      document.getElementById('dayDetailModal').classList.add('show');
+    }
+
+    function closeDayDetail() {
+      document.getElementById('dayDetailModal').classList.remove('show');
+    }
+
+    function goToDay() {
+      if (selectedCalDay) {
+        const selected = new Date(calYear, calMonth, selectedCalDay);
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        dayOffset = Math.round((selected - today) / 86400000);
+        updateDate();
+        loadDiary();
+      }
+      closeDayDetail();
       closeCalendar();
     }
 
