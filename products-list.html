@@ -13,6 +13,7 @@
       background: var(--sage-light); color: var(--sage-dark);
     }
     .food-item { cursor: pointer; }
+    .product-id-small { font-size: 11px; color: var(--text-light); margin-top: 2px; }
   </style>
 </head>
 <body>
@@ -41,10 +42,10 @@
 
   <script>
     const defaultProducts = [
-      {id: 1, name: 'Сыр пармезан', category: 'Молочные', calories: 392},
-      {id: 2, name: 'Хлеб цельнозерновой', category: 'Выпечка', calories: 250},
-      {id: 3, name: 'Творог 5%', category: 'Молочные', calories: 121},
-      {id: 4, name: 'Яйцо', category: 'Другое', calories: 157}
+      {id: 1, name: 'Сыр пармезан', category: 'Молочные', calories: 392, brand: ''},
+      {id: 2, name: 'Хлеб цельнозерновой', category: 'Выпечка', calories: 250, brand: ''},
+      {id: 3, name: 'Творог 5%', category: 'Молочные', calories: 121, brand: ''},
+      {id: 4, name: 'Яйцо', category: 'Другое', calories: 157, brand: ''}
     ];
 
     let products = JSON.parse(localStorage.getItem('products') || 'null') || defaultProducts;
@@ -66,6 +67,7 @@
           <div class="food-icon">${icon}</div>
           <div class="food-info">
             <div class="food-name">${p.name} <span class="cat-badge">${p.category || ''}</span></div>
+            <div class="product-id-small">ID: ${p.id}${p.brand ? ' · ' + p.brand : ''}</div>
             <div class="food-kcal">${p.calories || 0} ккал / 100 г</div>
           </div>
         </div>`;
