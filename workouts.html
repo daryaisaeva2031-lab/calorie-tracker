@@ -344,9 +344,22 @@
     }
     function resetWorkout() {
       if (!editingWorkoutId) return;
+      const data = blockData.workouts[editingWorkoutId];
+      if (data && data.dateStr) {
+        const targetKey = 'workouts-' + data.dateStr;
+        let targetWorkouts = JSON.parse(localStorage.getItem(targetKey) || '[]');
+        const block = document.getElementById('blockSelect').value;
+        const match = editingWorkoutId.match(/w(\d+)d(\d+)/);
+        if (match) {
+          const week = parseInt(match[1]), day = parseInt(match[2]);
+          targetWorkouts = targetWorkouts.filter(tw => !(tw.block === block && tw.week === week && tw.day === day));
+          localStorage.setItem(targetKey, JSON.stringify(targetWorkouts));
+        }
+      }
       blockData.workouts[editingWorkoutId] = { done: false, kg: '', load: 0, comment: '', dateStr: '' };
       closeModal('workoutDetailModal');
       renderWeeks();
+      loadDay();
     }
     function saveWorkoutDetail() {
       const data = getWorkout(editingWorkoutId);
