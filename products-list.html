@@ -17,6 +17,7 @@
       position: absolute; top: 8px; right: 10px;
       font-size: 11px; color: var(--text-light);
     }
+    .brand-name { font-size: 13px; color: var(--text-light); margin-top: 1px; }
   </style>
 </head>
 <body>
@@ -71,7 +72,8 @@
           <div class="food-icon">${icon}</div>
           <div class="food-info">
             <div class="food-name">${p.name} <span class="cat-badge">${p.category || ''}</span></div>
-            <div class="food-kcal">${p.calories || 0} ккал / 100 г${p.brand ? ' · ' + p.brand : ''}</div>
+            ${p.brand ? `<div class="brand-name">${p.brand}</div>` : ''}
+            <div class="food-kcal">${p.calories || 0} ккал / 100 г</div>
           </div>
         </div>`;
       });
