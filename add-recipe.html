@@ -22,12 +22,16 @@
     .remove-btn { background: none; border: none; color: #c44; font-size: 18px; cursor: pointer; padding-top: 10px; }
     .suggestions {
       position: absolute; top: 100%; left: 0; right: 0; background: white;
-      border: 1px solid var(--sage-light); border-radius: 10px; max-height: 150px;
+      border: 1px solid var(--sage-light); border-radius: 10px; max-height: 180px;
       overflow-y: auto; z-index: 10; box-shadow: var(--shadow); display: none;
     }
     .suggestions.show { display: block; }
     .suggestion-item { padding: 10px 12px; cursor: pointer; font-size: 14px; }
     .suggestion-item:hover { background: var(--sage-light); }
+    .add-new-btn {
+      padding: 10px 12px; cursor: pointer; font-size: 14px; color: var(--sage);
+      font-weight: 600; border-top: 1px solid var(--sage-light);
+    }
     .save-btn {
       width: 100%; padding: 14px; border: none; border-radius: 14px;
       background: var(--sage); color: white; font-family: inherit;
@@ -37,6 +41,17 @@
       background: var(--sage-light); border-radius: 14px; padding: 14px; margin-top: 12px;
     }
     .calc-row { display: flex; justify-content: space-between; margin: 4px 0; font-size: 14px; }
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+      z-index: 100; justify-content: center; align-items: flex-end;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-box {
+      background: var(--cream); border-radius: 20px 20px 0 0; width: 100%; max-width: 400px;
+      padding: 20px 16px 30px; max-height: 85vh; overflow-y: auto;
+    }
+    .macros-row { display: flex; gap: 8px; }
+    .macros-row .form-group { flex: 1; }
   </style>
 </head>
 <body>
@@ -58,7 +73,6 @@
       <div style="font-weight:700; margin-bottom:10px; color:var(--sage-dark);">Ингредиенты</div>
       <div id="ingredientsList"></div>
       <button onclick="addIngredient()" style="width:100%; padding:10px; border:1px dashed var(--sage); border-radius:12px; background:transparent; color:var(--sage-dark); font-family:inherit; margin-top:8px;">+ Добавить ингредиент</button>
-      <div style="font-size:13px; color:var(--text-light); margin-top:8px;">Если продукта нет — создай его в <a href="add-product.html" style="color:var(--sage);">списке продуктов</a></div>
     </div>
 
     <div class="card">
@@ -92,9 +106,37 @@
     </nav>
   </div>
 
+  <div class="modal-overlay" id="productModal" onclick="if(event.target===this) closeModal()">
+    <div class="modal-box">
+      <div style="font-weight:700; margin-bottom:12px; text-align:center;">Добавить продукт</div>
+      <div class="form-group">
+        <label class="form-label">Название</label>
+        <input type="text" class="form-input" id="newName">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Категория</label>
+        <select class="form-select" id="newCategory">
+          <option>Овощи</option><option>Фрукты и ягоды</option><option>Мясо и рыба</option>
+          <option>Молочные</option><option>Крупы</option><option>Выпечка</option><option>Другое</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Калории на 100 г</label>
+        <input type="number" class="form-input" id="newCalories">
+      </div>
+      <div class="macros-row">
+        <div class="form-group"><label class="form-label">Белки</label><input type="number" step="0.1" class="form-input" id="newProtein"></div>
+        <div class="form-group"><label class="form-label">Жиры</label><input type="number" step="0.1" class="form-input" id="newFat"></div>
+        <div class="form-group"><label class="form-label">Углеводы</label><input type="number" step="0.1" class="form-input" id="newCarbs"></div>
+      </div>
+      <button class="save-btn" onclick="saveNewProduct()">Сохранить</button>
+    </div>
+  </div>
+
   <script>
     let products = JSON.parse(localStorage.getItem('products') || '[]');
     let ingredients = [];
+    let currentIngredientIndex = null;
 
     function addIngredient() {
       ingredients.push({productId: '', name: '', grams: 100});
@@ -126,11 +168,14 @@
     function showSuggestions(i, query) {
       const box = document.getElementById('sug-' + i);
       const q = (query || '').toLowerCase();
-      const matches = products.filter(p => p.name.toLowerCase().includes(q)).slice(0, 6);
-      if (!matches.length) { box.classList.remove('show'); return; }
-      box.innerHTML = matches.map(p =>
+      const matches = products.filter(p => p.name.toLowerCase().includes(q)).slice(0, 5);
+      let html = matches.map(p =>
         `<div class="suggestion-item" onclick="selectProduct(${i}, ${p.id}, '${p.name.replace(/'/g, "\\'")}')">${p.name}</div>`
       ).join('');
+      if (q && !matches.some(p => p.name.toLowerCase() === q)) {
+        html += `<div class="add-new-btn" onclick="openNewProduct(${i}, '${query.replace(/'/g, "\\'")}')">+ Добавить «${query}»</div>`;
+      }
+      box.innerHTML = html;
       box.classList.add('show');
     }
 
@@ -139,6 +184,41 @@
       ingredients[i].name = name;
       renderIngredients();
       recalc();
+    }
+
+    function openNewProduct(i, name) {
+      currentIngredientIndex = i;
+      document.getElementById('newName').value = name;
+      document.getElementById('newCalories').value = '';
+      document.getElementById('newProtein').value = '';
+      document.getElementById('newFat').value = '';
+      document.getElementById('newCarbs').value = '';
+      document.getElementById('productModal').classList.add('show');
+    }
+
+    function closeModal() {
+      document.getElementById('productModal').classList.remove('show');
+    }
+
+    function saveNewProduct() {
+      const name = document.getElementById('newName').value;
+      if (!name) { alert('Введи название'); return; }
+      const newId = Math.max(0, ...products.map(p => p.id || 0)) + 1;
+      const product = {
+        id: newId,
+        name,
+        category: document.getElementById('newCategory').value,
+        calories: +document.getElementById('newCalories').value || 0,
+        protein: +document.getElementById('newProtein').value || 0,
+        fat: +document.getElementById('newFat').value || 0,
+        carbs: +document.getElementById('newCarbs').value || 0
+      };
+      products.push(product);
+      localStorage.setItem('products', JSON.stringify(products));
+      if (currentIngredientIndex !== null) {
+        selectProduct(currentIngredientIndex, newId, name);
+      }
+      closeModal();
     }
 
     document.addEventListener('click', e => {
