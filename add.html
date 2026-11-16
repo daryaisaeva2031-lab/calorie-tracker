@@ -14,6 +14,24 @@
     }
     .tab.active { background: var(--sage); color: white; }
     .item { cursor: pointer; }
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+      z-index: 100; justify-content: center; align-items: flex-end;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-box {
+      background: var(--cream); border-radius: 20px 20px 0 0; width: 100%; max-width: 400px;
+      padding: 20px 16px 30px;
+    }
+    .grams-input {
+      width: 100%; padding: 14px; border-radius: 12px; border: 1px solid var(--sage-light);
+      font-size: 20px; text-align: center; font-family: inherit; margin: 12px 0;
+    }
+    .add-btn-modal {
+      width: 100%; padding: 14px; border: none; border-radius: 14px;
+      background: var(--sage); color: white; font-family: inherit;
+      font-size: 15px; font-weight: 600; cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -45,6 +63,15 @@
     </nav>
   </div>
 
+  <div class="modal-overlay" id="gramsModal" onclick="if(event.target===this) closeModal()">
+    <div class="modal-box">
+      <div style="font-weight:700; text-align:center; font-size:18px;" id="modalName">Продукт</div>
+      <div style="text-align:center; font-size:13px; color:var(--text-light); margin-top:4px;" id="modalKcal">0 ккал / 100 г</div>
+      <input type="number" class="grams-input" id="gramsInput" value="100" placeholder="Граммы">
+      <button class="add-btn-modal" onclick="confirmAdd()">Добавить</button>
+    </div>
+  </div>
+
   <script>
     const params = new URLSearchParams(location.search);
     const meal = params.get('meal') || 'Завтрак';
@@ -53,6 +80,8 @@
     let currentTab = 'products';
     let products = JSON.parse(localStorage.getItem('products') || '[]');
     let recipes = JSON.parse(localStorage.getItem('recipes') || '[]');
+    let pendingType = null;
+    let pendingId = null;
 
     function setTab(tab, el) {
       currentTab = tab;
@@ -73,7 +102,7 @@
           return;
         }
         items.forEach(p => {
-          list.innerHTML += `<div class="card food-item item" onclick="addItem('product', ${p.id})">
+          list.innerHTML += `<div class="card food-item item" onclick="openModal('product', ${p.id})">
             <div class="food-icon">🥗</div>
             <div class="food-info">
               <div class="food-name">${p.name}</div>
@@ -89,7 +118,7 @@
           return;
         }
         items.forEach(r => {
-          list.innerHTML += `<div class="card food-item item" onclick="addItem('recipe', ${r.id})">
+          list.innerHTML += `<div class="card food-item item" onclick="openModal('recipe', ${r.id})">
             <div class="food-icon">🥘</div>
             <div class="food-info">
               <div class="food-name">${r.name}</div>
@@ -101,39 +130,52 @@
       }
     }
 
-    function addItem(type, id) {
-      // For now just show a prompt for grams
-      const grams = prompt('Сколько грамм?', '100');
-      if (!grams) return;
-
-      let entry;
+    function openModal(type, id) {
+      pendingType = type;
+      pendingId = id;
+      let name = '', kcal = 0;
       if (type === 'product') {
         const p = products.find(x => x.id == id);
-        if (!p) return;
-        const g = +grams;
-        entry = {
-          type: 'product',
-          id: p.id,
-          name: p.name,
-          grams: g,
-          calories: Math.round((p.calories || 0) * g / 100),
-          protein: +((p.protein || 0) * g / 100).toFixed(1),
-          fat: +((p.fat || 0) * g / 100).toFixed(1),
-          carbs: +((p.carbs || 0) * g / 100).toFixed(1)
-        };
+        if (p) { name = p.name; kcal = p.calories || 0; }
       } else {
         const r = recipes.find(x => x.id == id);
-        if (!r) return;
-        const g = +grams;
+        if (r) { name = r.name; kcal = r.per100?.calories || 0; }
+      }
+      document.getElementById('modalName').textContent = name;
+      document.getElementById('modalKcal').textContent = kcal + ' ккал / 100 г';
+      document.getElementById('gramsInput').value = 100;
+      document.getElementById('gramsModal').classList.add('show');
+      document.getElementById('gramsInput').focus();
+    }
+
+    function closeModal() {
+      document.getElementById('gramsModal').classList.remove('show');
+    }
+
+    function confirmAdd() {
+      const grams = +document.getElementById('gramsInput').value;
+      if (!grams || grams <= 0) { alert('Введи граммы'); return; }
+
+      let entry;
+      if (pendingType === 'product') {
+        const p = products.find(x => x.id == pendingId);
+        if (!p) return;
         entry = {
-          type: 'recipe',
-          id: r.id,
-          name: r.name,
-          grams: g,
-          calories: Math.round((r.per100?.calories || 0) * g / 100),
-          protein: +((r.per100?.protein || 0) * g / 100).toFixed(1),
-          fat: +((r.per100?.fat || 0) * g / 100).toFixed(1),
-          carbs: +((r.per100?.carbs || 0) * g / 100).toFixed(1)
+          type: 'product', id: p.id, name: p.name, grams,
+          calories: Math.round((p.calories || 0) * grams / 100),
+          protein: +((p.protein || 0) * grams / 100).toFixed(1),
+          fat: +((p.fat || 0) * grams / 100).toFixed(1),
+          carbs: +((p.carbs || 0) * grams / 100).toFixed(1)
+        };
+      } else {
+        const r = recipes.find(x => x.id == pendingId);
+        if (!r) return;
+        entry = {
+          type: 'recipe', id: r.id, name: r.name, grams,
+          calories: Math.round((r.per100?.calories || 0) * grams / 100),
+          protein: +((r.per100?.protein || 0) * grams / 100).toFixed(1),
+          fat: +((r.per100?.fat || 0) * grams / 100).toFixed(1),
+          carbs: +((r.per100?.carbs || 0) * grams / 100).toFixed(1)
         };
       }
 
@@ -142,7 +184,7 @@
       if (!diary[meal]) diary[meal] = [];
       diary[meal].push(entry);
       localStorage.setItem(key, JSON.stringify(diary));
-      alert('Добавлено');
+      closeModal();
       location.href = 'index.html';
     }
 
