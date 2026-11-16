@@ -134,6 +134,11 @@
   </div>
 
   <script>
+    // Prevent mouse wheel from changing number inputs
+    document.addEventListener('wheel', e => {
+      if (e.target.type === 'number') e.preventDefault();
+    }, { passive: false });
+
     let products = JSON.parse(localStorage.getItem('products') || '[]');
     let ingredients = [];
     let currentIngredientIndex = null;
