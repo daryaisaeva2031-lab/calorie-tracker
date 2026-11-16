@@ -53,7 +53,24 @@
     ];
 
     let products = JSON.parse(localStorage.getItem('products') || 'null') || defaultProducts;
-    products.forEach((p, i) => { if (!p.id) p.id = i + 1; });
+
+    // Force unique sequential IDs for all products
+    let maxId = Math.max(0, ...products.map(p => p.id || 0));
+    products.forEach((p, i) => {
+      if (!p.id || products.filter(x => x.id === p.id).length > 1) {
+        maxId++;
+        p.id = maxId;
+      }
+    });
+    // Ensure no duplicates by reassigning if needed
+    const seen = new Set();
+    products.forEach(p => {
+      if (seen.has(p.id)) {
+        maxId++;
+        p.id = maxId;
+      }
+      seen.add(p.id);
+    });
     localStorage.setItem('products', JSON.stringify(products));
 
     function render() {
