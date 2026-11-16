@@ -6,46 +6,35 @@
   <title>Добавить — Калории</title>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+    .tab {
+      flex: 1; padding: 10px; border-radius: 12px; text-align: center;
+      background: var(--sage-light); cursor: pointer; font-weight: 600;
+    }
+    .tab.active { background: var(--sage); color: white; }
+    .item { cursor: pointer; }
+  </style>
 </head>
 <body>
   <div class="app">
     <header class="header">
       <a href="index.html"><button class="icon-btn">←</button></a>
-      <h1>Завтрак</h1>
+      <h1 id="mealTitle">Завтрак</h1>
       <div style="width:42px"></div>
     </header>
 
+    <div class="tabs">
+      <div class="tab active" onclick="setTab('products', this)">Продукты</div>
+      <div class="tab" onclick="setTab('recipes', this)">Блюда</div>
+    </div>
+
     <div class="search-box">
       <span>🔍</span>
-      <input type="text" placeholder="Что вы ели?">
+      <input type="text" id="search" placeholder="Поиск..." oninput="render()">
     </div>
 
-    <div class="quick-actions">
-      <div class="quick-btn">📷<br>Камера</div>
-      <div class="quick-btn">📊<br>Штрих-код</div>
-      <div class="quick-btn">❤️<br>Избранное</div>
-    </div>
-
-    <div class="card food-item">
-      <div class="food-icon">🥣</div>
-      <div class="food-info"><div class="food-name">Овсянка</div><div class="food-kcal">150 ккал</div></div>
-      <button class="add-btn">+</button>
-    </div>
-    <div class="card food-item">
-      <div class="food-icon">🍌</div>
-      <div class="food-info"><div class="food-name">Банан</div><div class="food-kcal">90 ккал</div></div>
-      <button class="add-btn">+</button>
-    </div>
-    <div class="card food-item">
-      <div class="food-icon">🥚</div>
-      <div class="food-info"><div class="food-name">Яйцо</div><div class="food-kcal">70 ккал</div></div>
-      <button class="add-btn">+</button>
-    </div>
-    <div class="card food-item">
-      <div class="food-icon">🍞</div>
-      <div class="food-info"><div class="food-name">Хлеб</div><div class="food-kcal">80 ккал</div></div>
-      <button class="add-btn">+</button>
-    </div>
+    <div id="list"></div>
 
     <nav class="bottom-nav">
       <a href="index.html" class="nav-item">🏠<span>Сегодня</span></a>
@@ -55,5 +44,109 @@
       <a href="workouts.html" class="nav-item">💪<span>Тренировки</span></a>
     </nav>
   </div>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const meal = params.get('meal') || 'Завтрак';
+    document.getElementById('mealTitle').textContent = meal;
+
+    let currentTab = 'products';
+    let products = JSON.parse(localStorage.getItem('products') || '[]');
+    let recipes = JSON.parse(localStorage.getItem('recipes') || '[]');
+
+    function setTab(tab, el) {
+      currentTab = tab;
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      render();
+    }
+
+    function render() {
+      const q = (document.getElementById('search').value || '').toLowerCase();
+      const list = document.getElementById('list');
+      list.innerHTML = '';
+
+      if (currentTab === 'products') {
+        const items = products.filter(p => p.name.toLowerCase().includes(q));
+        if (!items.length) {
+          list.innerHTML = '<div style="text-align:center; color:var(--text-light); padding:30px;">Нет продуктов</div>';
+          return;
+        }
+        items.forEach(p => {
+          list.innerHTML += `<div class="card food-item item" onclick="addItem('product', ${p.id})">
+            <div class="food-icon">🥗</div>
+            <div class="food-info">
+              <div class="food-name">${p.name}</div>
+              <div class="food-kcal">${p.calories || 0} ккал / 100 г</div>
+            </div>
+            <button class="add-btn">+</button>
+          </div>`;
+        });
+      } else {
+        const items = recipes.filter(r => r.name.toLowerCase().includes(q));
+        if (!items.length) {
+          list.innerHTML = '<div style="text-align:center; color:var(--text-light); padding:30px;">Нет рецептов</div>';
+          return;
+        }
+        items.forEach(r => {
+          list.innerHTML += `<div class="card food-item item" onclick="addItem('recipe', ${r.id})">
+            <div class="food-icon">🥘</div>
+            <div class="food-info">
+              <div class="food-name">${r.name}</div>
+              <div class="food-kcal">${r.per100?.calories || 0} ккал / 100 г</div>
+            </div>
+            <button class="add-btn">+</button>
+          </div>`;
+        });
+      }
+    }
+
+    function addItem(type, id) {
+      // For now just show a prompt for grams
+      const grams = prompt('Сколько грамм?', '100');
+      if (!grams) return;
+
+      let entry;
+      if (type === 'product') {
+        const p = products.find(x => x.id == id);
+        if (!p) return;
+        const g = +grams;
+        entry = {
+          type: 'product',
+          id: p.id,
+          name: p.name,
+          grams: g,
+          calories: Math.round((p.calories || 0) * g / 100),
+          protein: +((p.protein || 0) * g / 100).toFixed(1),
+          fat: +((p.fat || 0) * g / 100).toFixed(1),
+          carbs: +((p.carbs || 0) * g / 100).toFixed(1)
+        };
+      } else {
+        const r = recipes.find(x => x.id == id);
+        if (!r) return;
+        const g = +grams;
+        entry = {
+          type: 'recipe',
+          id: r.id,
+          name: r.name,
+          grams: g,
+          calories: Math.round((r.per100?.calories || 0) * g / 100),
+          protein: +((r.per100?.protein || 0) * g / 100).toFixed(1),
+          fat: +((r.per100?.fat || 0) * g / 100).toFixed(1),
+          carbs: +((r.per100?.carbs || 0) * g / 100).toFixed(1)
+        };
+      }
+
+      const key = 'diary-' + new Date().toISOString().slice(0,10);
+      let diary = JSON.parse(localStorage.getItem(key) || '{}');
+      if (!diary[meal]) diary[meal] = [];
+      diary[meal].push(entry);
+      localStorage.setItem(key, JSON.stringify(diary));
+      alert('Добавлено');
+      location.href = 'index.html';
+    }
+
+    render();
+  </script>
 </body>
 </html>
