@@ -6,6 +6,34 @@
   <title>Рецепты — Калории</title>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    .recipe-item { position: relative; }
+    .add-to-diary {
+      position: absolute; bottom: 8px; right: 10px;
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--sage); color: white; border: none;
+      font-size: 16px; cursor: pointer; display: flex;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+      z-index: 100; justify-content: center; align-items: center;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-box {
+      background: var(--cream); border-radius: 20px; width: 90%; max-width: 340px;
+      padding: 20px 16px;
+    }
+    .modal-select, .modal-input {
+      width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--sage-light);
+      font-family: inherit; font-size: 15px; margin: 6px 0; background: white;
+    }
+    .modal-btn {
+      width: 100%; padding: 12px; border: none; border-radius: 14px;
+      background: var(--sage); color: white; font-family: inherit;
+      font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 10px;
+    }
+  </style>
 </head>
 <body>
   <div class="app">
@@ -31,8 +59,33 @@
     </nav>
   </div>
 
+  <div class="modal-overlay" id="addModal" onclick="if(event.target===this) closeModal()">
+    <div class="modal-box">
+      <div style="font-weight:700; text-align:center; font-size:17px; margin-bottom:8px;" id="modalRecipeName">Рецепт</div>
+      <select class="modal-select" id="modalDay">
+        <option value="0">Сегодня</option>
+        <option value="1">Завтра</option>
+        <option value="-1">Вчера</option>
+      </select>
+      <select class="modal-select" id="modalMeal">
+        <option>Завтрак</option>
+        <option>Обед</option>
+        <option>Ужин</option>
+        <option>Перекус</option>
+      </select>
+      <div style="display:flex; gap:8px;">
+        <input type="number" class="modal-input" id="modalAmount" value="100" onfocus="this.value=''" style="flex:1;">
+        <select class="modal-select" id="modalUnit" style="width:auto;" onchange="onUnitChange()">
+          <option value="grams">г</option>
+        </select>
+      </div>
+      <button class="modal-btn" onclick="confirmAdd()">Добавить</button>
+    </div>
+  </div>
+
   <script>
     let recipes = JSON.parse(localStorage.getItem('recipes') || '[]');
+    let pendingRecipe = null;
 
     function render() {
       const q = (document.getElementById('search').value || '').toLowerCase();
@@ -43,15 +96,72 @@
         return;
       }
       recipes.filter(r => r.name.toLowerCase().includes(q)).forEach(r => {
-        list.innerHTML += `<div class="card meal-card">
+        list.innerHTML += `<div class="card meal-card recipe-item">
           <div class="meal-icon">🥘</div>
           <div class="meal-info">
             <div class="meal-name">${r.name}</div>
             <div class="meal-kcal">${r.per100?.calories || 0} ккал / 100 г</div>
           </div>
+          <button class="add-to-diary" onclick="openAddModal(${r.id})">+</button>
         </div>`;
       });
     }
+
+    function openAddModal(id) {
+      const r = recipes.find(x => x.id == id);
+      if (!r) return;
+      pendingRecipe = r;
+      document.getElementById('modalRecipeName').textContent = r.name;
+      const unitSelect = document.getElementById('modalUnit');
+      unitSelect.innerHTML = '<option value="grams">г</option>';
+      if (r.portionGrams) {
+        unitSelect.innerHTML += `<option value="portion">порция (${r.portionGrams} г)</option>`;
+      }
+      document.getElementById('modalAmount').value = 100;
+      document.getElementById('addModal').classList.add('show');
+    }
+
+    function onUnitChange() {
+      const unit = document.getElementById('modalUnit').value;
+      document.getElementById('modalAmount').value = unit === 'portion' ? 1 : 100;
+    }
+
+    function closeModal() {
+      document.getElementById('addModal').classList.remove('show');
+    }
+
+    function confirmAdd() {
+      const dayOffset = +document.getElementById('modalDay').value;
+      const meal = document.getElementById('modalMeal').value;
+      const amount = +document.getElementById('modalAmount').value;
+      const unit = document.getElementById('modalUnit').value;
+      if (!amount || amount <= 0) { alert('Введи количество'); return; }
+
+      let grams = amount;
+      if (unit === 'portion' && pendingRecipe.portionGrams) {
+        grams = amount * pendingRecipe.portionGrams;
+      }
+
+      const r = pendingRecipe;
+      const entry = {
+        type: 'recipe', id: r.id, name: r.name, grams,
+        calories: Math.round((r.per100?.calories || 0) * grams / 100),
+        protein: +((r.per100?.protein || 0) * grams / 100).toFixed(1),
+        fat: +((r.per100?.fat || 0) * grams / 100).toFixed(1),
+        carbs: +((r.per100?.carbs || 0) * grams / 100).toFixed(1)
+      };
+
+      const date = new Date();
+      date.setDate(date.getDate() + dayOffset);
+      const key = 'diary-' + date.toISOString().slice(0,10);
+      let diary = JSON.parse(localStorage.getItem(key) || '{}');
+      if (!diary[meal]) diary[meal] = [];
+      diary[meal].push(entry);
+      localStorage.setItem(key, JSON.stringify(diary));
+      closeModal();
+      alert('Добавлено!');
+    }
+
     render();
   </script>
 </body>
