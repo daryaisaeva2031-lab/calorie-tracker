@@ -12,6 +12,7 @@
     .w-btn .icon { font-size: 22px; }
     .w-btn .title { font-weight: 700; letter-spacing: 0.5px; }
     .w-btn .sub { font-size: 12px; font-weight: 500; opacity: 0.8; }
+    .progress-btn { width: 100%; padding: 12px; border-radius: 14px; border: none; background: #e0f4f4; color: var(--sage-dark); font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer; margin-bottom: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; }
     .steps-row { display: flex; gap: 8px; margin-bottom: 16px; }
     .steps-input { flex: 1; padding: 12px; border-radius: 12px; border: 1px solid var(--sage-light); font-family: inherit; font-size: 15px; }
     .steps-btn { padding: 12px 16px; border: none; border-radius: 12px; background: var(--sage); color: white; font-family: inherit; font-weight: 600; cursor: pointer; }
@@ -32,7 +33,7 @@
     .block-select { width: 100%; padding: 12px; border-radius: 14px; border: 1px solid var(--sage-light); font-family: inherit; font-size: 15px; margin-bottom: 12px; background: white; }
     .week-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; background: white; border-radius: 12px; padding: 8px; }
     .week-label { padding: 8px 10px; border-radius: 10px; background: var(--sage); color: white; font-size: 12px; font-weight: 600; min-width: 70px; text-align: center; }
-    .workout-plaque { flex: 1; padding: 8px 4px; border-radius: 10px; border: 2px solid var(--sage-light); background: white; cursor: pointer; font-size: 12px; font-family: inherit; font-weight: 600; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 50px; }
+    .workout-plaque { flex: 1; padding: 8px 4px; border-radius: 10px; border: 2px solid var(--sage-light); background: white; cursor: pointer; font-size: 12px; font-family: inherit; font-weight: 600; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 40px; }
     .workout-plaque.done { background: var(--sage); border-color: var(--sage); color: white; }
     .plaque-top { display: flex; align-items: center; gap: 4px; }
     .plaque-date { font-size: 10px; opacity: 0.8; }
@@ -50,6 +51,8 @@
     .load-btn.selected { border-color: var(--sage-dark); }
     .done-check { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 14px; }
     .done-check input { width: 20px; height: 20px; }
+    .progress-block { margin-bottom: 16px; }
+    .progress-block-title { font-weight: 700; margin-bottom: 8px; color: var(--sage-dark); }
   </style>
 </head>
 <body>
@@ -68,6 +71,7 @@
       <button class="w-btn" onclick="openWarmup()"><span class="icon">💚</span><span class="title">СЕМЬЯ</span><span class="sub">разминки</span></button>
       <button class="w-btn" onclick="openOwn()"><span class="icon">🌿</span><span class="title">СВОЯ</span></button>
     </div>
+    <button class="progress-btn" onclick="openProgress()">🩵 СЕМЬЯ прогресс</button>
     <div class="card"><div style="font-weight:600; margin-bottom:8px;" id="listTitle">На сегодня</div><div id="todayList"></div></div>
     <nav class="bottom-nav">
       <a href="index.html" class="nav-item">🏠<span>Сегодня</span></a>
@@ -98,6 +102,14 @@
       <div id="weeksContainer"></div>
       <button class="modal-btn" onclick="saveFamily()">Сохранить</button>
       <button onclick="closeModal('familyModal')" style="margin-top:8px; width:100%; padding:12px; border:none; border-radius:14px; background:var(--sage-light); color:var(--sage-dark); font-family:inherit; font-size:15px; font-weight:600;">Закрыть</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="progressModal" onclick="if(event.target===this) closeModal('progressModal')">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div style="font-weight:700; text-align:center; margin-bottom:16px;">🩵 СЕМЬЯ прогресс</div>
+      <div id="progressContent"></div>
+      <button onclick="closeModal('progressModal')" style="margin-top:12px; width:100%; padding:12px; border:none; border-radius:14px; background:var(--sage); color:white; font-family:inherit; font-size:15px; font-weight:600;">Закрыть</button>
     </div>
   </div>
 
@@ -136,6 +148,7 @@
     const kgPresets = [1, 3, 5, 7];
     const loadNames = ['','легко','средне','трудно'];
     const loadClasses = ['','load-easy','load-mid','load-hard'];
+    const blocks = [{id:'zhivaya', name:'Живая сила'}, {id:'sila', name:'Сила'}, {id:'vynoslivost', name:'Выносливость'}];
     let blockData = {}, editingWorkoutId = null, tempKg = '', tempLoad = 0;
     const warmups = ['Грудной отдел — круги руками','Грудной отдел — растяжка','Шея — наклоны','Спина — кошка','Ноги — махи','Плечи — круги'];
 
@@ -224,6 +237,31 @@
           openWorkoutDetail(this.dataset.id, parseInt(this.dataset.week), parseInt(this.dataset.day));
         });
       });
+    }
+    function openProgress() {
+      const container = document.getElementById('progressContent');
+      let html = '';
+      blocks.forEach(block => {
+        const data = JSON.parse(localStorage.getItem('familyBlock-' + block.id) || '{}');
+        const workouts = data.workouts || {};
+        html += `<div class="progress-block"><div class="progress-block-title">${block.name}</div>`;
+        for (let w = 1; w <= 4; w++) {
+          html += `<div class="week-row"><div class="week-label">Неделя ${w}</div>`;
+          for (let d = 1; d <= 3; d++) {
+            const id = `w${w}d${d}`, wd = workouts[id] || { done: false, kg: '', load: 0 };
+            const doneClass = wd.done ? 'done' : '';
+            const mark = wd.done ? '✓' : '';
+            const kgText = wd.kg || '—';
+            const lc = loadClass(wd.load);
+            const dot = lc ? `<span class="load-dot ${lc}"></span>` : '';
+            html += `<div class="workout-plaque ${doneClass}"><div class="plaque-top">${mark ? mark + ' ' : ''}${kgText}${dot}</div></div>`;
+          }
+          html += '</div>';
+        }
+        html += '</div>';
+      });
+      container.innerHTML = html;
+      document.getElementById('progressModal').classList.add('show');
     }
     function openWorkoutDetail(id, week, day) {
       editingWorkoutId = id;
