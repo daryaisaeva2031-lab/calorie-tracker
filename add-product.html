@@ -34,7 +34,7 @@
   <div class="app">
     <header class="header">
       <a href="products-list.html"><button class="icon-btn">←</button></a>
-      <h1>Добавить продукт</h1>
+      <h1 id="pageTitle">Добавить продукт</h1>
       <div style="width:42px"></div>
     </header>
 
@@ -111,7 +111,31 @@
   </div>
 
   <script>
+    const params = new URLSearchParams(location.search);
+    const editId = params.get('id') ? +params.get('id') : null;
     let selectedPortion = null;
+    let products = JSON.parse(localStorage.getItem('products') || '[]');
+
+    if (editId) {
+      const p = products.find(x => x.id === editId);
+      if (p) {
+        document.getElementById('pageTitle').textContent = 'Редактировать';
+        document.getElementById('name').value = p.name || '';
+        document.getElementById('category').value = p.category || '';
+        document.getElementById('calories').value = p.calories || '';
+        document.getElementById('protein').value = p.protein || '';
+        document.getElementById('fat').value = p.fat || '';
+        document.getElementById('carbs').value = p.carbs || '';
+        if (p.portionType) {
+          selectedPortion = p.portionType;
+          document.querySelectorAll('.portion-card').forEach(c => {
+            if (c.textContent.includes(p.portionType)) c.classList.add('selected');
+          });
+          document.getElementById('portionGrams').style.display = 'block';
+          document.getElementById('portionSize').value = p.portionGrams || '';
+        }
+      }
+    }
 
     function selectPortion(el, type) {
       document.querySelectorAll('.portion-card').forEach(c => c.classList.remove('selected'));
@@ -122,6 +146,7 @@
 
     function saveProduct() {
       const product = {
+        id: editId || (Math.max(0, ...products.map(p => p.id || 0)) + 1),
         name: document.getElementById('name').value,
         category: document.getElementById('category').value,
         calories: +document.getElementById('calories').value || 0,
@@ -137,10 +162,15 @@
         return;
       }
 
-      let products = JSON.parse(localStorage.getItem('products') || '[]');
-      products.push(product);
+      if (editId) {
+        const idx = products.findIndex(x => x.id === editId);
+        if (idx >= 0) products[idx] = product;
+        else products.push(product);
+      } else {
+        products.push(product);
+      }
       localStorage.setItem('products', JSON.stringify(products));
-      alert('Продукт сохранён');
+      alert('Сохранено');
       location.href = 'products-list.html';
     }
   </script>
