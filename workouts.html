@@ -15,9 +15,11 @@
       background: var(--sage-light); color: var(--sage-dark);
       font-family: inherit; font-size: 14px; font-weight: 600;
       cursor: pointer; display: flex; flex-direction: column;
-      align-items: center; gap: 6px;
+      align-items: center; gap: 4px; text-align: center;
     }
-    .w-btn span { font-size: 22px; }
+    .w-btn .icon { font-size: 22px; }
+    .w-btn .title { font-weight: 700; letter-spacing: 0.5px; }
+    .w-btn .sub { font-size: 12px; font-weight: 500; opacity: 0.8; }
     .steps-row {
       display: flex; gap: 8px; margin-bottom: 16px;
     }
@@ -65,10 +67,24 @@
     <div style="font-size:13px; color:var(--text-light); margin-bottom:16px;" id="stepsDisplay"></div>
 
     <div class="workout-btns">
-      <button class="w-btn" onclick="addSimple('pool')"><span>💧</span>Бассейн</button>
-      <button class="w-btn" onclick="openFamily()"><span>💜</span>Семья силовые</button>
-      <button class="w-btn" onclick="openWarmup()"><span>💚</span>Семья разминки</button>
-      <button class="w-btn" onclick="openOwn()"><span>🌿</span>Своя</button>
+      <button class="w-btn" onclick="addSimple('pool')">
+        <span class="icon">💧</span>
+        <span class="title">БАССЕЙН</span>
+      </button>
+      <button class="w-btn" onclick="openFamily()">
+        <span class="icon">💜</span>
+        <span class="title">СЕМЬЯ</span>
+        <span class="sub">силовые</span>
+      </button>
+      <button class="w-btn" onclick="openWarmup()">
+        <span class="icon">💚</span>
+        <span class="title">СЕМЬЯ</span>
+        <span class="sub">разминки</span>
+      </button>
+      <button class="w-btn" onclick="openOwn()">
+        <span class="icon">🌿</span>
+        <span class="title">СВОЯ</span>
+      </button>
     </div>
 
     <div class="card">
