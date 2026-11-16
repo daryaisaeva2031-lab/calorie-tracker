@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Рецепт — Калории</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    .form-group { margin-bottom: 14px; }
+    .form-label { font-size: 14px; font-weight: 600; color: var(--sage-dark); margin-bottom: 6px; display: block; }
+    .form-input, .form-select {
+      width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--sage-light);
+      font-family: inherit; font-size: 15px; background: white;
+    }
+    .ingredient-row {
+      display: flex; gap: 8px; align-items: center; margin-bottom: 8px;
+    }
+    .ingredient-row select { flex: 2; }
+    .ingredient-row input { flex: 1; width: 70px; }
+    .remove-btn { background: none; border: none; color: #c44; font-size: 18px; cursor: pointer; }
+    .save-btn {
+      width: 100%; padding: 14px; border: none; border-radius: 14px;
+      background: var(--sage); color: white; font-family: inherit;
+      font-size: 15px; font-weight: 600; margin-top: 12px; cursor: pointer;
+    }
+    .calc-box {
+      background: var(--sage-light); border-radius: 14px; padding: 14px; margin-top: 12px;
+    }
+    .calc-row { display: flex; justify-content: space-between; margin: 4px 0; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <a href="recipes.html"><button class="icon-btn">←</button></a>
+      <h1>Новый рецепт</h1>
+      <div style="width:42px"></div>
+    </header>
+
+    <div class="card">
+      <div class="form-group">
+        <label class="form-label">Название блюда</label>
+        <input type="text" class="form-input" id="recipeName" placeholder="Например: Салат с тунцом">
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="font-weight:700; margin-bottom:10px; color:var(--sage-dark);">Ингредиенты</div>
+      <div id="ingredientsList"></div>
+      <button onclick="addIngredient()" style="width:100%; padding:10px; border:1px dashed var(--sage); border-radius:12px; background:transparent; color:var(--sage-dark); font-family:inherit; margin-top:8px;">+ Добавить ингредиент</button>
+      <div style="font-size:13px; color:var(--text-light); margin-top:8px;">Если продукта нет — создай его в <a href="add-product.html" style="color:var(--sage);">списке продуктов</a></div>
+    </div>
+
+    <div class="card">
+      <div class="form-group">
+        <label class="form-label">Вес готового блюда (г)</label>
+        <input type="number" class="form-input" id="readyWeight" placeholder="Например 400" oninput="recalc()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Порция (г)</label>
+        <input type="number" class="form-input" id="portionGrams" placeholder="Например 200" oninput="recalc()">
+      </div>
+    </div>
+
+    <div class="card calc-box">
+      <div style="font-weight:700; margin-bottom:8px;">На 100 г</div>
+      <div class="calc-row"><span>Калории</span><b id="per100kcal">0</b></div>
+      <div class="calc-row"><span>Белки</span><b id="per100p">0 г</b></div>
+      <div class="calc-row"><span>Жиры</span><b id="per100f">0 г</b></div>
+      <div class="calc-row"><span>Углеводы</span><b id="per100c">0 г</b></div>
+      <div style="margin-top:10px; font-size:13px; color:var(--text-light);">На порцию: <b id="perPortion">0 ккал</b></div>
+    </div>
+
+    <button class="save-btn" onclick="saveRecipe()">Сохранить рецепт</button>
+
+    <nav class="bottom-nav">
+      <a href="index.html" class="nav-item">🏠<span>Сегодня</span></a>
+      <a href="products.html" class="nav-item active">🥦<span>Продукты</span></a>
+      <a href="weight.html" class="nav-item">⚖️<span>Вес</span></a>
+      <a href="menu.html" class="nav-item">📋<span>Меню</span></a>
+      <a href="workouts.html" class="nav-item">💪<span>Тренировки</span></a>
+    </nav>
+  </div>
+
+  <script>
+    let products = JSON.parse(localStorage.getItem('products') || '[]');
+    let ingredients = [];
+
+    function addIngredient() {
+      ingredients.push({productId: '', grams: 100});
+      renderIngredients();
+    }
+
+    function removeIngredient(i) {
+      ingredients.splice(i, 1);
+      renderIngredients();
+      recalc();
+    }
+
+    function renderIngredients() {
+      const list = document.getElementById('ingredientsList');
+      list.innerHTML = '';
+      ingredients.forEach((ing, i) => {
+        let opts = '<option value="">Выбери продукт</option>';
+        products.forEach(p => {
+          opts += `<option value="${p.id}" ${ing.productId==p.id?'selected':''}>${p.name}</option>`;
+        });
+        list.innerHTML += `<div class="ingredient-row">
+          <select class="form-select" onchange="ingredients[${i}].productId=this.value; recalc()">${opts}</select>
+          <input type="number" class="form-input" value="${ing.grams}" placeholder="г" onchange="ingredients[${i}].grams=+this.value; recalc()">
+          <button class="remove-btn" onclick="removeIngredient(${i})">×</button>
+        </div>`;
+      });
+    }
+
+    function recalc() {
+      let totalK=0, totalP=0, totalF=0, totalC=0, totalG=0;
+      ingredients.forEach(ing => {
+        const p = products.find(x => x.id == ing.productId);
+        if (!p) return;
+        const g = +ing.grams || 0;
+        totalG += g;
+        totalK += (p.calories || 0) * g / 100;
+        totalP += (p.protein || 0) * g / 100;
+        totalF += (p.fat || 0) * g / 100;
+        totalC += (p.carbs || 0) * g / 100;
+      });
+      const ready = +document.getElementById('readyWeight').value || totalG || 1;
+      const per100k = Math.round(totalK / ready * 100);
+      const per100p = (totalP / ready * 100).toFixed(1);
+      const per100f = (totalF / ready * 100).toFixed(1);
+      const per100c = (totalC / ready * 100).toFixed(1);
+      document.getElementById('per100kcal').textContent = per100k;
+      document.getElementById('per100p').textContent = per100p + ' г';
+      document.getElementById('per100f').textContent = per100f + ' г';
+      document.getElementById('per100c').textContent = per100c + ' г';
+
+      const portion = +document.getElementById('portionGrams').value || 0;
+      document.getElementById('perPortion').textContent = portion ? Math.round(per100k * portion / 100) + ' ккал' : '0 ккал';
+    }
+
+    function saveRecipe() {
+      const name = document.getElementById('recipeName').value;
+      if (!name) { alert('Введи название'); return; }
+      const ready = +document.getElementById('readyWeight').value || 0;
+      const portion = +document.getElementById('portionGrams').value || 0;
+
+      let totalK=0, totalP=0, totalF=0, totalC=0;
+      ingredients.forEach(ing => {
+        const p = products.find(x => x.id == ing.productId);
+        if (!p) return;
+        const g = +ing.grams || 0;
+        totalK += (p.calories || 0) * g / 100;
+        totalP += (p.protein || 0) * g / 100;
+        totalF += (p.fat || 0) * g / 100;
+        totalC += (p.carbs || 0) * g / 100;
+      });
+      const readyW = ready || 1;
+
+      const recipe = {
+        id: Date.now(),
+        name,
+        ingredients,
+        readyWeight: ready,
+        portionGrams: portion,
+        per100: {
+          calories: Math.round(totalK / readyW * 100),
+          protein: +(totalP / readyW * 100).toFixed(1),
+          fat: +(totalF / readyW * 100).toFixed(1),
+          carbs: +(totalC / readyW * 100).toFixed(1)
+        }
+      };
+
+      let recipes = JSON.parse(localStorage.getItem('recipes') || '[]');
+      recipes.push(recipe);
+      localStorage.setItem('recipes', JSON.stringify(recipes));
+      alert('Рецепт сохранён');
+      location.href = 'recipes.html';
+    }
+
+    addIngredient();
+  </script>
+</body>
+</html>
