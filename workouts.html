@@ -7,163 +7,61 @@
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    .workout-btns {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;
-    }
-    .w-btn {
-      padding: 14px 10px; border-radius: 16px; border: none;
-      background: var(--sage-light); color: var(--sage-dark);
-      font-family: inherit; font-size: 14px; font-weight: 600;
-      cursor: pointer; display: flex; flex-direction: column;
-      align-items: center; gap: 4px; text-align: center;
-    }
+    .workout-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+    .w-btn { padding: 14px 10px; border-radius: 16px; border: none; background: var(--sage-light); color: var(--sage-dark); font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
     .w-btn .icon { font-size: 22px; }
     .w-btn .title { font-weight: 700; letter-spacing: 0.5px; }
     .w-btn .sub { font-size: 12px; font-weight: 500; opacity: 0.8; }
-    .steps-row {
-      display: flex; gap: 8px; margin-bottom: 16px;
-    }
-    .steps-input {
-      flex: 1; padding: 12px; border-radius: 12px; border: 1px solid var(--sage-light);
-      font-family: inherit; font-size: 15px;
-    }
-    .steps-btn {
-      padding: 12px 16px; border: none; border-radius: 12px;
-      background: var(--sage); color: white; font-family: inherit;
-      font-weight: 600; cursor: pointer;
-    }
-    .workout-item {
-      display: flex; align-items: center; gap: 10px; padding: 10px 0;
-      border-bottom: 1px solid var(--sage-light);
-    }
-    .workout-details {
-      font-size: 12px; color: var(--text-light);
-    }
-    .modal-overlay {
-      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
-      z-index: 100; justify-content: center; align-items: center;
-    }
+    .steps-row { display: flex; gap: 8px; margin-bottom: 16px; }
+    .steps-input { flex: 1; padding: 12px; border-radius: 12px; border: 1px solid var(--sage-light); font-family: inherit; font-size: 15px; }
+    .steps-btn { padding: 12px 16px; border: none; border-radius: 12px; background: var(--sage); color: white; font-family: inherit; font-weight: 600; cursor: pointer; }
+    .workout-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--sage-light); }
+    .workout-details { font-size: 12px; color: var(--text-light); }
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; justify-content: center; align-items: center; }
     .modal-overlay.show { display: flex; }
-    .modal-box {
-      background: var(--cream); border-radius: 20px; width: 90%; max-width: 400px;
-      padding: 20px 16px; max-height: 85vh; overflow-y: auto;
-    }
-    .modal-btn {
-      width: 100%; padding: 12px; border: none; border-radius: 14px;
-      background: var(--sage); color: white; font-family: inherit;
-      font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 10px;
-    }
-    .day-nav {
-      display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 12px;
-    }
-    .day-nav button {
-      width: 36px; height: 36px; border-radius: 50%; border: none;
-      background: var(--sage-light); color: var(--sage-dark);
-      font-size: 16px; cursor: pointer;
-    }
-    .block-select {
-      width: 100%; padding: 12px; border-radius: 14px; border: 1px solid var(--sage-light);
-      font-family: inherit; font-size: 15px; margin-bottom: 12px;
-      background: white;
-    }
-    .week-row {
-      display: flex; align-items: center; gap: 6px; margin-bottom: 8px;
-      background: white; border-radius: 12px; padding: 8px;
-    }
-    .week-label {
-      padding: 8px 10px; border-radius: 10px; background: var(--sage);
-      color: white; font-size: 12px; font-weight: 600; min-width: 70px; text-align: center;
-    }
-    .workout-plaque {
-      flex: 1; padding: 8px 6px; border-radius: 10px; border: 2px solid var(--sage-light);
-      background: white; cursor: pointer; font-size: 12px; font-family: inherit;
-      font-weight: 600; text-align: center; display: flex; align-items: center;
-      justify-content: center; gap: 4px;
-    }
-    .workout-plaque.done {
-      background: var(--sage); border-color: var(--sage); color: white;
-    }
-    .load-dot {
-      width: 12px; height: 12px; border-radius: 3px;
-    }
+    .modal-box { background: var(--cream); border-radius: 20px; width: 90%; max-width: 400px; padding: 20px 16px; max-height: 85vh; overflow-y: auto; }
+    .modal-btn { width: 100%; padding: 12px; border: none; border-radius: 14px; background: var(--sage); color: white; font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+    .day-nav { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 12px; }
+    .day-nav button { width: 36px; height: 36px; border-radius: 50%; border: none; background: var(--sage-light); color: var(--sage-dark); font-size: 16px; cursor: pointer; }
+    .block-select { width: 100%; padding: 12px; border-radius: 14px; border: 1px solid var(--sage-light); font-family: inherit; font-size: 15px; margin-bottom: 12px; background: white; }
+    .week-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; background: white; border-radius: 12px; padding: 8px; }
+    .week-label { padding: 8px 10px; border-radius: 10px; background: var(--sage); color: white; font-size: 12px; font-weight: 600; min-width: 70px; text-align: center; }
+    .workout-plaque { flex: 1; padding: 8px 6px; border-radius: 10px; border: 2px solid var(--sage-light); background: white; cursor: pointer; font-size: 12px; font-family: inherit; font-weight: 600; text-align: center; display: flex; align-items: center; justify-content: center; gap: 4px; }
+    .workout-plaque.done { background: var(--sage); border-color: var(--sage); color: white; }
+    .load-dot { width: 12px; height: 12px; border-radius: 3px; }
     .load-easy { background: #a8d5a2; }
     .load-mid { background: #f5d76e; }
     .load-hard { background: #e8a0a0; }
-    .kg-btns {
-      display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;
-    }
-    .kg-btn {
-      padding: 8px 14px; border-radius: 10px; border: 2px solid var(--sage-light);
-      background: white; cursor: pointer; font-family: inherit; font-weight: 600;
-    }
-    .kg-btn.selected {
-      background: var(--sage); border-color: var(--sage); color: white;
-    }
-    .load-btns {
-      display: flex; gap: 8px; margin-bottom: 12px;
-    }
-    .load-btn {
-      flex: 1; padding: 10px; border-radius: 10px; border: 2px solid transparent;
-      cursor: pointer; font-family: inherit; font-weight: 600; font-size: 13px;
-    }
+    .kg-btns, .day-btns { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+    .kg-btn, .day-btn-sel { padding: 8px 12px; border-radius: 10px; border: 2px solid var(--sage-light); background: white; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 13px; }
+    .kg-btn.selected, .day-btn-sel.selected { background: var(--sage); border-color: var(--sage); color: white; }
+    .load-btns { display: flex; gap: 8px; margin-bottom: 12px; }
+    .load-btn { flex: 1; padding: 10px; border-radius: 10px; border: 2px solid transparent; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 13px; }
     .load-btn.easy { background: #a8d5a2; }
     .load-btn.mid { background: #f5d76e; }
     .load-btn.hard { background: #e8a0a0; }
     .load-btn.selected { border-color: var(--sage-dark); }
-    .done-check {
-      display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
-      font-size: 14px;
-    }
+    .done-check { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 14px; }
     .done-check input { width: 20px; height: 20px; }
   </style>
 </head>
 <body>
   <div class="app">
-    <header class="header">
-      <h1>Тренировки</h1>
-    </header>
-
+    <header class="header"><h1>Тренировки</h1></header>
     <div class="day-nav">
       <button onclick="changeDay(-1)">←</button>
-      <div style="text-align:center;">
-        <div id="dayTitle" style="font-weight:700; color:var(--sage-dark);">Сегодня</div>
-        <div id="todayDate" style="font-size:13px; color:var(--text-light);"></div>
-      </div>
+      <div style="text-align:center;"><div id="dayTitle" style="font-weight:700; color:var(--sage-dark);">Сегодня</div><div id="todayDate" style="font-size:13px; color:var(--text-light);"></div></div>
       <button onclick="changeDay(1)">→</button>
     </div>
-
-    <div class="steps-row">
-      <input type="number" class="steps-input" id="stepsInput" placeholder="Шаги">
-      <button class="steps-btn" onclick="saveSteps()">Ок</button>
-    </div>
+    <div class="steps-row"><input type="number" class="steps-input" id="stepsInput" placeholder="Шаги"><button class="steps-btn" onclick="saveSteps()">Ок</button></div>
     <div style="font-size:13px; color:var(--text-light); margin-bottom:16px;" id="stepsDisplay"></div>
-
     <div class="workout-btns">
-      <button class="w-btn" onclick="addSimple('pool')">
-        <span class="icon">💧</span>
-        <span class="title">БАССЕЙН</span>
-      </button>
-      <button class="w-btn" onclick="openFamily()">
-        <span class="icon">💜</span>
-        <span class="title">СЕМЬЯ</span>
-        <span class="sub">силовые</span>
-      </button>
-      <button class="w-btn" onclick="openWarmup()">
-        <span class="icon">💚</span>
-        <span class="title">СЕМЬЯ</span>
-        <span class="sub">разминки</span>
-      </button>
-      <button class="w-btn" onclick="openOwn()">
-        <span class="icon">🌿</span>
-        <span class="title">СВОЯ</span>
-      </button>
+      <button class="w-btn" onclick="addSimple('pool')"><span class="icon">💧</span><span class="title">БАССЕЙН</span></button>
+      <button class="w-btn" onclick="openFamily()"><span class="icon">💜</span><span class="title">СЕМЬЯ</span><span class="sub">силовые</span></button>
+      <button class="w-btn" onclick="openWarmup()"><span class="icon">💚</span><span class="title">СЕМЬЯ</span><span class="sub">разминки</span></button>
+      <button class="w-btn" onclick="openOwn()"><span class="icon">🌿</span><span class="title">СВОЯ</span></button>
     </div>
-
-    <div class="card">
-      <div style="font-weight:600; margin-bottom:8px;" id="listTitle">На сегодня</div>
-      <div id="todayList"></div>
-    </div>
-
+    <div class="card"><div style="font-weight:600; margin-bottom:8px;" id="listTitle">На сегодня</div><div id="todayList"></div></div>
     <nav class="bottom-nav">
       <a href="index.html" class="nav-item">🏠<span>Сегодня</span></a>
       <a href="products.html" class="nav-item">🥦<span>Продукты</span></a>
@@ -185,40 +83,32 @@
   <div class="modal-overlay" id="familyModal" onclick="if(event.target===this) closeModal('familyModal')">
     <div class="modal-box">
       <div style="font-weight:700; text-align:center; margin-bottom:12px;">Семья — силовые</div>
-
       <select class="block-select" id="blockSelect" onchange="loadBlock()">
         <option value="zhivaya">Живая сила</option>
         <option value="sila">Сила</option>
         <option value="vynoslivost">Выносливость</option>
       </select>
-
       <div id="weeksContainer"></div>
-
       <button class="modal-btn" onclick="saveFamily()">Сохранить</button>
       <button onclick="closeModal('familyModal')" style="margin-top:8px; width:100%; padding:12px; border:none; border-radius:14px; background:var(--sage-light); color:var(--sage-dark); font-family:inherit; font-size:15px; font-weight:600;">Закрыть</button>
     </div>
   </div>
 
   <div class="modal-overlay" id="workoutDetailModal" style="z-index:110;" onclick="if(event.target===this) closeModal('workoutDetailModal')">
-    <div class="modal-box" style="max-width:320px;">
+    <div class="modal-box" style="max-width:340px;">
       <div style="font-weight:700; text-align:center; margin-bottom:12px;" id="workoutDetailTitle">Тренировка</div>
-
+      <div style="font-size:13px; color:var(--text-light); margin-bottom:6px;">День</div>
+      <div class="day-btns" id="dayBtns"></div>
       <div style="font-size:13px; color:var(--text-light); margin-bottom:6px;">Килограммы</div>
       <div class="kg-btns" id="kgBtns"></div>
-
       <div style="font-size:13px; color:var(--text-light); margin-bottom:6px;">Нагрузка</div>
       <div class="load-btns">
         <button class="load-btn easy" id="loadEasy" onclick="setLoad(1)">легко</button>
         <button class="load-btn mid" id="loadMid" onclick="setLoad(2)">средне</button>
         <button class="load-btn hard" id="loadHard" onclick="setLoad(3)">трудно</button>
       </div>
-
-      <label class="done-check">
-        <input type="checkbox" id="workoutDone"> Сделана
-      </label>
-
+      <label class="done-check"><input type="checkbox" id="workoutDone"> Сделана</label>
       <textarea class="steps-input" id="workoutComment" placeholder="Комментарий" style="width:100%; height:50px;"></textarea>
-
       <button class="modal-btn" onclick="saveWorkoutDetail()">Готово</button>
     </div>
   </div>
@@ -235,276 +125,142 @@
   <script>
     let dayOffset = 0;
     const months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
-    let workouts = [];
-    let steps = '';
-    let key = '';
-    let stepsKey = '';
+    const weekdays = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+    let workouts = [], steps = '', key = '', stepsKey = '';
+    const kgOptions = ['4 кг','5 кг','6 кг','7 кг','8 кг'];
+    const loadNames = ['','легко','средне','трудно'];
+    let blockData = {}, editingWorkoutId = null, tempKg = 0, tempLoad = 0, tempWeekday = -1;
+    const warmups = ['Грудной отдел — круги руками','Грудной отдел — растяжка','Шея — наклоны','Спина — кошка','Ноги — махи','Плечи — круги'];
 
-    const kgOptions = ['4 кг', '5 кг', '6 кг', '7 кг', '8 кг'];
-    const loadNames = ['', 'легко', 'средне', 'трудно'];
-    let blockData = {};
-    let editingWorkoutId = null;
-    let tempKg = 0;
-    let tempLoad = 0;
-
-    const warmups = [
-      'Грудной отдел — круги руками',
-      'Грудной отдел — растяжка',
-      'Шея — наклоны',
-      'Спина — кошка',
-      'Ноги — махи',
-      'Плечи — круги'
-    ];
-
-    function changeDay(delta) {
-      dayOffset += delta;
-      loadDay();
-    }
-
+    function changeDay(delta) { dayOffset += delta; loadDay(); }
     function loadDay() {
-      const date = new Date();
-      date.setDate(date.getDate() + dayOffset);
+      const date = new Date(); date.setDate(date.getDate() + dayOffset);
       const dateStr = date.toISOString().slice(0,10);
-      key = 'workouts-' + dateStr;
-      stepsKey = 'steps-' + dateStr;
+      key = 'workouts-' + dateStr; stepsKey = 'steps-' + dateStr;
       workouts = JSON.parse(localStorage.getItem(key) || '[]');
       steps = localStorage.getItem(stepsKey) || '';
-
       document.getElementById('todayDate').textContent = date.getDate() + ' ' + months[date.getMonth()];
-
       let title = 'Сегодня';
       if (dayOffset === -1) title = 'Вчера';
       else if (dayOffset === 1) title = 'Завтра';
       else if (dayOffset !== 0) title = date.getDate() + ' ' + months[date.getMonth()];
       document.getElementById('dayTitle').textContent = title;
       document.getElementById('listTitle').textContent = dayOffset === 0 ? 'На сегодня' : 'Тренировки';
-
       render();
     }
-
     function render() {
       const list = document.getElementById('todayList');
-      if (!workouts.length) {
-        list.innerHTML = '<div style="color:var(--text-light); text-align:center; padding:12px;">Пока пусто</div>';
-      } else {
+      if (!workouts.length) { list.innerHTML = '<div style="color:var(--text-light); text-align:center; padding:12px;">Пока пусто</div>'; }
+      else {
         list.innerHTML = workouts.map((w, i) => {
           let details = '';
           if (w.week && w.day) {
             details = `Нед. ${w.week}, трен. ${w.day}`;
+            if (w.weekday >= 0) details += ` · ${weekdays[w.weekday]}`;
             if (w.kg) details += ` · ${w.kg}`;
             if (w.load) details += ` · ${w.load}`;
           }
-          return `<div class="workout-item">
-            <span>${w.icon || '💜'}</span>
-            <div style="flex:1;">
-              <div>${w.name}</div>
-              ${details ? `<div class="workout-details">${details}</div>` : ''}
-            </div>
-            <button onclick="removeWorkout(${i})" style="border:none; background:none; color:#c00; cursor:pointer;">×</button>
-          </div>`;
+          return `<div class="workout-item"><span>${w.icon || '💜'}</span><div style="flex:1;"><div>${w.name}</div>${details ? `<div class="workout-details">${details}</div>` : ''}</div><button onclick="removeWorkout(${i})" style="border:none; background:none; color:#c00; cursor:pointer;">×</button></div>`;
         }).join('');
       }
       document.getElementById('stepsDisplay').textContent = steps ? 'Шаги: ' + steps : '';
       document.getElementById('stepsInput').value = steps;
     }
-
-    function save() {
-      localStorage.setItem(key, JSON.stringify(workouts));
-      render();
-    }
-
-    function addSimple(type) {
-      const names = { pool: 'Бассейн' };
-      const icons = { pool: '💧' };
-      workouts.push({ type, name: names[type], icon: icons[type] });
-      save();
-    }
-
-    function openFamily() {
-      loadBlock();
-      document.getElementById('familyModal').classList.add('show');
-    }
-
+    function save() { localStorage.setItem(key, JSON.stringify(workouts)); render(); }
+    function addSimple(type) { workouts.push({ type, name: 'Бассейн', icon: '💧' }); save(); }
+    function openFamily() { loadBlock(); document.getElementById('familyModal').classList.add('show'); }
     function loadBlock() {
       const block = document.getElementById('blockSelect').value;
       blockData = JSON.parse(localStorage.getItem('familyBlock-' + block) || '{}');
       if (!blockData.workouts) blockData.workouts = {};
       renderWeeks();
     }
-
     function getWorkout(id) {
-      if (!blockData.workouts[id]) {
-        blockData.workouts[id] = { done: false, kg: -1, load: 0, comment: '' };
-      }
+      if (!blockData.workouts[id]) blockData.workouts[id] = { done: false, kg: -1, load: 0, comment: '', weekday: -1 };
       return blockData.workouts[id];
     }
-
-    function loadClass(load) {
-      return ['', 'load-easy', 'load-mid', 'load-hard'][load] || '';
-    }
-
+    function loadClass(load) { return ['','load-easy','load-mid','load-hard'][load] || ''; }
     function renderWeeks() {
       const container = document.getElementById('weeksContainer');
       let html = '';
       for (let w = 1; w <= 4; w++) {
         html += `<div class="week-row"><div class="week-label">Неделя ${w}</div>`;
         for (let d = 1; d <= 3; d++) {
-          const id = `w${w}d${d}`;
-          const data = getWorkout(id);
-          const doneClass = data.done ? 'done' : '';
-          const mark = data.done ? '✓ ' : '';
+          const id = `w${w}d${d}`, data = getWorkout(id);
+          const doneClass = data.done ? 'done' : '', mark = data.done ? '✓ ' : '';
           const kgText = data.kg >= 0 ? kgOptions[data.kg] : '—';
-          const lc = loadClass(data.load);
-          const dot = lc ? `<div class="load-dot ${lc}"></div>` : '';
-          html += `<div class="workout-plaque ${doneClass}" onclick="openWorkoutDetail('${id}', ${w}, ${d})">${mark}${kgText}${dot}</div>`;
+          const lc = loadClass(data.load), dot = lc ? `<div class="load-dot ${lc}"></div>` : '';
+          const wd = data.weekday >= 0 ? weekdays[data.weekday] : '';
+          html += `<div class="workout-plaque ${doneClass}" onclick="openWorkoutDetail('${id}', ${w}, ${d})">${mark}${kgText}${dot}${wd ? ' '+wd : ''}</div>`;
         }
         html += '</div>';
       }
       container.innerHTML = html;
     }
-
     function openWorkoutDetail(id, week, day) {
       editingWorkoutId = id;
       const data = getWorkout(id);
-      tempKg = data.kg;
-      tempLoad = data.load;
+      tempKg = data.kg; tempLoad = data.load; tempWeekday = data.weekday >= 0 ? data.weekday : -1;
       document.getElementById('workoutDetailTitle').textContent = `Неделя ${week}, трен. ${day}`;
       document.getElementById('workoutDone').checked = data.done;
       document.getElementById('workoutComment').value = data.comment || '';
-      renderKgBtns();
-      updateLoadBtns();
+      renderDayBtns(); renderKgBtns(); updateLoadBtns();
       document.getElementById('workoutDetailModal').classList.add('show');
     }
-
+    function renderDayBtns() {
+      document.getElementById('dayBtns').innerHTML = weekdays.map((d, i) => `<button class="day-btn-sel ${tempWeekday === i ? 'selected' : ''}" onclick="setWeekday(${i})">${d}</button>`).join('');
+    }
+    function setWeekday(i) { tempWeekday = tempWeekday === i ? -1 : i; renderDayBtns(); }
     function renderKgBtns() {
-      const container = document.getElementById('kgBtns');
-      container.innerHTML = kgOptions.map((kg, i) =>
-        `<button class="kg-btn ${tempKg === i ? 'selected' : ''}" onclick="setKg(${i})">${kg}</button>`
-      ).join('');
+      document.getElementById('kgBtns').innerHTML = kgOptions.map((kg, i) => `<button class="kg-btn ${tempKg === i ? 'selected' : ''}" onclick="setKg(${i})">${kg}</button>`).join('');
     }
-
-    function setKg(i) {
-      tempKg = i;
-      renderKgBtns();
-    }
-
-    function setLoad(l) {
-      tempLoad = tempLoad === l ? 0 : l;
-      updateLoadBtns();
-    }
-
+    function setKg(i) { tempKg = i; renderKgBtns(); }
+    function setLoad(l) { tempLoad = tempLoad === l ? 0 : l; updateLoadBtns(); }
     function updateLoadBtns() {
       document.getElementById('loadEasy').classList.toggle('selected', tempLoad === 1);
       document.getElementById('loadMid').classList.toggle('selected', tempLoad === 2);
       document.getElementById('loadHard').classList.toggle('selected', tempLoad === 3);
     }
-
     function saveWorkoutDetail() {
       const data = getWorkout(editingWorkoutId);
-      data.kg = tempKg;
-      data.load = tempLoad;
+      data.kg = tempKg; data.load = tempLoad; data.weekday = tempWeekday;
       data.done = document.getElementById('workoutDone').checked;
       data.comment = document.getElementById('workoutComment').value;
-      closeModal('workoutDetailModal');
-      renderWeeks();
+      closeModal('workoutDetailModal'); renderWeeks();
     }
-
     function saveFamily() {
       const block = document.getElementById('blockSelect').value;
       const blockName = document.getElementById('blockSelect').selectedOptions[0].text;
       localStorage.setItem('familyBlock-' + block, JSON.stringify(blockData));
-
       const doneWorkouts = [];
       for (let w = 1; w <= 4; w++) {
         for (let d = 1; d <= 3; d++) {
-          const id = `w${w}d${d}`;
-          const data = blockData.workouts[id];
-          if (data && data.done) {
-            doneWorkouts.push({
-              week: w,
-              day: d,
-              kg: data.kg >= 0 ? kgOptions[data.kg] : '',
-              load: loadNames[data.load] || ''
-            });
-          }
+          const id = `w${w}d${d}`, data = blockData.workouts[id];
+          if (data && data.done) doneWorkouts.push({ week: w, day: d, kg: data.kg >= 0 ? kgOptions[data.kg] : '', load: loadNames[data.load] || '', weekday: data.weekday });
         }
       }
-
       if (doneWorkouts.length) {
-        doneWorkouts.forEach(dw => {
-          workouts.push({
-            type: 'family',
-            name: blockName,
-            icon: '💜',
-            block: block,
-            week: dw.week,
-            day: dw.day,
-            kg: dw.kg,
-            load: dw.load
-          });
-        });
-      } else {
-        workouts.push({
-          type: 'family',
-          name: blockName,
-          icon: '💜',
-          block: block
-        });
-      }
-      save();
-      closeModal('familyModal');
+        doneWorkouts.forEach(dw => workouts.push({ type: 'family', name: blockName, icon: '💜', block, week: dw.week, day: dw.day, kg: dw.kg, load: dw.load, weekday: dw.weekday }));
+      } else { workouts.push({ type: 'family', name: blockName, icon: '💜', block }); }
+      save(); closeModal('familyModal');
     }
-
-    function openWarmup() {
-      filterWarmups();
-      document.getElementById('warmupModal').classList.add('show');
-    }
-
+    function openWarmup() { filterWarmups(); document.getElementById('warmupModal').classList.add('show'); }
     function filterWarmups() {
       const q = (document.getElementById('warmupSearch').value || '').toLowerCase();
-      const list = document.getElementById('warmupList');
       const filtered = warmups.filter(w => w.toLowerCase().includes(q));
-      list.innerHTML = filtered.map(w =>
-        `<div style="padding:10px; cursor:pointer; border-bottom:1px solid var(--sage-light);" onclick="addWarmup('${w}')">${w}</div>`
-      ).join('') || '<div style="padding:10px; color:var(--text-light);">Нет совпадений</div>';
+      document.getElementById('warmupList').innerHTML = filtered.map(w => `<div style="padding:10px; cursor:pointer; border-bottom:1px solid var(--sage-light);" onclick="addWarmup('${w}')">${w}</div>`).join('') || '<div style="padding:10px; color:var(--text-light);">Нет совпадений</div>';
     }
-
-    function addWarmup(name) {
-      workouts.push({ type: 'warmup', name, icon: '💚' });
-      save();
-      closeModal('warmupModal');
-    }
-
-    function openOwn() {
-      document.getElementById('ownName').value = '';
-      document.getElementById('ownComment').value = '';
-      document.getElementById('ownModal').classList.add('show');
-    }
-
+    function addWarmup(name) { workouts.push({ type: 'warmup', name, icon: '💚' }); save(); closeModal('warmupModal'); }
+    function openOwn() { document.getElementById('ownName').value = ''; document.getElementById('ownComment').value = ''; document.getElementById('ownModal').classList.add('show'); }
     function saveOwn() {
       const name = document.getElementById('ownName').value.trim();
       if (!name) { alert('Введи название'); return; }
-      const comment = document.getElementById('ownComment').value.trim();
-      workouts.push({ type: 'own', name, comment, icon: '🌿' });
-      save();
-      closeModal('ownModal');
+      workouts.push({ type: 'own', name, comment: document.getElementById('ownComment').value.trim(), icon: '🌿' });
+      save(); closeModal('ownModal');
     }
-
-    function saveSteps() {
-      steps = document.getElementById('stepsInput').value;
-      localStorage.setItem(stepsKey, steps);
-      render();
-    }
-
-    function removeWorkout(i) {
-      workouts.splice(i, 1);
-      save();
-    }
-
-    function closeModal(id) {
-      document.getElementById(id).classList.remove('show');
-    }
-
+    function saveSteps() { steps = document.getElementById('stepsInput').value; localStorage.setItem(stepsKey, steps); render(); }
+    function removeWorkout(i) { workouts.splice(i, 1); save(); }
+    function closeModal(id) { document.getElementById(id).classList.remove('show'); }
     loadDay();
   </script>
 </body>
