@@ -54,7 +54,6 @@
 
     let products = JSON.parse(localStorage.getItem('products') || 'null') || defaultProducts;
 
-    // Force unique sequential IDs for all products
     let maxId = Math.max(0, ...products.map(p => p.id || 0));
     products.forEach((p, i) => {
       if (!p.id || products.filter(x => x.id === p.id).length > 1) {
@@ -62,7 +61,6 @@
         p.id = maxId;
       }
     });
-    // Ensure no duplicates by reassigning if needed
     const seen = new Set();
     products.forEach(p => {
       if (seen.has(p.id)) {
@@ -73,17 +71,38 @@
     });
     localStorage.setItem('products', JSON.stringify(products));
 
+    const nameIcons = {
+      'морков': '🥕', 'яблок': '🍎', 'банан': '🍌', 'огурец': '🥒',
+      'помидор': '🍅', 'картош': '🥔', 'лук': '🧅', 'чеснок': '🧄',
+      'яйц': '🥚', 'хлеб': '🍞', 'сыр': '🧀', 'творог': '🧀',
+      'молок': '🥛', 'куриц': '🍗', 'рыб': '🐟', 'мяс': '🥩',
+      'свинин': '🥩', 'говяд': '🥩', 'рис': '🍚', 'греч': '🍚',
+      'овс': '🥣', 'масл': '🧈', 'шоколад': '🍫', 'конфет': '🍬',
+      'ягод': '🍓', 'клубник': '🍓', 'авокад': '🥑', 'броккол': '🥦',
+      'салат': '🥗', 'тунец': '🍣', 'кревет': '🦀', 'кофе': '☕',
+      'чай': '🍵', 'вода': '💧', 'орех': '🥜', 'миндаль': '🥜'
+    };
+
+    const categoryIcons = {
+      'Молочные': '🧀', 'Выпечка': '🍞', 'Мясо и рыба': '🍗',
+      'Овощи': '🥦', 'Фрукты и ягоды': '🍎', 'Крупы': '🌾',
+      'Сладости': '🍫', 'Домашнее': '🏠', 'Другое': '📦', 'Масло': '🧈'
+    };
+
+    function getIcon(name, category) {
+      const n = (name || '').toLowerCase();
+      for (const [key, icon] of Object.entries(nameIcons)) {
+        if (n.includes(key)) return icon;
+      }
+      return categoryIcons[category] || '🥗';
+    }
+
     function render() {
       const q = (document.getElementById('search').value || '').toLowerCase();
       const list = document.getElementById('productsList');
       list.innerHTML = '';
       products.filter(p => p.name.toLowerCase().includes(q)).forEach(p => {
-        const icons = {
-          'Молочные': '🧀', 'Выпечка': '🍞', 'Мясо и рыба': '🍗',
-          'Овощи': '🥦', 'Фрукты и ягоды': '🍎', 'Крупы': '🌾',
-          'Сладости': '🍫', 'Домашнее': '🏠', 'Другое': '📦'
-        };
-        const icon = icons[p.category] || '🥗';
+        const icon = getIcon(p.name, p.category);
         list.innerHTML += `<div class="card food-item" onclick="location.href='add-product.html?id=${p.id}'">
           <div class="product-id-corner">ID: ${p.id}</div>
           <div class="food-icon">${icon}</div>
