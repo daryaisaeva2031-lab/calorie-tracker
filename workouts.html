@@ -66,8 +66,8 @@
 
     <div class="workout-btns">
       <button class="w-btn" onclick="addSimple('pool')"><span>💧</span>Бассейн</button>
-      <button class="w-btn" onclick="openFamily()"><span>💪</span>Семья силовые</button>
-      <button class="w-btn" onclick="openWarmup()"><span>🤸</span>Семья разминки</button>
+      <button class="w-btn" onclick="openFamily()"><span>💜</span>Семья силовые</button>
+      <button class="w-btn" onclick="openWarmup()"><span>💚</span>Семья разминки</button>
       <button class="w-btn" onclick="openOwn()"><span>🌿</span>Своя</button>
     </div>
 
@@ -136,7 +136,7 @@
       } else {
         list.innerHTML = workouts.map((w, i) =>
           `<div class="workout-item">
-            <span>${w.icon || '💪'}</span>
+            <span>${w.icon || '💜'}</span>
             <div style="flex:1;">${w.name}</div>
             <button onclick="removeWorkout(${i})" style="border:none; background:none; color:#c00; cursor:pointer;">×</button>
           </div>`
@@ -153,7 +153,7 @@
 
     function addSimple(type) {
       const names = { pool: 'Бассейн', family: 'Семья — силовые' };
-      const icons = { pool: '💧', family: '💪' };
+      const icons = { pool: '💧', family: '💜' };
       workouts.push({ type, name: names[type], icon: icons[type] });
       save();
       closeModal('familyModal');
@@ -178,7 +178,7 @@
     }
 
     function addWarmup(name) {
-      workouts.push({ type: 'warmup', name, icon: '🤸' });
+      workouts.push({ type: 'warmup', name, icon: '💚' });
       save();
       closeModal('warmupModal');
     }
