@@ -13,7 +13,6 @@
       background: var(--sage-light); color: var(--sage-dark);
     }
     .food-item { cursor: pointer; }
-    .product-id-small { font-size: 11px; color: var(--text-light); margin-top: 2px; }
   </style>
 </head>
 <body>
@@ -67,8 +66,7 @@
           <div class="food-icon">${icon}</div>
           <div class="food-info">
             <div class="food-name">${p.name} <span class="cat-badge">${p.category || ''}</span></div>
-            <div class="product-id-small">ID: ${p.id}${p.brand ? ' · ' + p.brand : ''}</div>
-            <div class="food-kcal">${p.calories || 0} ккал / 100 г</div>
+            <div class="food-kcal">${p.calories || 0} ккал / 100 г${p.brand ? ' · ' + p.brand : ''}</div>
           </div>
         </div>`;
       });
