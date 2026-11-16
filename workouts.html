@@ -71,28 +71,47 @@
       padding: 8px 10px; border-radius: 10px; background: var(--sage);
       color: white; font-size: 12px; font-weight: 600; min-width: 70px; text-align: center;
     }
-    .workout-btn {
+    .workout-plaque {
       flex: 1; padding: 8px 6px; border-radius: 10px; border: 2px solid var(--sage-light);
       background: white; cursor: pointer; font-size: 12px; font-family: inherit;
-      font-weight: 600; text-align: center;
+      font-weight: 600; text-align: center; display: flex; align-items: center;
+      justify-content: center; gap: 4px;
     }
-    .workout-btn.done {
+    .workout-plaque.done {
       background: var(--sage); border-color: var(--sage); color: white;
     }
-    .load-sq {
-      width: 18px; height: 18px; border-radius: 4px; cursor: pointer;
-      border: 1px solid #ddd;
+    .load-dot {
+      width: 12px; height: 12px; border-radius: 3px;
     }
     .load-easy { background: #a8d5a2; }
     .load-mid { background: #f5d76e; }
     .load-hard { background: #e8a0a0; }
-    .load-none { background: #eee; }
-    .load-legend {
-      display: flex; gap: 8px; justify-content: center; margin: 12px 0; font-size: 12px;
+    .kg-btns {
+      display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;
     }
-    .load-legend span {
-      display: flex; align-items: center; gap: 4px;
+    .kg-btn {
+      padding: 8px 14px; border-radius: 10px; border: 2px solid var(--sage-light);
+      background: white; cursor: pointer; font-family: inherit; font-weight: 600;
     }
+    .kg-btn.selected {
+      background: var(--sage); border-color: var(--sage); color: white;
+    }
+    .load-btns {
+      display: flex; gap: 8px; margin-bottom: 12px;
+    }
+    .load-btn {
+      flex: 1; padding: 10px; border-radius: 10px; border: 2px solid transparent;
+      cursor: pointer; font-family: inherit; font-weight: 600; font-size: 13px;
+    }
+    .load-btn.easy { background: #a8d5a2; }
+    .load-btn.mid { background: #f5d76e; }
+    .load-btn.hard { background: #e8a0a0; }
+    .load-btn.selected { border-color: var(--sage-dark); }
+    .done-check {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
+      font-size: 14px;
+    }
+    .done-check input { width: 20px; height: 20px; }
   </style>
 </head>
 <body>
@@ -170,18 +189,34 @@
         <option value="vynoslivost">Выносливость</option>
       </select>
 
-      <div class="load-legend">
-        <span><div class="load-sq load-easy"></div> легко</span>
-        <span><div class="load-sq load-mid"></div> средне</span>
-        <span><div class="load-sq load-hard"></div> трудно</span>
-      </div>
-
       <div id="weeksContainer"></div>
 
-      <textarea class="steps-input" id="familyComment" placeholder="Комментарий" style="width:100%; height:50px; margin-top:12px;"></textarea>
-
-      <button class="modal-btn" onclick="saveFamily()">Сохранить</button>
+      <button class="modal-btn" onclick="saveFamily()">Сохранить блок</button>
       <button onclick="closeModal('familyModal')" style="margin-top:8px; width:100%; padding:12px; border:none; border-radius:14px; background:var(--sage-light); color:var(--sage-dark); font-family:inherit; font-size:15px; font-weight:600;">Закрыть</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="workoutDetailModal" style="z-index:110;" onclick="if(event.target===this) closeModal('workoutDetailModal')">
+    <div class="modal-box" style="max-width:320px;">
+      <div style="font-weight:700; text-align:center; margin-bottom:12px;" id="workoutDetailTitle">Тренировка</div>
+
+      <div style="font-size:13px; color:var(--text-light); margin-bottom:6px;">Килограммы</div>
+      <div class="kg-btns" id="kgBtns"></div>
+
+      <div style="font-size:13px; color:var(--text-light); margin-bottom:6px;">Нагрузка</div>
+      <div class="load-btns">
+        <button class="load-btn easy" id="loadEasy" onclick="setLoad(1)">легко</button>
+        <button class="load-btn mid" id="loadMid" onclick="setLoad(2)">средне</button>
+        <button class="load-btn hard" id="loadHard" onclick="setLoad(3)">трудно</button>
+      </div>
+
+      <label class="done-check">
+        <input type="checkbox" id="workoutDone"> Сделана
+      </label>
+
+      <textarea class="steps-input" id="workoutComment" placeholder="Комментарий" style="width:100%; height:50px;"></textarea>
+
+      <button class="modal-btn" onclick="saveWorkoutDetail()">Готово</button>
     </div>
   </div>
 
@@ -204,6 +239,9 @@
 
     const kgOptions = ['4 кг', '5 кг', '6 кг', '7 кг', '8 кг'];
     let blockData = {};
+    let editingWorkoutId = null;
+    let tempKg = 0;
+    let tempLoad = 0;
 
     const warmups = [
       'Грудной отдел — круги руками',
@@ -278,37 +316,18 @@
       const block = document.getElementById('blockSelect').value;
       blockData = JSON.parse(localStorage.getItem('familyBlock-' + block) || '{}');
       if (!blockData.workouts) blockData.workouts = {};
-      document.getElementById('familyComment').value = blockData.comment || '';
       renderWeeks();
     }
 
     function getWorkout(id) {
       if (!blockData.workouts[id]) {
-        blockData.workouts[id] = { done: false, kg: 0, load: 0 };
+        blockData.workouts[id] = { done: false, kg: -1, load: 0, comment: '' };
       }
       return blockData.workouts[id];
     }
 
-    function toggleDone(id) {
-      const w = getWorkout(id);
-      w.done = !w.done;
-      renderWeeks();
-    }
-
-    function cycleKg(id) {
-      const w = getWorkout(id);
-      w.kg = (w.kg + 1) % kgOptions.length;
-      renderWeeks();
-    }
-
-    function cycleLoad(id) {
-      const w = getWorkout(id);
-      w.load = (w.load + 1) % 4;
-      renderWeeks();
-    }
-
     function loadClass(load) {
-      return ['load-none', 'load-easy', 'load-mid', 'load-hard'][load] || 'load-none';
+      return ['', 'load-easy', 'load-mid', 'load-hard'][load] || '';
     }
 
     function renderWeeks() {
@@ -321,21 +340,65 @@
           const data = getWorkout(id);
           const doneClass = data.done ? 'done' : '';
           const mark = data.done ? '✓ ' : '';
-          const kgText = kgOptions[data.kg];
+          const kgText = data.kg >= 0 ? kgOptions[data.kg] : '—';
           const lc = loadClass(data.load);
-          html += `<button class="workout-btn ${doneClass}" onclick="toggleDone('${id}')">${mark}${kgText}</button>`;
-          html += `<div class="load-sq ${lc}" onclick="cycleLoad('${id}')" title="Нагрузка"></div>`;
+          const dot = lc ? `<div class="load-dot ${lc}"></div>` : '';
+          html += `<div class="workout-plaque ${doneClass}" onclick="openWorkoutDetail('${id}', ${w}, ${d})">${mark}${kgText}${dot}</div>`;
         }
         html += '</div>';
       }
       container.innerHTML = html;
     }
 
+    function openWorkoutDetail(id, week, day) {
+      editingWorkoutId = id;
+      const data = getWorkout(id);
+      tempKg = data.kg;
+      tempLoad = data.load;
+      document.getElementById('workoutDetailTitle').textContent = `Неделя ${week}, трен. ${day}`;
+      document.getElementById('workoutDone').checked = data.done;
+      document.getElementById('workoutComment').value = data.comment || '';
+      renderKgBtns();
+      updateLoadBtns();
+      document.getElementById('workoutDetailModal').classList.add('show');
+    }
+
+    function renderKgBtns() {
+      const container = document.getElementById('kgBtns');
+      container.innerHTML = kgOptions.map((kg, i) =>
+        `<button class="kg-btn ${tempKg === i ? 'selected' : ''}" onclick="setKg(${i})">${kg}</button>`
+      ).join('');
+    }
+
+    function setKg(i) {
+      tempKg = i;
+      renderKgBtns();
+    }
+
+    function setLoad(l) {
+      tempLoad = tempLoad === l ? 0 : l;
+      updateLoadBtns();
+    }
+
+    function updateLoadBtns() {
+      document.getElementById('loadEasy').classList.toggle('selected', tempLoad === 1);
+      document.getElementById('loadMid').classList.toggle('selected', tempLoad === 2);
+      document.getElementById('loadHard').classList.toggle('selected', tempLoad === 3);
+    }
+
+    function saveWorkoutDetail() {
+      const data = getWorkout(editingWorkoutId);
+      data.kg = tempKg;
+      data.load = tempLoad;
+      data.done = document.getElementById('workoutDone').checked;
+      data.comment = document.getElementById('workoutComment').value;
+      closeModal('workoutDetailModal');
+      renderWeeks();
+    }
+
     function saveFamily() {
       const block = document.getElementById('blockSelect').value;
       const blockName = document.getElementById('blockSelect').selectedOptions[0].text;
-      blockData.comment = document.getElementById('familyComment').value;
-
       localStorage.setItem('familyBlock-' + block, JSON.stringify(blockData));
 
       workouts.push({
