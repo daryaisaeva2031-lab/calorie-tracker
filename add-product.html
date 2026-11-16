@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Добавить продукт — Калории</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    .form-group { margin-bottom: 16px; }
+    .form-label { font-size: 14px; font-weight: 600; color: var(--sage-dark); margin-bottom: 6px; display: block; }
+    .form-input, .form-select {
+      width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--sage-light);
+      font-family: inherit; font-size: 15px; background: white;
+    }
+    .macros-row { display: flex; gap: 10px; }
+    .macros-row .form-group { flex: 1; }
+    .portion-types {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;
+    }
+    .portion-card {
+      background: var(--sage-light); border-radius: 14px; padding: 16px; text-align: center;
+      cursor: pointer; border: 2px solid transparent;
+    }
+    .portion-card.selected { border-color: var(--sage); background: white; }
+    .save-btn {
+      width: 100%; padding: 14px; border: none; border-radius: 14px;
+      background: var(--sage); color: white; font-family: inherit;
+      font-size: 15px; font-weight: 600; margin-top: 16px; cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <a href="products-list.html"><button class="icon-btn">←</button></a>
+      <h1>Добавить продукт</h1>
+      <div style="width:42px"></div>
+    </header>
+
+    <div class="card">
+      <div class="form-group">
+        <label class="form-label">Название продукта</label>
+        <input type="text" class="form-input" id="name" placeholder="Например: Сыр пармезан">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Категория</label>
+        <select class="form-select" id="category">
+          <option value="">Выбери категорию</option>
+          <option>Молочные</option>
+          <option>Мясо и рыба</option>
+          <option>Овощи</option>
+          <option>Фрукты и ягоды</option>
+          <option>Выпечка</option>
+          <option>Крупы</option>
+          <option>Масло</option>
+          <option>Сладости</option>
+          <option>Домашнее</option>
+          <option>Другое</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Калории на 100 г</label>
+        <input type="number" class="form-input" id="calories" placeholder="0">
+      </div>
+
+      <div class="macros-row">
+        <div class="form-group">
+          <label class="form-label">Белки</label>
+          <input type="number" step="0.1" class="form-input" id="protein" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Жиры</label>
+          <input type="number" step="0.1" class="form-input" id="fat" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Углеводы</label>
+          <input type="number" step="0.1" class="form-input" id="carbs" placeholder="0">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="font-weight:700; margin-bottom:8px; color:var(--sage-dark);">Размер порции</div>
+      <div style="font-size:13px; color:var(--text-light); margin-bottom:10px;">Можно добавить другой размер (штука, кусок, чашка...)</div>
+      <div class="portion-types">
+        <div class="portion-card" onclick="selectPortion(this, 'штука')">🥚<br>штука</div>
+        <div class="portion-card" onclick="selectPortion(this, 'кусок')">🥩<br>кусок</div>
+        <div class="portion-card" onclick="selectPortion(this, 'чашка')">☕<br>чашка</div>
+        <div class="portion-card" onclick="selectPortion(this, 'упаковка')">📦<br>упаковка</div>
+        <div class="portion-card" onclick="selectPortion(this, 'порция')">🥣<br>порция</div>
+        <div class="portion-card" onclick="selectPortion(this, 'банка')">🥫<br>банка</div>
+      </div>
+      <div id="portionGrams" style="display:none; margin-top:12px;">
+        <label class="form-label">Сколько грамм в этой порции?</label>
+        <input type="number" class="form-input" id="portionSize" placeholder="Например 50">
+      </div>
+    </div>
+
+    <button class="save-btn" onclick="saveProduct()">Сохранить</button>
+
+    <nav class="bottom-nav">
+      <a href="index.html" class="nav-item">🏠<span>Сегодня</span></a>
+      <a href="products.html" class="nav-item active">🥦<span>Продукты</span></a>
+      <a href="weight.html" class="nav-item">⚖️<span>Вес</span></a>
+      <a href="menu.html" class="nav-item">📋<span>Меню</span></a>
+      <a href="workouts.html" class="nav-item">💪<span>Тренировки</span></a>
+    </nav>
+  </div>
+
+  <script>
+    let selectedPortion = null;
+
+    function selectPortion(el, type) {
+      document.querySelectorAll('.portion-card').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedPortion = type;
+      document.getElementById('portionGrams').style.display = 'block';
+    }
+
+    function saveProduct() {
+      const product = {
+        name: document.getElementById('name').value,
+        category: document.getElementById('category').value,
+        calories: +document.getElementById('calories').value || 0,
+        protein: +document.getElementById('protein').value || 0,
+        fat: +document.getElementById('fat').value || 0,
+        carbs: +document.getElementById('carbs').value || 0,
+        portionType: selectedPortion,
+        portionGrams: +document.getElementById('portionSize').value || 0
+      };
+
+      if (!product.name) {
+        alert('Введи название продукта');
+        return;
+      }
+
+      let products = JSON.parse(localStorage.getItem('products') || '[]');
+      products.push(product);
+      localStorage.setItem('products', JSON.stringify(products));
+      alert('Продукт сохранён');
+      location.href = 'products-list.html';
+    }
+  </script>
+</body>
+</html>
