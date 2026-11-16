@@ -42,7 +42,7 @@
     }
     .modal-overlay.show { display: flex; }
     .modal-box {
-      background: var(--cream); border-radius: 20px; width: 90%; max-width: 380px;
+      background: var(--cream); border-radius: 20px; width: 90%; max-width: 400px;
       padding: 20px 16px; max-height: 85vh; overflow-y: auto;
     }
     .modal-btn {
@@ -63,26 +63,35 @@
       font-family: inherit; font-size: 15px; margin-bottom: 12px;
       background: white;
     }
-    .kg-badge {
-      display: inline-block; padding: 6px 14px; border-radius: 20px;
-      background: var(--sage); color: white; font-size: 13px; font-weight: 600;
-      margin-bottom: 16px; cursor: pointer;
-    }
     .week-row {
-      display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+      display: flex; align-items: center; gap: 6px; margin-bottom: 8px;
       background: white; border-radius: 12px; padding: 8px;
     }
     .week-label {
-      padding: 8px 12px; border-radius: 10px; background: var(--sage);
-      color: white; font-size: 13px; font-weight: 600; min-width: 80px; text-align: center;
+      padding: 8px 10px; border-radius: 10px; background: var(--sage);
+      color: white; font-size: 12px; font-weight: 600; min-width: 70px; text-align: center;
     }
-    .check-btn {
-      width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--sage-light);
-      background: white; cursor: pointer; font-size: 16px;
-      display: flex; align-items: center; justify-content: center;
+    .workout-btn {
+      flex: 1; padding: 8px 6px; border-radius: 10px; border: 2px solid var(--sage-light);
+      background: white; cursor: pointer; font-size: 12px; font-family: inherit;
+      font-weight: 600; text-align: center;
     }
-    .check-btn.done {
+    .workout-btn.done {
       background: var(--sage); border-color: var(--sage); color: white;
+    }
+    .load-sq {
+      width: 18px; height: 18px; border-radius: 4px; cursor: pointer;
+      border: 1px solid #ddd;
+    }
+    .load-easy { background: #a8d5a2; }
+    .load-mid { background: #f5d76e; }
+    .load-hard { background: #e8a0a0; }
+    .load-none { background: #eee; }
+    .load-legend {
+      display: flex; gap: 8px; justify-content: center; margin: 12px 0; font-size: 12px;
+    }
+    .load-legend span {
+      display: flex; align-items: center; gap: 4px;
     }
   </style>
 </head>
@@ -161,8 +170,10 @@
         <option value="vynoslivost">Выносливость</option>
       </select>
 
-      <div style="text-align:center;">
-        <span class="kg-badge" id="kgBadge" onclick="cycleKg()">4-5 кг</span>
+      <div class="load-legend">
+        <span><div class="load-sq load-easy"></div> легко</span>
+        <span><div class="load-sq load-mid"></div> средне</span>
+        <span><div class="load-sq load-hard"></div> трудно</span>
       </div>
 
       <div id="weeksContainer"></div>
@@ -191,9 +202,8 @@
     let key = '';
     let stepsKey = '';
 
-    const kgOptions = ['2-3 кг', '4-5 кг', '6-7 кг', '8-10 кг'];
-    let currentKgIndex = 1;
-    let blockChecks = {};
+    const kgOptions = ['4 кг', '5 кг', '6 кг', '7 кг', '8 кг'];
+    let blockData = {};
 
     const warmups = [
       'Грудной отдел — круги руками',
@@ -266,17 +276,39 @@
 
     function loadBlock() {
       const block = document.getElementById('blockSelect').value;
-      const saved = JSON.parse(localStorage.getItem('familyBlock-' + block) || '{}');
-      blockChecks = saved.checks || {};
-      currentKgIndex = saved.kgIndex !== undefined ? saved.kgIndex : 1;
-      document.getElementById('kgBadge').textContent = kgOptions[currentKgIndex];
-      document.getElementById('familyComment').value = saved.comment || '';
+      blockData = JSON.parse(localStorage.getItem('familyBlock-' + block) || '{}');
+      if (!blockData.workouts) blockData.workouts = {};
+      document.getElementById('familyComment').value = blockData.comment || '';
       renderWeeks();
     }
 
-    function cycleKg() {
-      currentKgIndex = (currentKgIndex + 1) % kgOptions.length;
-      document.getElementById('kgBadge').textContent = kgOptions[currentKgIndex];
+    function getWorkout(id) {
+      if (!blockData.workouts[id]) {
+        blockData.workouts[id] = { done: false, kg: 0, load: 0 };
+      }
+      return blockData.workouts[id];
+    }
+
+    function toggleDone(id) {
+      const w = getWorkout(id);
+      w.done = !w.done;
+      renderWeeks();
+    }
+
+    function cycleKg(id) {
+      const w = getWorkout(id);
+      w.kg = (w.kg + 1) % kgOptions.length;
+      renderWeeks();
+    }
+
+    function cycleLoad(id) {
+      const w = getWorkout(id);
+      w.load = (w.load + 1) % 4;
+      renderWeeks();
+    }
+
+    function loadClass(load) {
+      return ['load-none', 'load-easy', 'load-mid', 'load-hard'][load] || 'load-none';
     }
 
     function renderWeeks() {
@@ -286,37 +318,31 @@
         html += `<div class="week-row"><div class="week-label">Неделя ${w}</div>`;
         for (let d = 1; d <= 3; d++) {
           const id = `w${w}d${d}`;
-          const done = blockChecks[id] ? 'done' : '';
-          const mark = blockChecks[id] ? '✓' : '';
-          html += `<button class="check-btn ${done}" onclick="toggleCheck('${id}')">${mark}</button>`;
+          const data = getWorkout(id);
+          const doneClass = data.done ? 'done' : '';
+          const mark = data.done ? '✓ ' : '';
+          const kgText = kgOptions[data.kg];
+          const lc = loadClass(data.load);
+          html += `<button class="workout-btn ${doneClass}" onclick="toggleDone('${id}')">${mark}${kgText}</button>`;
+          html += `<div class="load-sq ${lc}" onclick="cycleLoad('${id}')" title="Нагрузка"></div>`;
         }
         html += '</div>';
       }
       container.innerHTML = html;
     }
 
-    function toggleCheck(id) {
-      blockChecks[id] = !blockChecks[id];
-      renderWeeks();
-    }
-
     function saveFamily() {
       const block = document.getElementById('blockSelect').value;
       const blockName = document.getElementById('blockSelect').selectedOptions[0].text;
-      const comment = document.getElementById('familyComment').value;
+      blockData.comment = document.getElementById('familyComment').value;
 
-      localStorage.setItem('familyBlock-' + block, JSON.stringify({
-        checks: blockChecks,
-        kgIndex: currentKgIndex,
-        comment: comment
-      }));
+      localStorage.setItem('familyBlock-' + block, JSON.stringify(blockData));
 
       workouts.push({
         type: 'family',
-        name: blockName + ' (' + kgOptions[currentKgIndex] + ')',
+        name: blockName,
         icon: '💜',
-        block: block,
-        kg: kgOptions[currentKgIndex]
+        block: block
       });
       save();
       closeModal('familyModal');
