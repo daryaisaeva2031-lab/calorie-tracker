@@ -10,14 +10,14 @@
   <meta name="theme-color" content="#7d9b7a">
   <link rel="apple-touch-icon" href="icon.png">
   <style>
-    .calendar-overlay {
+    .calendar-overlay, .modal-overlay {
       display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
       z-index: 100; justify-content: center; align-items: flex-end;
     }
-    .calendar-overlay.show { display: flex; }
-    .calendar-modal {
+    .calendar-overlay.show, .modal-overlay.show { display: flex; }
+    .calendar-modal, .modal-box {
       background: var(--cream); border-radius: 24px 24px 0 0; width: 100%; max-width: 400px;
-      padding: 20px 16px 30px; box-shadow: 0 -4px 30px rgba(0,0,0,0.1);
+      padding: 20px 16px 30px; box-shadow: 0 -4px 30px rgba(0,0,0,0.1); max-height: 80vh; overflow-y: auto;
     }
     .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
     .cal-title { font-size: 18px; font-weight: 700; color: var(--sage-dark); }
@@ -30,6 +30,13 @@
     .cal-day.today { background: var(--sage); color: white; font-weight: 700; }
     .cal-day.other { color: #ccc; }
     .cal-day:hover { background: var(--sage-light); }
+    .meal-header { display: flex; justify-content: space-between; align-items: center; margin: 16px 0 10px; }
+    .day-btn {
+      padding: 6px 12px; border-radius: 12px; border: none;
+      background: var(--sage-light); color: var(--sage-dark); font-family: inherit;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+    .food-entry { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--sage-light); font-size: 14px; }
   </style>
 </head>
 <body>
@@ -93,7 +100,10 @@
       </div>
     </div>
 
-    <h2 style="font-size:18px; margin:16px 0 10px; color:var(--sage-dark);">Приёмы пищи</h2>
+    <div class="meal-header">
+      <h2 style="font-size:18px; color:var(--sage-dark); margin:0;">Приёмы пищи</h2>
+      <button class="day-btn" onclick="showDay()">Весь день</button>
+    </div>
     <div id="mealsContainer"></div>
 
     <nav class="bottom-nav">
@@ -117,10 +127,19 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="mealModal" onclick="if(event.target===this) closeMealModal()">
+    <div class="modal-box">
+      <div style="font-weight:700; font-size:18px; margin-bottom:12px;" id="mealModalTitle">Завтрак</div>
+      <div id="mealModalContent"></div>
+      <button onclick="closeMealModal()" style="margin-top:16px; width:100%; padding:12px; border:none; border-radius:14px; background:var(--sage); color:white; font-family:inherit; font-size:15px; font-weight:600;">Закрыть</button>
+    </div>
+  </div>
+
   <script>
     let dayOffset = 0;
     let calMonth = new Date().getMonth();
     let calYear = new Date().getFullYear();
+    let currentDiary = {};
     const months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
     const monthsNom = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
     const weekdays = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
@@ -196,20 +215,20 @@
       const date = new Date();
       date.setDate(date.getDate() + dayOffset);
       const key = 'diary-' + date.toISOString().slice(0,10);
-      const diary = JSON.parse(localStorage.getItem(key) || '{}');
+      currentDiary = JSON.parse(localStorage.getItem(key) || '{}');
 
       let totalK = 0, totalP = 0, totalF = 0, totalC = 0;
       const container = document.getElementById('mealsContainer');
       container.innerHTML = '';
 
       meals.forEach(meal => {
-        const items = diary[meal] || [];
+        const items = currentDiary[meal] || [];
         let mealK = 0;
         items.forEach(i => { mealK += i.calories || 0; totalK += i.calories || 0; totalP += i.protein || 0; totalF += i.fat || 0; totalC += i.carbs || 0; });
-        container.innerHTML += `<div class="card meal-card">
+        container.innerHTML += `<div class="card meal-card" onclick="showMeal('${meal}')" style="cursor:pointer;">
           <div class="meal-icon">${mealIcons[meal]}</div>
           <div class="meal-info"><div class="meal-name">${meal}</div><div class="meal-kcal">${mealK} ккал</div></div>
-          <a href="add.html?meal=${encodeURIComponent(meal)}"><button class="add-btn">+</button></a>
+          <a href="add.html?meal=${encodeURIComponent(meal)}" onclick="event.stopPropagation()"><button class="add-btn">+</button></a>
         </div>`;
       });
 
@@ -221,6 +240,41 @@
       document.getElementById('barP').style.width = Math.min(100, totalP / 90 * 100) + '%';
       document.getElementById('barF').style.width = Math.min(100, totalF / 70 * 100) + '%';
       document.getElementById('barC').style.width = Math.min(100, totalC / 200 * 100) + '%';
+    }
+
+    function showMeal(meal) {
+      const items = currentDiary[meal] || [];
+      document.getElementById('mealModalTitle').textContent = meal;
+      const content = document.getElementById('mealModalContent');
+      if (!items.length) {
+        content.innerHTML = '<div style="text-align:center; color:var(--text-light); padding:20px;">Пока пусто</div>';
+      } else {
+        content.innerHTML = items.map(i =>
+          `<div class="food-entry"><span>${i.name} (${i.grams} г)</span><b>${i.calories} ккал</b></div>`
+        ).join('');
+      }
+      document.getElementById('mealModal').classList.add('show');
+    }
+
+    function showDay() {
+      document.getElementById('mealModalTitle').textContent = 'Весь день';
+      const content = document.getElementById('mealModalContent');
+      let html = '';
+      meals.forEach(meal => {
+        const items = currentDiary[meal] || [];
+        if (items.length) {
+          html += `<div style="font-weight:600; margin-top:12px;">${meal}</div>`;
+          items.forEach(i => {
+            html += `<div class="food-entry"><span>${i.name} (${i.grams} г)</span><b>${i.calories} ккал</b></div>`;
+          });
+        }
+      });
+      content.innerHTML = html || '<div style="text-align:center; color:var(--text-light); padding:20px;">День пустой</div>';
+      document.getElementById('mealModal').classList.add('show');
+    }
+
+    function closeMealModal() {
+      document.getElementById('mealModal').classList.remove('show');
     }
 
     updateDate();
