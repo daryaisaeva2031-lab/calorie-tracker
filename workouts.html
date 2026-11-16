@@ -103,9 +103,14 @@
     <div class="modal-box" onclick="event.stopPropagation()">
       <div style="font-weight:700; text-align:center; margin-bottom:12px;">Семья — силовые</div>
       <select class="block-select" id="blockSelect" onchange="loadBlock()">
-        <option value="zhivaya">Живая сила</option>
-        <option value="sila">Сила</option>
-        <option value="vynoslivost">Выносливость</option>
+        <option value="spokoinaya">Спокойная сила (14 кг)</option>
+        <option value="goryachaya">Горячая сила (гиря 12 кг)</option>
+        <option value="kompaktnaya">Компактная сила (5+7+10 кг)</option>
+        <option value="mudraya">Мудрая сила (9-10 кг)</option>
+        <option value="izyashchnaya">Изящная сила (7-8 кг)</option>
+        <option value="zhivaya">Живая сила (5-7 кг)</option>
+        <option value="zhenstvennaya">Женственная сила (4-5 кг)</option>
+        <option value="legkaya">Лёгкая сила (2-3 кг)</option>
       </select>
       <div id="weeksContainer"></div>
       <button class="modal-btn" onclick="saveFamily()">Сохранить</button>
@@ -159,7 +164,16 @@
     const kgPresets = [1, 3, 5, 7];
     const loadNames = ['','легко','средне','трудно'];
     const loadClasses = ['','load-easy','load-mid','load-hard'];
-    const blocks = [{id:'zhivaya', name:'Живая сила'}, {id:'sila', name:'Сила'}, {id:'vynoslivost', name:'Выносливость'}];
+    const blocks = [
+      {id:'spokoinaya', name:'Спокойная сила', kg:'14 кг'},
+      {id:'goryachaya', name:'Горячая сила', kg:'гиря 12 кг'},
+      {id:'kompaktnaya', name:'Компактная сила', kg:'5+7+10 кг'},
+      {id:'mudraya', name:'Мудрая сила', kg:'9-10 кг'},
+      {id:'izyashchnaya', name:'Изящная сила', kg:'7-8 кг'},
+      {id:'zhivaya', name:'Живая сила', kg:'5-7 кг'},
+      {id:'zhenstvennaya', name:'Женственная сила', kg:'4-5 кг'},
+      {id:'legkaya', name:'Лёгкая сила', kg:'2-3 кг'}
+    ];
     let blockData = {}, editingWorkoutId = null, tempKg = '', tempLoad = 0;
     const warmups = ['Грудной отдел — круги руками','Грудной отдел — растяжка','Шея — наклоны','Спина — кошка','Ноги — махи','Плечи — круги'];
 
@@ -268,7 +282,7 @@
       blocks.forEach(block => {
         const data = JSON.parse(localStorage.getItem('familyBlock-' + block.id) || '{}');
         const workouts = data.workouts || {};
-        html += `<div class="progress-block"><div class="progress-block-title">${block.name}</div>`;
+        html += `<div class="progress-block"><div class="progress-block-title">${block.name} <span style="font-weight:500; color:var(--text-light);">${block.kg}</span></div>`;
         for (let w = 1; w <= 4; w++) {
           html += `<div class="week-row"><div class="week-label">Неделя ${w}</div>`;
           for (let d = 1; d <= 3; d++) {
