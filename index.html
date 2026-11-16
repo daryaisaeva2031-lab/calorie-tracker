@@ -17,7 +17,7 @@
     .calendar-overlay.show, .modal-overlay.show { display: flex; }
     .calendar-modal, .modal-box {
       background: var(--cream); border-radius: 20px; width: 90%; max-width: 360px;
-      padding: 20px 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.15); max-height: 80vh; overflow-y: auto;
+      padding: 20px 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.15); max-height: 85vh; overflow-y: auto;
     }
     .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
     .cal-title { font-size: 18px; font-weight: 700; color: var(--sage-dark); }
@@ -29,6 +29,7 @@
       background: transparent; position: relative;
     }
     .cal-day.today { background: var(--sage); color: white; font-weight: 700; }
+    .cal-day.selected { outline: 2px solid var(--sage); }
     .cal-day.other { color: #ccc; }
     .cal-day:hover { background: var(--sage-light); }
     .cal-icons { font-size: 9px; line-height: 1; margin-top: 1px; }
@@ -48,7 +49,8 @@
       width: 110px; height: 110px; border-radius: 50%; background: var(--cream);
       display: flex; flex-direction: column; align-items: center; justify-content: center;
     }
-    .day-stat { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--sage-light); }
+    .day-stat { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--sage-light); font-size: 14px; }
+    .day-info { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--sage-light); }
   </style>
 </head>
 <body>
@@ -135,16 +137,9 @@
         <button class="icon-btn" onclick="changeMonth(1)">→</button>
       </div>
       <div class="cal-grid" id="calGrid"></div>
-      <button onclick="closeCalendar()" style="margin-top:16px; width:100%; padding:12px; border:none; border-radius:14px; background:var(--sage); color:white; font-family:inherit; font-size:15px; font-weight:600;">Закрыть</button>
-    </div>
-  </div>
-
-  <div class="modal-overlay" id="dayDetailModal" onclick="if(event.target===this) closeDayDetail()">
-    <div class="modal-box">
-      <div style="font-weight:700; font-size:18px; margin-bottom:12px; text-align:center;" id="dayDetailTitle">16 ноября</div>
-      <div id="dayDetailContent"></div>
-      <button onclick="goToDay()" style="margin-top:12px; width:100%; padding:12px; border:none; border-radius:14px; background:var(--sage-light); color:var(--sage-dark); font-family:inherit; font-size:15px; font-weight:600;">Перейти к дню</button>
-      <button onclick="closeDayDetail()" style="margin-top:8px; width:100%; padding:12px; border:none; border-radius:14px; background:var(--sage); color:white; font-family:inherit; font-size:15px; font-weight:600;">Закрыть</button>
+      <div class="day-info" id="dayInfo" style="display:none;"></div>
+      <button onclick="goToDay()" id="goToDayBtn" style="display:none; margin-top:12px; width:100%; padding:12px; border:none; border-radius:14px; background:var(--sage-light); color:var(--sage-dark); font-family:inherit; font-size:15px; font-weight:600;">Перейти к дню</button>
+      <button onclick="closeCalendar()" style="margin-top:12px; width:100%; padding:12px; border:none; border-radius:14px; background:var(--sage); color:white; font-family:inherit; font-size:15px; font-weight:600;">Закрыть</button>
     </div>
   </div>
 
@@ -182,6 +177,9 @@
     }
 
     function openCalendar() {
+      selectedCalDay = null;
+      document.getElementById('dayInfo').style.display = 'none';
+      document.getElementById('goToDayBtn').style.display = 'none';
       renderCalendar();
       document.getElementById('calOverlay').classList.add('show');
     }
@@ -192,6 +190,9 @@
       calMonth += delta;
       if (calMonth > 11) { calMonth = 0; calYear++; }
       if (calMonth < 0) { calMonth = 11; calYear--; }
+      selectedCalDay = null;
+      document.getElementById('dayInfo').style.display = 'none';
+      document.getElementById('goToDayBtn').style.display = 'none';
       renderCalendar();
     }
     function renderCalendar() {
@@ -220,6 +221,7 @@
         if (d === today.getDate() && calMonth === today.getMonth() && calYear === today.getFullYear()) {
           el.classList.add('today');
         }
+        if (d === selectedCalDay) el.classList.add('selected');
         const dateStr = calYear + '-' + String(calMonth+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
         const wKey = 'workouts-' + dateStr;
         const wData = JSON.parse(localStorage.getItem(wKey) || '[]');
@@ -229,15 +231,15 @@
           icons = types.map(t => typeIcons[t] || '').join('');
         }
         el.innerHTML = d + (icons ? `<div class="cal-icons">${icons}</div>` : '');
-        el.onclick = () => showDayDetail(d);
+        el.onclick = () => showDayInfo(d);
         grid.appendChild(el);
       }
     }
 
-    function showDayDetail(day) {
+    function showDayInfo(day) {
       selectedCalDay = day;
+      renderCalendar();
       const dateStr = calYear + '-' + String(calMonth+1).padStart(2,'0') + '-' + String(day).padStart(2,'0');
-      document.getElementById('dayDetailTitle').textContent = day + ' ' + months[calMonth];
 
       const diary = JSON.parse(localStorage.getItem('diary-' + dateStr) || '{}');
       let totalK = 0;
@@ -252,26 +254,23 @@
 
       const wData = JSON.parse(localStorage.getItem('workouts-' + dateStr) || '[]');
 
-      let html = '';
+      let html = `<div style="font-weight:700; text-align:center; margin-bottom:8px;">${day} ${months[calMonth]}</div>`;
       html += `<div class="day-stat"><span>Калории</span><b>${totalK} ккал</b></div>`;
       html += `<div class="day-stat"><span>Шаги</span><b>${steps}</b></div>`;
       html += `<div class="day-stat"><span>Вес</span><b>${weight}</b></div>`;
 
       if (wData.length) {
-        html += `<div style="font-weight:600; margin-top:12px;">Тренировки</div>`;
+        html += `<div style="font-weight:600; margin-top:10px;">Тренировки</div>`;
         wData.forEach(w => {
           html += `<div class="food-entry"><span>${w.icon || ''} ${w.name}</span></div>`;
         });
       } else {
-        html += `<div style="color:var(--text-light); margin-top:12px; text-align:center;">Тренировок нет</div>`;
+        html += `<div style="color:var(--text-light); margin-top:10px; text-align:center; font-size:13px;">Тренировок нет</div>`;
       }
 
-      document.getElementById('dayDetailContent').innerHTML = html;
-      document.getElementById('dayDetailModal').classList.add('show');
-    }
-
-    function closeDayDetail() {
-      document.getElementById('dayDetailModal').classList.remove('show');
+      document.getElementById('dayInfo').innerHTML = html;
+      document.getElementById('dayInfo').style.display = 'block';
+      document.getElementById('goToDayBtn').style.display = 'block';
     }
 
     function goToDay() {
@@ -283,7 +282,6 @@
         updateDate();
         loadDiary();
       }
-      closeDayDetail();
       closeCalendar();
     }
 
