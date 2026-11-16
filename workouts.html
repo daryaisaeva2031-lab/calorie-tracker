@@ -42,13 +42,16 @@
     .workout-plaque { flex: 1; padding: 4px 2px; border-radius: 6px; border: 2px solid var(--sage-light); background: white; cursor: pointer; font-size: 10px; font-family: inherit; font-weight: 600; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; min-height: 32px; }
     .workout-plaque:hover { border-color: var(--sage); }
     .workout-plaque.done { background: var(--sage); border-color: var(--sage); color: white; }
-    .plaque-top { display: flex; align-items: center; gap: 3px; }
+    .plaque-top { display: flex; align-items: center; gap: 3px; flex-wrap: wrap; justify-content: center; }
     .plaque-date { font-size: 9px; opacity: 0.8; }
     .load-dot { width: 8px; height: 8px; border-radius: 2px; }
-    .kg-btns { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+    .kg-btns { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
     .kg-btn { padding: 8px 12px; border-radius: 10px; border: 2px solid var(--sage-light); background: white; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 13px; }
     .kg-btn.selected { background: var(--sage); border-color: var(--sage); color: white; }
     .kg-custom { width: 70px; padding: 8px; border-radius: 10px; border: 2px solid var(--sage-light); font-family: inherit; font-size: 13px; text-align: center; }
+    .kg-list { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 12px; }
+    .kg-tag { background: var(--sage); color: white; padding: 4px 8px; border-radius: 8px; font-size: 12px; display: flex; align-items: center; gap: 4px; }
+    .kg-tag .remove { cursor: pointer; font-weight: 700; }
     .date-input { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--sage-light); font-family: inherit; font-size: 14px; margin-bottom: 12px; }
     .load-btns { display: flex; gap: 8px; margin-bottom: 12px; }
     .load-btn { flex: 1; padding: 10px; border-radius: 10px; border: 2px solid transparent; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 13px; }
@@ -144,8 +147,9 @@
       <div style="font-weight:700; text-align:center; margin-bottom:12px;" id="workoutDetailTitle">Тренировка</div>
       <div style="font-size:13px; color:var(--text-light); margin-bottom:6px;">Дата</div>
       <input type="date" class="date-input" id="workoutDate">
-      <div style="font-size:13px; color:var(--text-light); margin-bottom:6px;">Килограммы</div>
+      <div style="font-size:13px; color:var(--text-light); margin-bottom:6px;">Килограммы (можно несколько)</div>
       <div class="kg-btns" id="kgBtns"></div>
+      <div class="kg-list" id="kgList"></div>
       <div style="font-size:13px; color:var(--text-light); margin-bottom:6px;">Нагрузка</div>
       <div class="load-btns">
         <button class="load-btn easy" id="loadEasy" onclick="setLoad(1)">легко</button>
@@ -184,16 +188,16 @@
     const loadNames = ['','легко','средне','трудно'];
     const loadClasses = ['','load-easy','load-mid','load-hard'];
     const blocks = [
-      {id:'legkaya', name:'Лёгкая сила', kg:'2-3 кг', color:'#7ba3d4'},
-      {id:'zhenstvennaya', name:'Женственная сила', kg:'4-5 кг', color:'#a8d4a8'},
-      {id:'zhivaya', name:'Живая сила', kg:'5-7 кг', color:'#7cb87c'},
-      {id:'izyashchnaya', name:'Изящная сила', kg:'7-8 кг', color:'#e8d44a'},
-      {id:'mudraya', name:'Мудрая сила', kg:'9-10 кг', color:'#e8a04a'},
-      {id:'kompaktnaya', name:'Компактная сила', kg:'5+7+10 кг', color:'#e07a6a'},
-      {id:'goryachaya', name:'Горячая сила', kg:'гиря 12 кг', color:'#e88bb8'},
-      {id:'spokoinaya', name:'Спокойная сила', kg:'14 кг', color:'#9b7ed9'}
+      {id:'legkaya', name:'Лёгкая сила', kg:'2-3 кг', color:'#7ba3d4', days: 3},
+      {id:'zhenstvennaya', name:'Женственная сила', kg:'4-5 кг', color:'#a8d4a8', days: 3},
+      {id:'zhivaya', name:'Живая сила', kg:'5-7 кг', color:'#7cb87c', days: 3},
+      {id:'izyashchnaya', name:'Изящная сила', kg:'7-8 кг', color:'#e8d44a', days: 3},
+      {id:'mudraya', name:'Мудрая сила', kg:'9-10 кг', color:'#e8a04a', days: 3},
+      {id:'kompaktnaya', name:'Компактная сила', kg:'5+7+10 кг', color:'#e07a6a', days: 5},
+      {id:'goryachaya', name:'Горячая сила', kg:'гиря 12 кг', color:'#e88bb8', days: 3},
+      {id:'spokoinaya', name:'Спокойная сила', kg:'14 кг', color:'#9b7ed9', days: 2}
     ];
-    let allBlockData = {}, editingWorkoutId = null, editingBlockId = null, tempKg = '', tempLoad = 0;
+    let allBlockData = {}, editingWorkoutId = null, editingBlockId = null, tempKgList = [], tempLoad = 0;
     const warmups = ['Грудной отдел — круги руками','Грудной отдел — растяжка','Шея — наклоны','Спина — кошка','Ноги — махи','Плечи — круги'];
 
     function changeDay(delta) { dayOffset += delta; loadDay(); }
@@ -338,7 +342,7 @@
     }
     function getWorkout(blockId, workoutId) {
       if (!allBlockData[blockId]) allBlockData[blockId] = { workouts: {} };
-      if (!allBlockData[blockId].workouts[workoutId]) allBlockData[blockId].workouts[workoutId] = { done: false, kg: '', load: 0, comment: '', dateStr: '' };
+      if (!allBlockData[blockId].workouts[workoutId]) allBlockData[blockId].workouts[workoutId] = { done: false, kg: '', kgList: [], load: 0, comment: '', dateStr: '' };
       return allBlockData[blockId].workouts[workoutId];
     }
     function loadClass(load) { return ['','load-easy','load-mid','load-hard'][load] || ''; }
@@ -352,14 +356,14 @@
       const container = document.getElementById('familyContent');
       let html = '';
       blocks.forEach(block => {
-        html += `<div class="block-section block-${block.id}"><div class="block-title" style="color:${block.color};">${block.name} <span style="font-weight:500; opacity:0.7;">${block.kg}</span></div>`;
+        html += `<div class="block-section block-${block.id}"><div class="block-title" style="color:${block.color};">${block.name} <span style="font-weight:500; opacity:0.7;">${block.kg} · ${block.days}р/нед</span></div>`;
         for (let w = 1; w <= 4; w++) {
           html += `<div class="week-row"><div class="week-label" style="background:${block.color};">Неделя ${w}</div>`;
-          for (let d = 1; d <= 3; d++) {
+          for (let d = 1; d <= block.days; d++) {
             const id = `w${w}d${d}`, data = getWorkout(block.id, id);
             const doneClass = data.done ? 'done' : '';
             const mark = data.done ? '✓' : '';
-            const kgText = data.kg || '—';
+            const kgText = data.kgList && data.kgList.length ? data.kgList.join('+') : (data.kg || '—');
             const lc = loadClass(data.load);
             const dot = lc ? `<span class="load-dot ${lc}"></span>` : '';
             const dateText = formatDate(data.dateStr);
@@ -385,7 +389,7 @@
       editingBlockId = blockId;
       editingWorkoutId = id;
       const data = getWorkout(blockId, id);
-      tempKg = data.kg || '';
+      tempKgList = data.kgList ? [...data.kgList] : (data.kg ? [data.kg] : []);
       tempLoad = data.load || 0;
       const block = blocks.find(b => b.id === blockId);
       document.getElementById('workoutDetailTitle').textContent = `${block.name} — Нед. ${week}, трен. ${day}`;
@@ -393,6 +397,7 @@
       document.getElementById('workoutComment').value = data.comment || '';
       document.getElementById('workoutDate').value = data.dateStr || '';
       renderKgBtns();
+      renderKgList();
       updateLoadBtns();
       setTimeout(() => {
         document.getElementById('workoutDetailModal').classList.add('show');
@@ -401,15 +406,39 @@
     function renderKgBtns() {
       const container = document.getElementById('kgBtns');
       let html = kgPresets.map(kg => {
-        const sel = tempKg === kg + ' кг' ? 'selected' : '';
-        return `<button class="kg-btn ${sel}" onclick="setKg('${kg} кг')">${kg} кг</button>`;
+        return `<button class="kg-btn" onclick="addKg('${kg} кг')">${kg} кг</button>`;
       }).join('');
-      const customVal = kgPresets.map(k => k + ' кг').includes(tempKg) ? '' : tempKg.replace(' кг', '');
-      html += `<input type="number" class="kg-custom" id="customKg" placeholder="свой" value="${customVal}" oninput="setCustomKg(this.value)">`;
+      html += `<input type="number" class="kg-custom" id="customKg" placeholder="свой" onkeypress="if(event.key==='Enter'){addCustomKg();}">`;
+      html += `<button class="kg-btn" onclick="addCustomKg()" style="padding:8px 10px;">+</button>`;
       container.innerHTML = html;
     }
-    function setKg(kg) { tempKg = kg; renderKgBtns(); }
-    function setCustomKg(val) { tempKg = val ? val + ' кг' : ''; }
+    function renderKgList() {
+      const container = document.getElementById('kgList');
+      if (!tempKgList.length) {
+        container.innerHTML = '<div style="font-size:12px; color:var(--text-light);">Выбери веса выше</div>';
+        return;
+      }
+      container.innerHTML = tempKgList.map((kg, i) =>
+        `<span class="kg-tag">${kg}<span class="remove" onclick="removeKg(${i})">×</span></span>`
+      ).join('');
+    }
+    function addKg(kg) {
+      if (!tempKgList.includes(kg)) {
+        tempKgList.push(kg);
+        renderKgList();
+      }
+    }
+    function addCustomKg() {
+      const val = document.getElementById('customKg').value;
+      if (val) {
+        addKg(val + ' кг');
+        document.getElementById('customKg').value = '';
+      }
+    }
+    function removeKg(i) {
+      tempKgList.splice(i, 1);
+      renderKgList();
+    }
     function setLoad(l) { tempLoad = tempLoad === l ? 0 : l; updateLoadBtns(); }
     function updateLoadBtns() {
       document.getElementById('loadEasy').classList.toggle('selected', tempLoad === 1);
@@ -429,7 +458,7 @@
           localStorage.setItem(targetKey, JSON.stringify(targetWorkouts));
         }
       }
-      allBlockData[editingBlockId].workouts[editingWorkoutId] = { done: false, kg: '', load: 0, comment: '', dateStr: '' };
+      allBlockData[editingBlockId].workouts[editingWorkoutId] = { done: false, kg: '', kgList: [], load: 0, comment: '', dateStr: '' };
       localStorage.setItem('familyBlock-' + editingBlockId, JSON.stringify(allBlockData[editingBlockId]));
       closeModal('workoutDetailModal');
       renderAllBlocks();
@@ -437,9 +466,8 @@
     }
     function saveWorkoutDetail() {
       const data = getWorkout(editingBlockId, editingWorkoutId);
-      const customVal = document.getElementById('customKg').value;
-      if (customVal && !kgPresets.map(k => k + ' кг').includes(tempKg)) tempKg = customVal + ' кг';
-      data.kg = tempKg;
+      data.kgList = [...tempKgList];
+      data.kg = tempKgList.join('+');
       data.load = tempLoad;
       data.dateStr = document.getElementById('workoutDate').value;
       data.done = document.getElementById('workoutDone').checked;
