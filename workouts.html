@@ -12,7 +12,6 @@
     .w-btn .icon { font-size: 22px; }
     .w-btn .title { font-weight: 700; letter-spacing: 0.5px; }
     .w-btn .sub { font-size: 12px; font-weight: 500; opacity: 0.8; }
-    .progress-btn { width: 100%; padding: 12px; border-radius: 14px; border: none; background: #e0f4f4; color: var(--sage-dark); font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer; margin-bottom: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; }
     .steps-row { display: flex; gap: 8px; margin-bottom: 16px; }
     .steps-input { flex: 1; padding: 12px; border-radius: 12px; border: 1px solid var(--sage-light); font-family: inherit; font-size: 15px; }
     .steps-btn { padding: 12px 16px; border: none; border-radius: 12px; background: var(--sage); color: white; font-family: inherit; font-weight: 600; cursor: pointer; }
@@ -30,15 +29,14 @@
     .modal-btn { width: 100%; padding: 12px; border: none; border-radius: 14px; background: var(--sage); color: white; font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 10px; }
     .day-nav { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 12px; }
     .day-nav button { width: 36px; height: 36px; border-radius: 50%; border: none; background: var(--sage-light); color: var(--sage-dark); font-size: 16px; cursor: pointer; }
-    .block-select { width: 100%; padding: 12px; border-radius: 14px; border: 1px solid var(--sage-light); font-family: inherit; font-size: 15px; margin-bottom: 12px; background: white; }
-    .week-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; background: white; border-radius: 12px; padding: 8px; }
-    .week-label { padding: 8px 10px; border-radius: 10px; background: var(--sage); color: white; font-size: 12px; font-weight: 600; min-width: 70px; text-align: center; }
-    .workout-plaque { flex: 1; padding: 10px 6px; border-radius: 10px; border: 2px solid var(--sage-light); background: white; cursor: pointer; font-size: 12px; font-family: inherit; font-weight: 600; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 56px; position: relative; }
+    .week-row { display: flex; align-items: center; gap: 4px; margin-bottom: 4px; background: white; border-radius: 10px; padding: 4px; }
+    .week-label { padding: 4px 6px; border-radius: 8px; color: white; font-size: 10px; font-weight: 600; min-width: 50px; text-align: center; }
+    .workout-plaque { flex: 1; padding: 4px 2px; border-radius: 6px; border: 2px solid var(--sage-light); background: white; cursor: pointer; font-size: 10px; font-family: inherit; font-weight: 600; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; min-height: 32px; }
     .workout-plaque:hover { border-color: var(--sage); }
     .workout-plaque.done { background: var(--sage); border-color: var(--sage); color: white; }
-    .plaque-top { display: flex; align-items: center; gap: 4px; }
-    .plaque-date { font-size: 10px; opacity: 0.8; }
-    .load-dot { width: 10px; height: 10px; border-radius: 2px; }
+    .plaque-top { display: flex; align-items: center; gap: 3px; }
+    .plaque-date { font-size: 9px; opacity: 0.8; }
+    .load-dot { width: 8px; height: 8px; border-radius: 2px; }
     .kg-btns { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
     .kg-btn { padding: 8px 12px; border-radius: 10px; border: 2px solid var(--sage-light); background: white; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 13px; }
     .kg-btn.selected { background: var(--sage); border-color: var(--sage); color: white; }
@@ -52,12 +50,8 @@
     .load-btn.selected { border-color: var(--sage-dark); }
     .done-check { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 14px; }
     .done-check input { width: 20px; height: 20px; }
-    .progress-block { margin-bottom: 12px; padding: 8px; border-radius: 10px; }
-    .progress-block-title { font-weight: 700; margin-bottom: 6px; font-size: 14px; }
-    .progress-modal .week-row { padding: 4px; gap: 4px; margin-bottom: 4px; }
-    .progress-modal .week-label { padding: 4px 6px; font-size: 10px; min-width: 50px; }
-    .progress-modal .workout-plaque { padding: 4px 2px; min-height: 32px; font-size: 10px; border-radius: 6px; }
-    .progress-modal .load-dot { width: 8px; height: 8px; }
+    .block-section { margin-bottom: 10px; padding: 8px; border-radius: 10px; }
+    .block-title { font-weight: 700; margin-bottom: 6px; font-size: 14px; }
     .btn-row { display: flex; gap: 8px; margin-top: 10px; }
     .btn-row .modal-btn { margin-top: 0; flex: 1; }
     .reset-btn { padding: 12px; border: none; border-radius: 14px; background: #e8a0a0; color: white; font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
@@ -87,7 +81,6 @@
       <button class="w-btn" onclick="openWarmup()"><span class="icon">💚</span><span class="title">СЕМЬЯ</span><span class="sub">разминки</span></button>
       <button class="w-btn" onclick="openOwn()"><span class="icon">🌿</span><span class="title">СВОЯ</span></button>
     </div>
-    <button class="progress-btn" onclick="openProgress()">🩵 СЕМЬЯ прогресс</button>
     <div class="card"><div style="font-weight:600; margin-bottom:8px;" id="listTitle">На сегодня</div><div id="todayList"></div></div>
     <nav class="bottom-nav">
       <a href="index.html" class="nav-item">🏠<span>Сегодня</span></a>
@@ -108,29 +101,11 @@
   </div>
 
   <div class="modal-overlay" id="familyModal" onclick="if(event.target===this) closeModal('familyModal')">
-    <div class="modal-box" onclick="event.stopPropagation()">
-      <div style="font-weight:700; text-align:center; margin-bottom:12px;">Семья — силовые</div>
-      <select class="block-select" id="blockSelect" onchange="loadBlock()">
-        <option value="legkaya">Лёгкая сила (2-3 кг)</option>
-        <option value="zhenstvennaya">Женственная сила (4-5 кг)</option>
-        <option value="zhivaya">Живая сила (5-7 кг)</option>
-        <option value="izyashchnaya">Изящная сила (7-8 кг)</option>
-        <option value="mudraya">Мудрая сила (9-10 кг)</option>
-        <option value="kompaktnaya">Компактная сила (5+7+10 кг)</option>
-        <option value="goryachaya">Горячая сила (гиря 12 кг)</option>
-        <option value="spokoinaya">Спокойная сила (14 кг)</option>
-      </select>
-      <div id="weeksContainer"></div>
+    <div class="modal-box" onclick="event.stopPropagation()" style="max-width:420px;">
+      <div style="font-weight:700; text-align:center; margin-bottom:12px;">💜 СЕМЬЯ силовые</div>
+      <div id="familyContent"></div>
       <button class="modal-btn" onclick="saveFamily()">Сохранить</button>
-      <button onclick="closeModal('familyModal')" style="margin-top:8px; width:100%; padding:12px; border:none; border-radius:14px; background:var(--sage-light); color:var(--sage-dark); font-family:inherit; font-size:15px; font-weight:600;">Закрыть</button>
-    </div>
-  </div>
-
-  <div class="modal-overlay" id="progressModal" onclick="if(event.target===this) closeModal('progressModal')">
-    <div class="modal-box progress-modal" onclick="event.stopPropagation()">
-      <div style="font-weight:700; text-align:center; margin-bottom:12px;">🩵 СЕМЬЯ прогресс</div>
-      <div id="progressContent"></div>
-      <button onclick="closeModal('progressModal')" style="margin-top:8px; width:100%; padding:10px; border:none; border-radius:14px; background:var(--sage); color:white; font-family:inherit; font-size:14px; font-weight:600;">Закрыть</button>
+      <button onclick="closeModal('familyModal')" style="margin-top:8px; width:100%; padding:10px; border:none; border-radius:14px; background:var(--sage-light); color:var(--sage-dark); font-family:inherit; font-size:14px; font-weight:600;">Закрыть</button>
     </div>
   </div>
 
@@ -182,20 +157,8 @@
       {id:'goryachaya', name:'Горячая сила', kg:'гиря 12 кг', color:'#e88bb8'},
       {id:'spokoinaya', name:'Спокойная сила', kg:'14 кг', color:'#9b7ed9'}
     ];
-    let blockData = {}, editingWorkoutId = null, tempKg = '', tempLoad = 0;
+    let allBlockData = {}, editingWorkoutId = null, editingBlockId = null, tempKg = '', tempLoad = 0;
     const warmups = ['Грудной отдел — круги руками','Грудной отдел — растяжка','Шея — наклоны','Спина — кошка','Ноги — махи','Плечи — круги'];
-
-    function resetBrokenWorkouts() {
-      if (localStorage.getItem('resetDone')) return;
-      const block = JSON.parse(localStorage.getItem('familyBlock-zhivaya') || '{}');
-      if (block.workouts) {
-        delete block.workouts['w1d2'];
-        delete block.workouts['w1d3'];
-        localStorage.setItem('familyBlock-zhivaya', JSON.stringify(block));
-      }
-      localStorage.setItem('resetDone', '1');
-    }
-    resetBrokenWorkouts();
 
     function changeDay(delta) { dayOffset += delta; loadDay(); }
     function loadDay() {
@@ -237,16 +200,20 @@
     }
     function save() { localStorage.setItem(key, JSON.stringify(workouts)); render(); }
     function addSimple(type) { workouts.push({ type, name: 'Бассейн', icon: '💧' }); save(); }
-    function openFamily() { loadBlock(); document.getElementById('familyModal').classList.add('show'); }
-    function loadBlock() {
-      const block = document.getElementById('blockSelect').value;
-      blockData = JSON.parse(localStorage.getItem('familyBlock-' + block) || '{}');
-      if (!blockData.workouts) blockData.workouts = {};
-      renderWeeks();
+    function openFamily() { loadAllBlocks(); document.getElementById('familyModal').classList.add('show'); }
+    function loadAllBlocks() {
+      allBlockData = {};
+      blocks.forEach(block => {
+        const data = JSON.parse(localStorage.getItem('familyBlock-' + block.id) || '{}');
+        if (!data.workouts) data.workouts = {};
+        allBlockData[block.id] = data;
+      });
+      renderAllBlocks();
     }
-    function getWorkout(id) {
-      if (!blockData.workouts[id]) blockData.workouts[id] = { done: false, kg: '', load: 0, comment: '', dateStr: '' };
-      return blockData.workouts[id];
+    function getWorkout(blockId, workoutId) {
+      if (!allBlockData[blockId]) allBlockData[blockId] = { workouts: {} };
+      if (!allBlockData[blockId].workouts[workoutId]) allBlockData[blockId].workouts[workoutId] = { done: false, kg: '', load: 0, comment: '', dateStr: '' };
+      return allBlockData[blockId].workouts[workoutId];
     }
     function loadClass(load) { return ['','load-easy','load-mid','load-hard'][load] || ''; }
     function formatDate(dateStr) {
@@ -255,66 +222,47 @@
       const yy = String(d.getFullYear()).slice(-2);
       return String(d.getDate()).padStart(2,'0') + '.' + String(d.getMonth()+1).padStart(2,'0') + '.' + yy;
     }
-    function renderWeeks() {
-      const container = document.getElementById('weeksContainer');
-      let html = '';
-      for (let w = 1; w <= 4; w++) {
-        html += `<div class="week-row"><div class="week-label">Неделя ${w}</div>`;
-        for (let d = 1; d <= 3; d++) {
-          const id = `w${w}d${d}`, data = getWorkout(id);
-          const doneClass = data.done ? 'done' : '';
-          const mark = data.done ? '✓' : '';
-          const kgText = data.kg || '—';
-          const lc = loadClass(data.load);
-          const dot = lc ? `<span class="load-dot ${lc}"></span>` : '';
-          const dateText = formatDate(data.dateStr);
-          html += `<div class="workout-plaque ${doneClass}" data-id="${id}" data-week="${w}" data-day="${d}">`;
-          html += `<div class="plaque-top">${mark ? mark + ' ' : ''}${kgText}${dot}</div>`;
-          html += `<div class="plaque-date">${dateText || '&nbsp;'}</div>`;
-          html += `</div>`;
-        }
-        html += '</div>';
-      }
-      container.innerHTML = html;
-      container.querySelectorAll('.workout-plaque').forEach(el => {
-        el.onclick = function(e) {
-          e.stopPropagation();
-          e.preventDefault();
-          openWorkoutDetail(this.dataset.id, parseInt(this.dataset.week), parseInt(this.dataset.day));
-        };
-      });
-    }
-    function openProgress() {
-      const container = document.getElementById('progressContent');
+    function renderAllBlocks() {
+      const container = document.getElementById('familyContent');
       let html = '';
       blocks.forEach(block => {
-        const data = JSON.parse(localStorage.getItem('familyBlock-' + block.id) || '{}');
-        const workouts = data.workouts || {};
-        html += `<div class="progress-block block-${block.id}"><div class="progress-block-title" style="color:${block.color};">${block.name} <span style="font-weight:500; opacity:0.7;">${block.kg}</span></div>`;
+        html += `<div class="block-section block-${block.id}"><div class="block-title" style="color:${block.color};">${block.name} <span style="font-weight:500; opacity:0.7;">${block.kg}</span></div>`;
         for (let w = 1; w <= 4; w++) {
           html += `<div class="week-row"><div class="week-label" style="background:${block.color};">Неделя ${w}</div>`;
           for (let d = 1; d <= 3; d++) {
-            const id = `w${w}d${d}`, wd = workouts[id] || { done: false, kg: '', load: 0 };
-            const doneClass = wd.done ? 'done' : '';
-            const mark = wd.done ? '✓' : '';
-            const kgText = wd.kg || '—';
-            const lc = loadClass(wd.load);
+            const id = `w${w}d${d}`, data = getWorkout(block.id, id);
+            const doneClass = data.done ? 'done' : '';
+            const mark = data.done ? '✓' : '';
+            const kgText = data.kg || '—';
+            const lc = loadClass(data.load);
             const dot = lc ? `<span class="load-dot ${lc}"></span>` : '';
-            html += `<div class="workout-plaque ${doneClass}"><div class="plaque-top">${mark ? mark + ' ' : ''}${kgText}${dot}</div></div>`;
+            const dateText = formatDate(data.dateStr);
+            html += `<div class="workout-plaque ${doneClass}" data-block="${block.id}" data-id="${id}" data-week="${w}" data-day="${d}">`;
+            html += `<div class="plaque-top">${mark ? mark + ' ' : ''}${kgText}${dot}</div>`;
+            html += `<div class="plaque-date">${dateText || '&nbsp;'}</div>`;
+            html += `</div>`;
           }
           html += '</div>';
         }
         html += '</div>';
       });
       container.innerHTML = html;
-      document.getElementById('progressModal').classList.add('show');
+      container.querySelectorAll('.workout-plaque').forEach(el => {
+        el.onclick = function(e) {
+          e.stopPropagation();
+          e.preventDefault();
+          openWorkoutDetail(this.dataset.block, this.dataset.id, parseInt(this.dataset.week), parseInt(this.dataset.day));
+        };
+      });
     }
-    function openWorkoutDetail(id, week, day) {
+    function openWorkoutDetail(blockId, id, week, day) {
+      editingBlockId = blockId;
       editingWorkoutId = id;
-      const data = getWorkout(id);
+      const data = getWorkout(blockId, id);
       tempKg = data.kg || '';
       tempLoad = data.load || 0;
-      document.getElementById('workoutDetailTitle').textContent = `Неделя ${week}, трен. ${day}`;
+      const block = blocks.find(b => b.id === blockId);
+      document.getElementById('workoutDetailTitle').textContent = `${block.name} — Нед. ${week}, трен. ${day}`;
       document.getElementById('workoutDone').checked = !!data.done;
       document.getElementById('workoutComment').value = data.comment || '';
       document.getElementById('workoutDate').value = data.dateStr || '';
@@ -343,26 +291,25 @@
       document.getElementById('loadHard').classList.toggle('selected', tempLoad === 3);
     }
     function resetWorkout() {
-      if (!editingWorkoutId) return;
-      const data = blockData.workouts[editingWorkoutId];
+      if (!editingWorkoutId || !editingBlockId) return;
+      const data = allBlockData[editingBlockId].workouts[editingWorkoutId];
       if (data && data.dateStr) {
         const targetKey = 'workouts-' + data.dateStr;
         let targetWorkouts = JSON.parse(localStorage.getItem(targetKey) || '[]');
-        const block = document.getElementById('blockSelect').value;
         const match = editingWorkoutId.match(/w(\d+)d(\d+)/);
         if (match) {
           const week = parseInt(match[1]), day = parseInt(match[2]);
-          targetWorkouts = targetWorkouts.filter(tw => !(tw.block === block && tw.week === week && tw.day === day));
+          targetWorkouts = targetWorkouts.filter(tw => !(tw.block === editingBlockId && tw.week === week && tw.day === day));
           localStorage.setItem(targetKey, JSON.stringify(targetWorkouts));
         }
       }
-      blockData.workouts[editingWorkoutId] = { done: false, kg: '', load: 0, comment: '', dateStr: '' };
+      allBlockData[editingBlockId].workouts[editingWorkoutId] = { done: false, kg: '', load: 0, comment: '', dateStr: '' };
       closeModal('workoutDetailModal');
-      renderWeeks();
+      renderAllBlocks();
       loadDay();
     }
     function saveWorkoutDetail() {
-      const data = getWorkout(editingWorkoutId);
+      const data = getWorkout(editingBlockId, editingWorkoutId);
       const customVal = document.getElementById('customKg').value;
       if (customVal && !kgPresets.map(k => k + ' кг').includes(tempKg)) tempKg = customVal + ' кг';
       data.kg = tempKg;
@@ -371,30 +318,30 @@
       data.done = document.getElementById('workoutDone').checked;
       data.comment = document.getElementById('workoutComment').value;
       closeModal('workoutDetailModal');
-      renderWeeks();
+      renderAllBlocks();
     }
     function saveFamily() {
-      const block = document.getElementById('blockSelect').value;
-      const blockName = document.getElementById('blockSelect').selectedOptions[0].text;
-      localStorage.setItem('familyBlock-' + block, JSON.stringify(blockData));
-
-      for (let w = 1; w <= 4; w++) {
-        for (let d = 1; d <= 3; d++) {
-          const id = `w${w}d${d}`, data = blockData.workouts[id];
-          if (data && data.done && data.dateStr) {
-            const targetKey = 'workouts-' + data.dateStr;
-            let targetWorkouts = JSON.parse(localStorage.getItem(targetKey) || '[]');
-            const exists = targetWorkouts.some(tw => tw.block === block && tw.week === w && tw.day === d);
-            if (!exists) {
-              targetWorkouts.push({
-                type: 'family', name: blockName, icon: '💜', block,
-                week: w, day: d, kg: data.kg || '', load: loadNames[data.load] || '', loadIdx: data.load
-              });
-              localStorage.setItem(targetKey, JSON.stringify(targetWorkouts));
+      blocks.forEach(block => {
+        localStorage.setItem('familyBlock-' + block.id, JSON.stringify(allBlockData[block.id]));
+        const blockData = allBlockData[block.id];
+        for (let w = 1; w <= 4; w++) {
+          for (let d = 1; d <= 3; d++) {
+            const id = `w${w}d${d}`, data = blockData.workouts[id];
+            if (data && data.done && data.dateStr) {
+              const targetKey = 'workouts-' + data.dateStr;
+              let targetWorkouts = JSON.parse(localStorage.getItem(targetKey) || '[]');
+              const exists = targetWorkouts.some(tw => tw.block === block.id && tw.week === w && tw.day === d);
+              if (!exists) {
+                targetWorkouts.push({
+                  type: 'family', name: block.name, icon: '💜', block: block.id,
+                  week: w, day: d, kg: data.kg || '', load: loadNames[data.load] || '', loadIdx: data.load
+                });
+                localStorage.setItem(targetKey, JSON.stringify(targetWorkouts));
+              }
             }
           }
         }
-      }
+      });
       loadDay();
       closeModal('familyModal');
     }
