@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Сегодня — Калории</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <button class="icon-btn">☰</button>
+      <h1>Сегодня</h1>
+      <button class="icon-btn">📅</button>
+    </header>
+
+    <section class="summary">
+      <div class="side-stat">
+        <div class="icon-circle">🥣</div>
+        <div class="label">Съедено</div>
+        <div class="value">0</div>
+      </div>
+      <div class="ring">
+        <div class="ring-inner">
+          <div class="big">1700</div>
+          <div class="small">осталось</div>
+        </div>
+      </div>
+      <div class="side-stat">
+        <div class="icon-circle">🔥</div>
+        <div class="label">Сожжено</div>
+        <div class="value">237</div>
+      </div>
+    </section>
+
+    <div class="card">
+      <div class="macro">
+        <div class="macro-icon">🌾</div>
+        <div class="macro-info">
+          <div class="macro-name">Углеводы</div>
+          <div class="bar"><div class="bar-fill" style="width:0%"></div></div>
+        </div>
+        <div class="macro-nums">0 / 200 г</div>
+      </div>
+      <div class="macro">
+        <div class="macro-icon">💧</div>
+        <div class="macro-info">
+          <div class="macro-name">Белки</div>
+          <div class="bar"><div class="bar-fill" style="width:0%"></div></div>
+        </div>
+        <div class="macro-nums">0 / 90 г</div>
+      </div>
+      <div class="macro">
+        <div class="macro-icon">🟡</div>
+        <div class="macro-info">
+          <div class="macro-name">Жиры</div>
+          <div class="bar"><div class="bar-fill" style="width:0%"></div></div>
+        </div>
+        <div class="macro-nums">0 / 70 г</div>
+      </div>
+    </div>
+
+    <h2 style="font-size:18px; margin:16px 0 10px; color:var(--sage-dark);">Приёмы пищи</h2>
+    <div class="card meal-card">
+      <div class="meal-icon">🥣</div>
+      <div class="meal-info"><div class="meal-name">Завтрак</div><div class="meal-kcal">0 ккал</div></div>
+      <a href="add.html"><button class="add-btn">+</button></a>
+    </div>
+    <div class="card meal-card">
+      <div class="meal-icon">🍽️</div>
+      <div class="meal-info"><div class="meal-name">Обед</div><div class="meal-kcal">0 ккал</div></div>
+      <a href="add.html"><button class="add-btn">+</button></a>
+    </div>
+    <div class="card meal-card">
+      <div class="meal-icon">🥗</div>
+      <div class="meal-info"><div class="meal-name">Ужин</div><div class="meal-kcal">0 ккал</div></div>
+      <a href="add.html"><button class="add-btn">+</button></a>
+    </div>
+    <div class="card meal-card">
+      <div class="meal-icon">🍎</div>
+      <div class="meal-info"><div class="meal-name">Перекус</div><div class="meal-kcal">0 ккал</div></div>
+      <a href="add.html"><button class="add-btn">+</button></a>
+    </div>
+
+    <nav class="bottom-nav">
+      <a href="index.html" class="nav-item active">🏠<span>Сегодня</span></a>
+      <a href="menu.html" class="nav-item">📋<span>Меню</span></a>
+      <a href="recipes.html" class="nav-item">📖<span>Рецепты</span></a>
+      <a href="shopping.html" class="nav-item">🛒<span>Покупки</span></a>
+      <a href="weight.html" class="nav-item">⚖️<span>Вес</span></a>
+    </nav>
+  </div>
+</body>
+</html>
