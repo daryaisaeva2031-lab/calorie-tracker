@@ -51,11 +51,11 @@
       <div class="side-stat">
         <div class="icon-circle">🥣</div>
         <div class="label">Съедено</div>
-        <div class="value">0</div>
+        <div class="value" id="eaten">0</div>
       </div>
       <div class="ring">
         <div class="ring-inner">
-          <div class="big">1700</div>
+          <div class="big" id="remaining">1700</div>
           <div class="small">осталось</div>
         </div>
       </div>
@@ -71,49 +71,30 @@
         <div class="macro-icon">💧</div>
         <div class="macro-info">
           <div class="macro-name">Белки</div>
-          <div class="bar"><div class="bar-fill" style="width:0%"></div></div>
+          <div class="bar"><div class="bar-fill" id="barP" style="width:0%"></div></div>
         </div>
-        <div class="macro-nums">0 / 90 г</div>
+        <div class="macro-nums" id="macroP">0 / 90 г</div>
       </div>
       <div class="macro">
         <div class="macro-icon">🟡</div>
         <div class="macro-info">
           <div class="macro-name">Жиры</div>
-          <div class="bar"><div class="bar-fill" style="width:0%"></div></div>
+          <div class="bar"><div class="bar-fill" id="barF" style="width:0%"></div></div>
         </div>
-        <div class="macro-nums">0 / 70 г</div>
+        <div class="macro-nums" id="macroF">0 / 70 г</div>
       </div>
       <div class="macro">
         <div class="macro-icon">🌾</div>
         <div class="macro-info">
           <div class="macro-name">Углеводы</div>
-          <div class="bar"><div class="bar-fill" style="width:0%"></div></div>
+          <div class="bar"><div class="bar-fill" id="barC" style="width:0%"></div></div>
         </div>
-        <div class="macro-nums">0 / 200 г</div>
+        <div class="macro-nums" id="macroC">0 / 200 г</div>
       </div>
     </div>
 
     <h2 style="font-size:18px; margin:16px 0 10px; color:var(--sage-dark);">Приёмы пищи</h2>
-    <div class="card meal-card">
-      <div class="meal-icon">🥣</div>
-      <div class="meal-info"><div class="meal-name">Завтрак</div><div class="meal-kcal">0 ккал</div></div>
-      <a href="add.html"><button class="add-btn">+</button></a>
-    </div>
-    <div class="card meal-card">
-      <div class="meal-icon">🍽️</div>
-      <div class="meal-info"><div class="meal-name">Обед</div><div class="meal-kcal">0 ккал</div></div>
-      <a href="add.html"><button class="add-btn">+</button></a>
-    </div>
-    <div class="card meal-card">
-      <div class="meal-icon">🥗</div>
-      <div class="meal-info"><div class="meal-name">Ужин</div><div class="meal-kcal">0 ккал</div></div>
-      <a href="add.html"><button class="add-btn">+</button></a>
-    </div>
-    <div class="card meal-card">
-      <div class="meal-icon">🍎</div>
-      <div class="meal-info"><div class="meal-name">Перекус</div><div class="meal-kcal">0 ккал</div></div>
-      <a href="add.html"><button class="add-btn">+</button></a>
-    </div>
+    <div id="mealsContainer"></div>
 
     <nav class="bottom-nav">
       <a href="index.html" class="nav-item active">🏠<span>Сегодня</span></a>
@@ -143,10 +124,13 @@
     const months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
     const monthsNom = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
     const weekdays = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+    const meals = ['Завтрак', 'Обед', 'Ужин', 'Перекус'];
+    const mealIcons = {'Завтрак': '🥣', 'Обед': '🍽️', 'Ужин': '🥗', 'Перекус': '🍎'};
 
     function changeDay(delta) {
       dayOffset += delta;
       updateDate();
+      loadDiary();
     }
     function updateDate() {
       const date = new Date();
@@ -204,9 +188,43 @@
       today.setHours(0,0,0,0);
       dayOffset = Math.round((selected - today) / 86400000);
       updateDate();
+      loadDiary();
       closeCalendar();
     }
+
+    function loadDiary() {
+      const date = new Date();
+      date.setDate(date.getDate() + dayOffset);
+      const key = 'diary-' + date.toISOString().slice(0,10);
+      const diary = JSON.parse(localStorage.getItem(key) || '{}');
+
+      let totalK = 0, totalP = 0, totalF = 0, totalC = 0;
+      const container = document.getElementById('mealsContainer');
+      container.innerHTML = '';
+
+      meals.forEach(meal => {
+        const items = diary[meal] || [];
+        let mealK = 0;
+        items.forEach(i => { mealK += i.calories || 0; totalK += i.calories || 0; totalP += i.protein || 0; totalF += i.fat || 0; totalC += i.carbs || 0; });
+        container.innerHTML += `<div class="card meal-card">
+          <div class="meal-icon">${mealIcons[meal]}</div>
+          <div class="meal-info"><div class="meal-name">${meal}</div><div class="meal-kcal">${mealK} ккал</div></div>
+          <a href="add.html?meal=${encodeURIComponent(meal)}"><button class="add-btn">+</button></a>
+        </div>`;
+      });
+
+      document.getElementById('eaten').textContent = totalK;
+      document.getElementById('remaining').textContent = Math.max(0, 1700 - totalK);
+      document.getElementById('macroP').textContent = totalP.toFixed(0) + ' / 90 г';
+      document.getElementById('macroF').textContent = totalF.toFixed(0) + ' / 70 г';
+      document.getElementById('macroC').textContent = totalC.toFixed(0) + ' / 200 г';
+      document.getElementById('barP').style.width = Math.min(100, totalP / 90 * 100) + '%';
+      document.getElementById('barF').style.width = Math.min(100, totalF / 70 * 100) + '%';
+      document.getElementById('barC').style.width = Math.min(100, totalC / 200 * 100) + '%';
+    }
+
     updateDate();
+    loadDiary();
   </script>
 </body>
 </html>
