@@ -37,6 +37,15 @@
       font-size: 13px; font-weight: 600; cursor: pointer;
     }
     .food-entry { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--sage-light); font-size: 14px; }
+    .ring {
+      width: 140px; height: 140px; border-radius: 50%;
+      background: conic-gradient(var(--sage) 0deg, var(--sage-light) 0deg);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .ring-inner {
+      width: 110px; height: 110px; border-radius: 50%; background: var(--cream);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
   </style>
 </head>
 <body>
@@ -60,7 +69,7 @@
         <div class="label">Съедено</div>
         <div class="value" id="eaten">0</div>
       </div>
-      <div class="ring">
+      <div class="ring" id="calorieRing">
         <div class="ring-inner">
           <div class="big" id="remaining">1700</div>
           <div class="small">осталось</div>
@@ -140,6 +149,7 @@
     let calMonth = new Date().getMonth();
     let calYear = new Date().getFullYear();
     let currentDiary = {};
+    const goal = 1700;
     const months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
     const monthsNom = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
     const weekdays = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
@@ -232,8 +242,14 @@
         </div>`;
       });
 
+      const remaining = Math.max(0, goal - totalK);
+      const percent = Math.min(100, (totalK / goal) * 100);
+      const degrees = percent * 3.6;
+
       document.getElementById('eaten').textContent = totalK;
-      document.getElementById('remaining').textContent = Math.max(0, 1700 - totalK);
+      document.getElementById('remaining').textContent = remaining;
+      document.getElementById('calorieRing').style.background = `conic-gradient(var(--sage) ${degrees}deg, var(--sage-light) ${degrees}deg)`;
+
       document.getElementById('macroP').textContent = totalP.toFixed(0) + ' / 90 г';
       document.getElementById('macroF').textContent = totalF.toFixed(0) + ' / 70 г';
       document.getElementById('macroC').textContent = totalC.toFixed(0) + ' / 200 г';
