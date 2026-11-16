@@ -12,30 +12,15 @@
     <header class="header">
       <a href="products.html"><button class="icon-btn">←</button></a>
       <h1>Рецепты</h1>
-      <button class="icon-btn">🔖</button>
+      <a href="add-recipe.html"><button class="icon-btn">+</button></a>
     </header>
 
     <div class="search-box">
       <span>🔍</span>
-      <input type="text" placeholder="Поиск рецептов...">
+      <input type="text" id="search" placeholder="Поиск рецептов..." oninput="render()">
     </div>
 
-    <div class="card meal-card">
-      <div class="meal-icon">🥣</div>
-      <div class="meal-info"><div class="meal-name">Овсянка</div><div class="meal-kcal">15 мин · Легко</div></div>
-    </div>
-    <div class="card meal-card">
-      <div class="meal-icon">🥗</div>
-      <div class="meal-info"><div class="meal-name">Салат с тунцом</div><div class="meal-kcal">20 мин · Легко</div></div>
-    </div>
-    <div class="card meal-card">
-      <div class="meal-icon">🍗</div>
-      <div class="meal-info"><div class="meal-name">Курица с рисом</div><div class="meal-kcal">35 мин · Средне</div></div>
-    </div>
-    <div class="card meal-card">
-      <div class="meal-icon">🍲</div>
-      <div class="meal-info"><div class="meal-name">Овощной суп</div><div class="meal-kcal">30 мин · Легко</div></div>
-    </div>
+    <div id="recipesList"></div>
 
     <nav class="bottom-nav">
       <a href="index.html" class="nav-item">🏠<span>Сегодня</span></a>
@@ -45,5 +30,29 @@
       <a href="workouts.html" class="nav-item">💪<span>Тренировки</span></a>
     </nav>
   </div>
+
+  <script>
+    let recipes = JSON.parse(localStorage.getItem('recipes') || '[]');
+
+    function render() {
+      const q = (document.getElementById('search').value || '').toLowerCase();
+      const list = document.getElementById('recipesList');
+      list.innerHTML = '';
+      if (!recipes.length) {
+        list.innerHTML = '<div style="text-align:center; color:var(--text-light); padding:40px;">Пока нет рецептов.<br>Нажми + чтобы создать</div>';
+        return;
+      }
+      recipes.filter(r => r.name.toLowerCase().includes(q)).forEach(r => {
+        list.innerHTML += `<div class="card meal-card">
+          <div class="meal-icon">🥘</div>
+          <div class="meal-info">
+            <div class="meal-name">${r.name}</div>
+            <div class="meal-kcal">${r.per100?.calories || 0} ккал / 100 г</div>
+          </div>
+        </div>`;
+      });
+    }
+    render();
+  </script>
 </body>
 </html>
