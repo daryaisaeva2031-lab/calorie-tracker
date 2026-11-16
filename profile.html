@@ -6,6 +6,24 @@
   <title>Профиль — Калории</title>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    .goal-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 0; border-bottom: 1px solid var(--sage-light);
+    }
+    .goal-row:last-child { border-bottom: none; }
+    .goal-input {
+      width: 70px; padding: 8px; border-radius: 10px; border: 1px solid var(--sage-light);
+      text-align: center; font-family: inherit; font-size: 15px; font-weight: 600;
+      background: var(--sage-light); color: var(--sage-dark);
+    }
+    .save-btn {
+      width: 100%; padding: 14px; border: none; border-radius: 14px;
+      background: var(--sage); color: white; font-family: inherit;
+      font-size: 15px; font-weight: 600; margin-top: 12px; cursor: pointer;
+    }
+    .percent { color: var(--sage); font-weight: 700; font-size: 16px; }
+  </style>
 </head>
 <body>
   <div class="app">
@@ -28,11 +46,50 @@
     </div>
 
     <div class="card">
-      <div style="font-weight:700; margin-bottom:12px; color:var(--sage-dark);">Цели</div>
-      <div style="font-size:14px; margin-bottom:6px;">Калории: 1700 ккал</div>
-      <div style="font-size:14px; margin-bottom:6px;">Белки: 90 г</div>
-      <div style="font-size:14px; margin-bottom:6px;">Жиры: 70 г</div>
-      <div style="font-size:14px;">Углеводы: 200 г</div>
+      <div style="font-weight:700; margin-bottom:8px; color:var(--sage-dark);">Цель по калориям</div>
+      <div class="goal-row">
+        <span>Калории</span>
+        <input type="number" id="calories" class="goal-input" value="1700"> <span style="font-size:13px; color:var(--text-light);">ккал</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="font-weight:700; margin-bottom:8px; color:var(--sage-dark);">БЖУ (проценты)</div>
+      <div class="goal-row">
+        <div>
+          <div>Углеводы</div>
+          <div id="carb-grams" style="font-size:12px; color:var(--text-light);">200 г</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <input type="number" id="carb-pct" class="goal-input" value="35" oninput="recalc()">
+          <span class="percent">%</span>
+        </div>
+      </div>
+      <div class="goal-row">
+        <div>
+          <div>Белки</div>
+          <div id="protein-grams" style="font-size:12px; color:var(--text-light);">90 г</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <input type="number" id="protein-pct" class="goal-input" value="25" oninput="recalc()">
+          <span class="percent">%</span>
+        </div>
+      </div>
+      <div class="goal-row">
+        <div>
+          <div>Жиры</div>
+          <div id="fat-grams" style="font-size:12px; color:var(--text-light);">70 г</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <input type="number" id="fat-pct" class="goal-input" value="40" oninput="recalc()">
+          <span class="percent">%</span>
+        </div>
+      </div>
+      <div style="display:flex; justify-content:space-between; margin-top:10px; font-weight:600;">
+        <span>Всего</span>
+        <span id="total-pct" class="percent">100%</span>
+      </div>
+      <button class="save-btn" onclick="saveGoals()">Сохранить</button>
     </div>
 
     <nav class="bottom-nav">
@@ -43,5 +100,47 @@
       <a href="workouts.html" class="nav-item">💪<span>Тренировки</span></a>
     </nav>
   </div>
+
+  <script>
+    function recalc() {
+      const cal = +document.getElementById('calories').value || 0;
+      const carb = +document.getElementById('carb-pct').value || 0;
+      const protein = +document.getElementById('protein-pct').value || 0;
+      const fat = +document.getElementById('fat-pct').value || 0;
+      const total = carb + protein + fat;
+
+      document.getElementById('total-pct').textContent = total + '%';
+      document.getElementById('total-pct').style.color = total === 100 ? 'var(--sage)' : '#c44';
+
+      document.getElementById('carb-grams').textContent = Math.round(cal * carb / 100 / 4) + ' г';
+      document.getElementById('protein-grams').textContent = Math.round(cal * protein / 100 / 4) + ' г';
+      document.getElementById('fat-grams').textContent = Math.round(cal * fat / 100 / 9) + ' г';
+    }
+
+    function saveGoals() {
+      const total = (+document.getElementById('carb-pct').value) +
+                     (+document.getElementById('protein-pct').value) +
+                     (+document.getElementById('fat-pct').value);
+      if (total !== 100) {
+        alert('Сумма процентов должна быть 100%');
+        return;
+      }
+      localStorage.setItem('calories', document.getElementById('calories').value);
+      localStorage.setItem('carb-pct', document.getElementById('carb-pct').value);
+      localStorage.setItem('protein-pct', document.getElementById('protein-pct').value);
+      localStorage.setItem('fat-pct', document.getElementById('fat-pct').value);
+      alert('Цели сохранены');
+    }
+
+    // Load saved
+    if (localStorage.getItem('calories')) {
+      document.getElementById('calories').value = localStorage.getItem('calories');
+      document.getElementById('carb-pct').value = localStorage.getItem('carb-pct');
+      document.getElementById('protein-pct').value = localStorage.getItem('protein-pct');
+      document.getElementById('fat-pct').value = localStorage.getItem('fat-pct');
+    }
+    recalc();
+    document.getElementById('calories').addEventListener('input', recalc);
+  </script>
 </body>
 </html>
