@@ -35,9 +35,13 @@
       padding: 20px 16px;
     }
     .modal-select, .modal-input {
-      width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--sage-light);
+      width: 100%; padding: 12px 36px 12px 12px; border-radius: 12px; border: 1px solid var(--sage-light);
       font-family: inherit; font-size: 15px; margin: 6px 0; background: white;
+      appearance: none; -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%237d9b7a' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 12px center;
     }
+    .modal-input { padding: 12px; background-image: none; }
     .modal-btn {
       width: 100%; padding: 12px; border: none; border-radius: 14px;
       background: var(--sage); color: white; font-family: inherit;
@@ -85,7 +89,7 @@
       </select>
       <div style="display:flex; gap:8px;">
         <input type="number" class="modal-input" id="modalAmount" value="100" onfocus="this.value=''" style="flex:1;">
-        <select class="modal-select" id="modalUnit" style="width:auto;" onchange="onUnitChange()">
+        <select class="modal-select" id="modalUnit" style="width:auto; min-width:100px;" onchange="onUnitChange()">
           <option value="grams">г</option>
         </select>
       </div>
