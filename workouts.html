@@ -6,6 +6,49 @@
   <title>Тренировки — Калории</title>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    .workout-btns {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;
+    }
+    .w-btn {
+      padding: 14px 10px; border-radius: 16px; border: none;
+      background: var(--sage-light); color: var(--sage-dark);
+      font-family: inherit; font-size: 14px; font-weight: 600;
+      cursor: pointer; display: flex; flex-direction: column;
+      align-items: center; gap: 6px;
+    }
+    .w-btn span { font-size: 22px; }
+    .steps-row {
+      display: flex; gap: 8px; margin-bottom: 16px;
+    }
+    .steps-input {
+      flex: 1; padding: 12px; border-radius: 12px; border: 1px solid var(--sage-light);
+      font-family: inherit; font-size: 15px;
+    }
+    .steps-btn {
+      padding: 12px 16px; border: none; border-radius: 12px;
+      background: var(--sage); color: white; font-family: inherit;
+      font-weight: 600; cursor: pointer;
+    }
+    .workout-item {
+      display: flex; align-items: center; gap: 10px; padding: 10px 0;
+      border-bottom: 1px solid var(--sage-light);
+    }
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+      z-index: 100; justify-content: center; align-items: center;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-box {
+      background: var(--cream); border-radius: 20px; width: 90%; max-width: 340px;
+      padding: 20px 16px;
+    }
+    .modal-btn {
+      width: 100%; padding: 12px; border: none; border-radius: 14px;
+      background: var(--sage); color: white; font-family: inherit;
+      font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 10px;
+    }
+  </style>
 </head>
 <body>
   <div class="app">
@@ -13,9 +56,24 @@
       <h1>Тренировки</h1>
     </header>
 
-    <div class="card" style="text-align:center; padding:40px 20px;">
-      <div style="font-size:48px; margin-bottom:12px;">💪</div>
-      <div style="font-size:16px; color:var(--text-light);">Здесь будут тренировки</div>
+    <div style="text-align:center; font-size:15px; color:var(--text-light); margin-bottom:12px;" id="todayDate"></div>
+
+    <div class="steps-row">
+      <input type="number" class="steps-input" id="stepsInput" placeholder="Шаги">
+      <button class="steps-btn" onclick="saveSteps()">Ок</button>
+    </div>
+    <div style="font-size:13px; color:var(--text-light); margin-bottom:16px;" id="stepsDisplay"></div>
+
+    <div class="workout-btns">
+      <button class="w-btn" onclick="addSimple('pool')"><span>💧</span>Бассейн</button>
+      <button class="w-btn" onclick="openFamily()"><span>💪</span>Семья силовые</button>
+      <button class="w-btn" onclick="openWarmup()"><span>🤸</span>Семья разминки</button>
+      <button class="w-btn" onclick="openOwn()"><span>🌿</span>Своя</button>
+    </div>
+
+    <div class="card">
+      <div style="font-weight:600; margin-bottom:8px;">На сегодня</div>
+      <div id="todayList"></div>
     </div>
 
     <nav class="bottom-nav">
@@ -26,5 +84,136 @@
       <a href="workouts.html" class="nav-item active">💪<span>Тренировки</span></a>
     </nav>
   </div>
+
+  <div class="modal-overlay" id="ownModal" onclick="if(event.target===this) closeModal('ownModal')">
+    <div class="modal-box">
+      <div style="font-weight:700; text-align:center; margin-bottom:12px;">Своя тренировка</div>
+      <input type="text" class="steps-input" id="ownName" placeholder="Название" style="width:100%; margin-bottom:8px;">
+      <textarea class="steps-input" id="ownComment" placeholder="Комментарий" style="width:100%; height:60px;"></textarea>
+      <button class="modal-btn" onclick="saveOwn()">Добавить</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="familyModal" onclick="if(event.target===this) closeModal('familyModal')">
+    <div class="modal-box">
+      <div style="font-weight:700; text-align:center; margin-bottom:12px;">Семья — силовые</div>
+      <div style="text-align:center; color:var(--text-light); margin-bottom:12px;">Блок и тренировки — скоро</div>
+      <button class="modal-btn" onclick="addSimple('family')">Отметить тренировку</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="warmupModal" onclick="if(event.target===this) closeModal('warmupModal')">
+    <div class="modal-box">
+      <div style="font-weight:700; text-align:center; margin-bottom:12px;">Семья — разминки</div>
+      <input type="text" class="steps-input" id="warmupSearch" placeholder="Начни писать..." style="width:100%; margin-bottom:8px;" oninput="filterWarmups()">
+      <div id="warmupList" style="max-height:200px; overflow-y:auto;"></div>
+      <button class="modal-btn" onclick="closeModal('warmupModal')">Закрыть</button>
+    </div>
+  </div>
+
+  <script>
+    const today = new Date();
+    const key = 'workouts-' + today.toISOString().slice(0,10);
+    const stepsKey = 'steps-' + today.toISOString().slice(0,10);
+    let workouts = JSON.parse(localStorage.getItem(key) || '[]');
+    let steps = localStorage.getItem(stepsKey) || '';
+
+    const warmups = [
+      'Грудной отдел — круги руками',
+      'Грудной отдел — растяжка',
+      'Шея — наклоны',
+      'Спина — кошка',
+      'Ноги — махи',
+      'Плечи — круги'
+    ];
+
+    document.getElementById('todayDate').textContent = today.getDate() + ' ' + ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'][today.getMonth()];
+
+    function render() {
+      const list = document.getElementById('todayList');
+      if (!workouts.length) {
+        list.innerHTML = '<div style="color:var(--text-light); text-align:center; padding:12px;">Пока пусто</div>';
+      } else {
+        list.innerHTML = workouts.map((w, i) =>
+          `<div class="workout-item">
+            <span>${w.icon || '💪'}</span>
+            <div style="flex:1;">${w.name}</div>
+            <button onclick="removeWorkout(${i})" style="border:none; background:none; color:#c00; cursor:pointer;">×</button>
+          </div>`
+        ).join('');
+      }
+      document.getElementById('stepsDisplay').textContent = steps ? 'Шаги: ' + steps : '';
+      document.getElementById('stepsInput').value = steps;
+    }
+
+    function save() {
+      localStorage.setItem(key, JSON.stringify(workouts));
+      render();
+    }
+
+    function addSimple(type) {
+      const names = { pool: 'Бассейн', family: 'Семья — силовые' };
+      const icons = { pool: '💧', family: '💪' };
+      workouts.push({ type, name: names[type], icon: icons[type] });
+      save();
+      closeModal('familyModal');
+    }
+
+    function openFamily() {
+      document.getElementById('familyModal').classList.add('show');
+    }
+
+    function openWarmup() {
+      filterWarmups();
+      document.getElementById('warmupModal').classList.add('show');
+    }
+
+    function filterWarmups() {
+      const q = (document.getElementById('warmupSearch').value || '').toLowerCase();
+      const list = document.getElementById('warmupList');
+      const filtered = warmups.filter(w => w.toLowerCase().includes(q));
+      list.innerHTML = filtered.map(w =>
+        `<div style="padding:10px; cursor:pointer; border-bottom:1px solid var(--sage-light);" onclick="addWarmup('${w}')">${w}</div>`
+      ).join('') || '<div style="padding:10px; color:var(--text-light);">Нет совпадений</div>';
+    }
+
+    function addWarmup(name) {
+      workouts.push({ type: 'warmup', name, icon: '🤸' });
+      save();
+      closeModal('warmupModal');
+    }
+
+    function openOwn() {
+      document.getElementById('ownName').value = '';
+      document.getElementById('ownComment').value = '';
+      document.getElementById('ownModal').classList.add('show');
+    }
+
+    function saveOwn() {
+      const name = document.getElementById('ownName').value.trim();
+      if (!name) { alert('Введи название'); return; }
+      const comment = document.getElementById('ownComment').value.trim();
+      workouts.push({ type: 'own', name, comment, icon: '🌿' });
+      save();
+      closeModal('ownModal');
+    }
+
+    function saveSteps() {
+      steps = document.getElementById('stepsInput').value;
+      localStorage.setItem(stepsKey, steps);
+      render();
+    }
+
+    function removeWorkout(i) {
+      workouts.splice(i, 1);
+      save();
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('show');
+    }
+
+    render();
+  </script>
 </body>
 </html>
