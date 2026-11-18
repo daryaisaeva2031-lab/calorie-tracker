@@ -2,8 +2,54 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <script src="sync-shim.js?v=20261118-noloop"></script>
-  <script type="module" src="sync.js?v=20261118-noloop"></script>
+  <script src="sync-shim.js?v=20261118-noloop">
+    function doLogin() {
+      if (window.google && google.accounts) {
+        google.accounts.id.initialize({
+          client_id: '261846159655-3d5mop7bgr7hk7kh2clbgvr383elfcri.apps.googleusercontent.com',
+          callback: (resp) => {
+            localStorage.setItem('gtoken', resp.credential);
+            document.getElementById('accountStatus').textContent = 'Вошли';
+          }
+        });
+        google.accounts.id.prompt();
+      } else {
+        alert('Google не загрузился. Обнови страницу.');
+      }
+    }
+    function doLogout() {
+      localStorage.removeItem('gtoken');
+      document.getElementById('accountStatus').textContent = 'Не вошли';
+    }
+    if (localStorage.getItem('gtoken')) {
+      document.getElementById('accountStatus').textContent = 'Вошли';
+    }
+
+  </script>
+  <script type="module" src="sync.js?v=20261118-noloop">
+    function doLogin() {
+      if (window.google && google.accounts) {
+        google.accounts.id.initialize({
+          client_id: '261846159655-3d5mop7bgr7hk7kh2clbgvr383elfcri.apps.googleusercontent.com',
+          callback: (resp) => {
+            localStorage.setItem('gtoken', resp.credential);
+            document.getElementById('accountStatus').textContent = 'Вошли';
+          }
+        });
+        google.accounts.id.prompt();
+      } else {
+        alert('Google не загрузился. Обнови страницу.');
+      }
+    }
+    function doLogout() {
+      localStorage.removeItem('gtoken');
+      document.getElementById('accountStatus').textContent = 'Не вошли';
+    }
+    if (localStorage.getItem('gtoken')) {
+      document.getElementById('accountStatus').textContent = 'Вошли';
+    }
+
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Профиль — Калории</title>
   <link rel="stylesheet" href="style.css?v=20261118-noloop">
@@ -62,6 +108,7 @@
       margin: 0 0 12px;
     }
   </style>
+  <script src="https://accounts.google.com/gsi/client" async></script>
 </head>
 <body>
   <div class="app">
@@ -359,6 +406,29 @@
       }
       alert('Подождите секунду и нажмите ещё раз.');
     }
+  
+    function doLogin() {
+      if (window.google && google.accounts) {
+        google.accounts.id.initialize({
+          client_id: '261846159655-3d5mop7bgr7hk7kh2clbgvr383elfcri.apps.googleusercontent.com',
+          callback: (resp) => {
+            localStorage.setItem('gtoken', resp.credential);
+            document.getElementById('accountStatus').textContent = 'Вошли';
+          }
+        });
+        google.accounts.id.prompt();
+      } else {
+        alert('Google не загрузился. Обнови страницу.');
+      }
+    }
+    function doLogout() {
+      localStorage.removeItem('gtoken');
+      document.getElementById('accountStatus').textContent = 'Не вошли';
+    }
+    if (localStorage.getItem('gtoken')) {
+      document.getElementById('accountStatus').textContent = 'Вошли';
+    }
+
   </script>
 </body>
 </html>
