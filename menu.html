@@ -2,20 +2,39 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
+  <script src="sync-shim.js?v=20261118-worker"></script>
+  <script type="module" src="sync.js?v=20261118-worker"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Меню — Калории</title>
-  <link rel="stylesheet" href="style.css?v=20261118-menu">
+  <link rel="stylesheet" href="style.css?v=20261118-worker">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
-  <script src="api-client.js?v=20261118-menu"></script>
+  <style>
+    .day-tabs { display: flex; gap: 6px; overflow-x: auto; padding: 12px 16px; }
+    .day-tab { padding: 8px 14px; border-radius: 20px; background: var(--card); color: var(--ink); font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .day-tab.active { background: var(--olive); color: #fff; }
+    .meal-section { margin: 12px 16px; }
+    .meal-title { font-weight: 700; font-size: 16px; margin-bottom: 8px; color: var(--ink); }
+    .meal-item { display: flex; justify-content: space-between; padding: 10px 14px; background: var(--card); border-radius: 12px; margin-bottom: 6px; }
+    .meal-item-name { font-weight: 600; }
+    .meal-item-info { color: var(--muted); font-size: 13px; }
+    .day-total { text-align: center; padding: 12px; font-weight: 700; color: var(--olive); }
+    .empty { text-align: center; padding: 40px; color: var(--muted); }
+  </style>
 </head>
 <body>
   <div class="app">
     <header class="header">
       <a href="index.html"><button class="icon-btn">←</button></a>
       <h1>Меню на неделю</h1>
+      <div style="width:42px"></div>
     </header>
-    <div style="padding:12px; overflow-x:auto; white-space:nowrap;" id="days"></div>
-    <div id="content" style="padding:12px;"></div>
+
+    <div class="day-tabs" id="dayTabs"></div>
+    <div id="menuContent"></div>
+
     <nav class="bottom-nav">
       <a href="index.html" class="nav-item"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 11.5 12 5l7.5 6.5"/><path d="M6.5 10.5V19h11v-8.5"/></svg></span>Сегодня</a>
       <a href="products.html" class="nav-item"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19c6-1 11-5 13.5-13.5C10 5 5 10 5 19Z"/><path d="M8.5 14.5c2 0 5-2.5 6.5-6"/></svg></span>Продукты</a>
@@ -24,55 +43,95 @@
       <a href="workouts.html" class="nav-item"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6.2 9.2v5.6M17.8 9.2v5.6"/><path d="M8.2 7.6v8.8M15.8 7.6v8.8"/><path d="M8.2 12h7.6"/><path d="M4.8 10.2h1.4v3.6H4.8zM17.8 10.2h1.4v3.6H17.8z"/></svg></span>Тренировки</a>
     </nav>
   </div>
+
   <script>
-    const days = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
-    const meals = ['Завтрак','Обед','Ужин','Перекус'];
-    let menu = {}, selected = 0, products = [];
-    async function load() {
-      if (!CalAPI.getToken()) { document.getElementById('content').innerHTML = '<div style="text-align:center;padding:40px;">Войди на главной</div>'; return; }
-      menu = JSON.parse(localStorage.getItem('weekMenu') || '{}');
-      products = await CalAPI.products.list() || [];
-      renderDays();
-      render();
+    const days = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Четверг 2.0', 'Пятница'];
+    const shortDays = ['Пн', 'Вт', 'Ср', 'Чт', 'Чт2', 'Пт'];
+    const meals = ['Завтрак', 'Обед', 'Ужин', 'Перекус'];
+    const mealIcons = { 'Завтрак': '🥣', 'Обед': '🍲', 'Ужин': '🍽️', 'Перекус': '🍫' };
+    let currentDay = 0;
+    let menuData = {};
+
+    function loadMenu() {
+      try {
+        const raw = localStorage.getItem('weekMenu');
+        menuData = raw ? JSON.parse(raw) : {};
+      } catch (e) {
+        menuData = {};
+      }
     }
-    function renderDays() {
-      document.getElementById('days').innerHTML = days.map((d,i) => `<button onclick="select(${i})" style="margin:4px;padding:8px 14px;border-radius:16px;border:none;background:${i===selected?'#D6E2C8':'rgba(243,237,224,.4)'};color:${i===selected?'#3F4630':'#F3EDE0'};font-weight:600;">${d}</button>`).join('');
+
+    function renderTabs() {
+      const tabs = document.getElementById('dayTabs');
+      tabs.innerHTML = shortDays.map((d, i) =>
+        `<div class="day-tab ${i === currentDay ? 'active' : ''}" onclick="selectDay(${i})">${d}</div>`
+      ).join('');
     }
-    function select(i) { selected = i; renderDays(); render(); }
-    function render() {
-      const day = days[selected];
-      const data = menu[day] || {};
+
+    function selectDay(i) {
+      currentDay = i;
+      renderTabs();
+      renderMenu();
+    }
+
+    function renderMenu() {
+      const content = document.getElementById('menuContent');
+      const dayName = days[currentDay];
+      const dayMenu = menuData[dayName] || {};
+
       let html = '';
-      meals.forEach(m => {
-        const items = data[m] || [];
-        const kcal = items.reduce((s,i) => s + (i.calories||0), 0);
-        html += `<div style="background:#F3EDE0;border-radius:16px;padding:12px;margin-bottom:10px;">
-          <div style="font-weight:700;display:flex;justify-content:space-between;">${m} <span>${kcal} ккал</span> <button onclick="addTo('${day}','${m}')" style="border:none;background:#6F7B52;color:white;border-radius:8px;padding:4px 10px;">+</button></div>
-          ${items.map((i,idx) => `<div style="font-size:13px;color:#666;margin-top:6px;display:flex;justify-content:space-between;">${i.name} · ${i.grams}г <button onclick="del('${day}','${m}',${idx})" style="border:none;background:none;color:#c00;">×</button></div>`).join('') || '<div style="font-size:13px;color:#999;margin-top:6px;">пусто</div>'}
+      let dayTotal = 0;
+
+      meals.forEach(meal => {
+        const items = dayMenu[meal] || [];
+        if (items.length === 0) return;
+
+        const mealTotal = items.reduce((s, i) => s + (i.calories || 0), 0);
+        dayTotal += mealTotal;
+
+        html += `<div class="meal-section">
+          <div class="meal-title">${mealIcons[meal] || ''} ${meal} · ${mealTotal} ккал</div>
+          ${items.map(item => `
+            <div class="meal-item">
+              <div>
+                <div class="meal-item-name">${item.name}</div>
+                <div class="meal-item-info">${item.grams} г · ${item.portions} порц.</div>
+              </div>
+              <div style="font-weight:600;">${item.calories} ккал</div>
+            </div>
+          `).join('')}
         </div>`;
       });
-      document.getElementById('content').innerHTML = html;
+
+      if (!html) {
+        html = '<div class="empty">Нет данных для этого дня</div>';
+      } else {
+        html = `<div class="day-total">Итого: ${dayTotal} ккал</div>` + html;
+      }
+
+      content.innerHTML = html;
     }
-    async function addTo(day, meal) {
-      if (!products.length) { alert('Сначала добавь продукты'); return; }
-      const name = prompt('Название продукта:\n' + products.slice(0,10).map(p=>p.name).join(', '));
-      if (!name) return;
-      const p = products.find(x => x.name.toLowerCase().includes(name.toLowerCase()));
-      if (!p) { alert('Не найден'); return; }
-      const grams = +prompt('Граммы:', '100');
-      if (!grams) return;
-      if (!menu[day]) menu[day] = {};
-      if (!menu[day][meal]) menu[day][meal] = [];
-      menu[day][meal].push({ name: p.name, grams, calories: Math.round((p.calories||0)*grams/100), protein: +((p.protein||0)*grams/100).toFixed(1), fat: +((p.fat||0)*grams/100).toFixed(1), carbs: +((p.carbs||0)*grams/100).toFixed(1) });
-      localStorage.setItem('weekMenu', JSON.stringify(menu));
-      render();
+
+    loadMenu();
+    renderTabs();
+    renderMenu();
+
+    function refreshMenuFromStorage() {
+      loadMenu();
+      const y = window.scrollY || 0;
+      renderTabs();
+      renderMenu();
+      window.scrollTo(0, y);
     }
-    function del(day, meal, idx) {
-      menu[day][meal].splice(idx, 1);
-      localStorage.setItem('weekMenu', JSON.stringify(menu));
-      render();
-    }
-    load();
+
+    window.__calorieOnSync = function (keys) {
+      if (!keys || !keys.length) return false;
+      if (keys.indexOf('weekMenu') === -1) return false;
+      refreshMenuFromStorage();
+      return true;
+    };
+
+    document.addEventListener('storage-synced', refreshMenuFromStorage);
   </script>
 </body>
 </html>

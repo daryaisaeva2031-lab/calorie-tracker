@@ -2,20 +2,26 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
+  <script src="sync-shim.js?v=20261118-worker"></script>
+  <script type="module" src="sync.js?v=20261118-worker"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Покупки — Калории</title>
-  <link rel="stylesheet" href="style.css?v=20261118-shop">
+  <link rel="stylesheet" href="style.css?v=20261118-worker">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
-  <script src="api-client.js?v=20261118-shop"></script>
 </head>
 <body>
   <div class="app">
     <header class="header">
       <a href="index.html"><button class="icon-btn">←</button></a>
-      <h1>Покупки</h1>
-      <button class="icon-btn" onclick="addItem()">+</button>
+      <h1>Список покупок</h1>
+      <button class="icon-btn" type="button" onclick="addItem()" aria-label="Добавить">+</button>
     </header>
-    <div id="list" style="padding:12px;"></div>
+
+    <div id="list"></div>
+
     <nav class="bottom-nav">
       <a href="index.html" class="nav-item"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 11.5 12 5l7.5 6.5"/><path d="M6.5 10.5V19h11v-8.5"/></svg></span>Сегодня</a>
       <a href="products.html" class="nav-item"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19c6-1 11-5 13.5-13.5C10 5 5 10 5 19Z"/><path d="M8.5 14.5c2 0 5-2.5 6.5-6"/></svg></span>Продукты</a>
@@ -25,50 +31,66 @@
     </nav>
   </div>
   <script>
-    let items = [];
-    async function load() {
-      if (!CalAPI.getToken()) { document.getElementById('list').innerHTML = '<div style="text-align:center;padding:40px;">Войди на главной</div>'; return; }
-      items = await CalAPI.shopping.list() || [];
-      render();
+    // Shopping list lives in localStorage 'shopping' ([{id, name, qty, group, done}]);
+    // sync.js mirrors it to the worker (/api/shopping).
+    function loadItems() {
+      try { const v = JSON.parse(localStorage.getItem('shopping') || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; }
+    }
+    function saveItems(items) { localStorage.setItem('shopping', JSON.stringify(items)); }
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
     }
     function render() {
+      const items = loadItems();
       const groups = {};
-      items.forEach(i => { if (!groups[i.group]) groups[i.group] = []; groups[i.group].push(i); });
+      items.forEach(i => { const g = i.group || 'Другое'; (groups[g] = groups[g] || []).push(i); });
       let html = '';
-      for (const g in groups) {
-        html += `<div style="margin-bottom:16px;"><div style="font-weight:700;margin-bottom:8px;color:#F3EDE0;">${g}</div>`;
-        groups[g].forEach(i => {
-          html += `<div style="background:#F3EDE0;border-radius:12px;padding:10px;margin-bottom:6px;display:flex;align-items:center;gap:10px;">
-            <input type="checkbox" ${i.done?'checked':''} onchange="toggle(${i.id})" style="width:20px;height:20px;">
-            <div style="flex:1;${i.done?'text-decoration:line-through;opacity:.6':''}">${i.name} <span style="color:#888;font-size:13px;">${i.qty||''}</span></div>
-            <button onclick="del(${i.id})" style="border:none;background:none;color:#c00;font-size:18px;cursor:pointer;">×</button>
-          </div>`;
+      Object.keys(groups).forEach(g => {
+        const list = groups[g];
+        html += '<div class="card"><div style="font-weight:600; margin-bottom:10px;">' + esc(g) + '</div>';
+        list.forEach((i, idx) => {
+          const mb = idx < list.length - 1 ? ' style="margin-bottom:8px;"' : '';
+          const box = i.done
+            ? '<div class="checkbox" style="background:var(--olive);display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;line-height:1;">✓</div>'
+            : '<div class="checkbox"></div>';
+          html += '<div class="list-item"' + mb + '>' +
+            '<div onclick="toggle(' + JSON.stringify(i.id) + ')" style="cursor:pointer;">' + box + '</div>' +
+            '<div onclick="toggle(' + JSON.stringify(i.id) + ')" style="flex:1;cursor:pointer;' + (i.done ? 'text-decoration:line-through;opacity:.6;' : '') + '">' + esc(i.name) + '</div>' +
+            '<div style="color:var(--text-light);">' + esc(i.qty || '') + '</div>' +
+            '<button type="button" onclick="del(' + JSON.stringify(i.id) + ')" aria-label="Удалить" style="border:none;background:none;color:var(--text-light);font-size:20px;cursor:pointer;padding:0 0 0 6px;">×</button>' +
+          '</div>';
         });
         html += '</div>';
-      }
-      document.getElementById('list').innerHTML = html || '<div style="text-align:center;color:#888;padding:40px;">Список пуст</div>';
+      });
+      document.getElementById('list').innerHTML = html ||
+        '<div class="card" style="text-align:center;color:var(--text-light);">Список пуст. Нажмите «+», чтобы добавить.</div>';
     }
-    async function addItem() {
+    function addItem() {
       const name = prompt('Название:');
       if (!name) return;
       const qty = prompt('Количество:') || '';
       const group = prompt('Группа (молочка, овощи, другое):') || 'Другое';
-      items.push({ id: Date.now(), name, qty, group, done: false });
-      await CalAPI.shopping.save(items);
+      const items = loadItems();
+      items.push({ id: Date.now(), name: name, qty: qty, group: group, done: false });
+      saveItems(items);
       render();
     }
-    async function toggle(id) {
+    function toggle(id) {
+      const items = loadItems();
       const i = items.find(x => x.id === id);
       if (i) i.done = !i.done;
-      await CalAPI.shopping.save(items);
+      saveItems(items);
       render();
     }
-    async function del(id) {
-      items = items.filter(x => x.id !== id);
-      await CalAPI.shopping.save(items);
+    function del(id) {
+      saveItems(loadItems().filter(x => x.id !== id));
       render();
     }
-    load();
+    window.__calorieOnSync = function (keys) {
+      if (keys.length === 1 && keys[0] === 'shopping') { render(); return true; }
+      return false;
+    };
+    render();
   </script>
 </body>
 </html>

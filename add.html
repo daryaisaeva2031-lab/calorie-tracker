@@ -2,60 +2,262 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
+  <script src="sync-shim.js?v=20261118-worker"></script>
+  <script src="app-ui.js?v=20261118-worker"></script>
+  <script type="module" src="sync.js?v=20261118-worker"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Добавить — Калории</title>
-  <link rel="stylesheet" href="style.css?v=20261118-api">
+  <link rel="stylesheet" href="style.css?v=20261118-worker">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
-  <script src="api-client.js?v=20261118-api"></script>
+  <style>
+    .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+    .tab {
+      flex: 1; padding: 10px; border-radius: 12px; text-align: center;
+      background: var(--sage-light); cursor: pointer; font-weight: 600;
+    }
+    .tab.active { background: var(--sage); color: white; }
+    .item { cursor: pointer; }
+    .cat-badge {
+      display: inline-block; font-size: 11px; font-weight: 600;
+      padding: 2px 8px; border-radius: 10px; margin-left: 8px;
+      background: var(--sage-light); color: var(--sage-dark);
+    }
+    .brand-name { font-size: 12px; color: var(--text-light); margin-top: 1px; }
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+      z-index: 100; justify-content: center; align-items: center;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-box {
+      background: var(--cream); border-radius: 20px; width: 90%; max-width: 360px;
+      padding: 20px 16px;
+    }
+    .amount-row { display: flex; gap: 8px; margin: 12px 0; }
+    .amount-input {
+      width: 80px; padding: 14px 8px; border-radius: 12px; border: 1px solid var(--sage-light);
+      font-size: 20px; text-align: center; font-family: inherit;
+    }
+    .unit-select {
+      flex: 1; padding: 14px 10px; border-radius: 12px; border: 1px solid var(--sage-light);
+      font-family: inherit; font-size: 14px; background: white;
+    }
+    .add-btn-modal {
+      width: 100%; padding: 14px; border: none; border-radius: 14px;
+      background: var(--sage); color: white; font-family: inherit;
+      font-size: 15px; font-weight: 600; cursor: pointer;
+    }
+  </style>
 </head>
 <body>
   <div class="app">
     <header class="header">
       <a href="index.html"><button class="icon-btn">←</button></a>
-      <h1 id="title">Добавить</h1>
+      <h1 id="mealTitle">Завтрак</h1>
+      <div style="width:42px"></div>
     </header>
-    <div style="padding:12px;">
-      <input id="search" placeholder="Поиск продукта..." style="width:100%;padding:12px;border-radius:12px;border:1px solid #ddd;margin-bottom:12px;" oninput="filter()">
-      <div id="list"></div>
+
+    <div class="tabs">
+      <div class="tab active" onclick="setTab('products', this)">Продукты</div>
+      <div class="tab" onclick="setTab('recipes', this)">Блюда</div>
+    </div>
+
+    <div class="search-box">
+      <span>🔍</span>
+      <input type="text" id="search" placeholder="Поиск..." oninput="render()">
+    </div>
+
+    <div id="list"></div>
+
+    <nav class="bottom-nav">
+      <a href="index.html" class="nav-item"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 11.5 12 5l7.5 6.5"/><path d="M6.5 10.5V19h11v-8.5"/></svg></span>Сегодня</a>
+      <a href="products.html" class="nav-item"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19c6-1 11-5 13.5-13.5C10 5 5 10 5 19Z"/><path d="M8.5 14.5c2 0 5-2.5 6.5-6"/></svg></span>Продукты</a>
+      <a href="weight.html" class="nav-item"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="5.5" width="15" height="14.2" rx="3"/><rect x="8" y="8" width="8" height="2.3" rx=".7"/><circle cx="12" cy="14.4" r="2.5"/><path d="M12 14.4 13.3 12.8"/></svg></span>Вес</a>
+      <a href="menu.html" class="nav-item"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4.5h9.5A2.5 2.5 0 0 1 20 7v12.5H8A2.5 2.5 0 0 1 5.5 17V7A2.5 2.5 0 0 1 8 4.5Z"/><path d="M9.5 9.5h7M9.5 13h7M9.5 16.5h4.5"/></svg></span>Меню</a>
+      <a href="workouts.html" class="nav-item"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6.2 9.2v5.6M17.8 9.2v5.6"/><path d="M8.2 7.6v8.8M15.8 7.6v8.8"/><path d="M8.2 12h7.6"/><path d="M4.8 10.2h1.4v3.6H4.8zM17.8 10.2h1.4v3.6H17.8z"/></svg></span>Тренировки</a>
+    </nav>
+  </div>
+
+  <div class="modal-overlay" id="gramsModal" onclick="if(event.target===this) closeModal()">
+    <div class="modal-box">
+      <div style="font-weight:700; text-align:center; font-size:18px;" id="modalName">Продукт</div>
+      <div style="text-align:center; font-size:13px; color:var(--text-light); margin-top:4px;" id="modalKcal">0 ккал / 100 г</div>
+      <div class="amount-row">
+        <input type="number" class="amount-input" id="amountInput" value="100" onfocus="this.value=''">
+        <select class="unit-select" id="unitSelect" onchange="onUnitChange()">
+          <option value="grams">г</option>
+        </select>
+      </div>
+      <div class="dish-sub" id="dishSub"></div>
+      <button class="add-btn-modal" onclick="confirmAdd()">Добавить</button>
     </div>
   </div>
+
   <script>
-    const meal = new URLSearchParams(location.search).get('meal') || 'Завтрак';
-    document.getElementById('title').textContent = meal;
-    let products = [];
-    async function load() {
-      if (!CalAPI.getToken()) { document.getElementById('list').innerHTML = '<div style="text-align:center;padding:40px;">Войди на главной</div>'; return; }
-      products = await CalAPI.products.list() || [];
-      render(products);
+    const params = new URLSearchParams(location.search);
+    const meal = params.get('meal') || 'Завтрак';
+    document.getElementById('mealTitle').textContent = meal;
+
+    let currentTab = 'products';
+    let products = JSON.parse(localStorage.getItem('products') || '[]');
+    let recipes = JSON.parse(localStorage.getItem('recipes') || '[]');
+    let pendingType = null;
+    let pendingId = null;
+    let pendingItem = null;
+
+    let dishCtrl = null;
+
+    function setTab(tab, el) {
+      currentTab = tab;
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      render();
     }
-    function render(list) {
-      document.getElementById('list').innerHTML = list.map(p => `<div class="food-item" style="margin-bottom:8px;cursor:pointer;" onclick="add(${p.id})">
-        <div style="flex:1;"><div style="font-weight:600;">${p.name}</div><div style="font-size:12px;color:#888;">${p.calories} ккал</div></div>
-      </div>`).join('') || '<div style="text-align:center;color:#888;">Нет продуктов</div>';
+
+    function render() {
+      const q = (document.getElementById('search').value || '').toLowerCase();
+      const list = document.getElementById('list');
+      list.innerHTML = '';
+
+      if (currentTab === 'products') {
+        const items = products.filter(p => p.name.toLowerCase().includes(q));
+        if (!items.length) {
+          list.innerHTML = '<div style="text-align:center; color:var(--text-light); padding:30px;">Нет продуктов</div>';
+          return;
+        }
+        items.forEach(p => {
+          const icon = productIcon(p);
+          list.innerHTML += `<div class="card food-item item" onclick="openModal('product', ${p.id})">
+            <div class="food-icon">${icon}</div>
+            <div class="food-info">
+              <div class="food-name">${escapeHtml(p.name)} <span class="cat-badge">${escapeHtml(p.category || '')}</span></div>
+              ${p.brand ? `<div class="brand-name">${escapeHtml(p.brand)}</div>` : ''}
+              <div class="food-kcal">${p.calories || 0} ккал / 100 г</div>
+            </div>
+            <button class="add-btn">+</button>
+          </div>`;
+        });
+      } else {
+        const items = recipes.filter(r => r.name.toLowerCase().includes(q));
+        if (!items.length) {
+          list.innerHTML = '<div style="text-align:center; color:var(--text-light); padding:30px;">Нет рецептов</div>';
+          return;
+        }
+        items.forEach(r => {
+          list.innerHTML += `<div class="card food-item item" onclick="openModal('recipe', ${r.id})">
+            <div class="food-icon">🥘</div>
+            <div class="food-info">
+              <div class="food-name">${escapeHtml(r.name)}</div>
+              <div class="food-kcal">${r.per100?.calories || 0} ккал / 100 г</div>
+            </div>
+            <button class="add-btn">+</button>
+          </div>`;
+        });
+      }
     }
-    function filter() {
-      const q = document.getElementById('search').value.toLowerCase();
-      render(products.filter(p => p.name.toLowerCase().includes(q)));
+
+    function onUnitChange() {
+      const unit = document.getElementById('unitSelect').value;
+      document.getElementById('amountInput').value = unit === 'portion' ? 1 : 100;
+      if (dishCtrl) dishCtrl.update();
     }
-    async function add(id) {
-      const p = products.find(x => x.id === id);
-      if (!p) return;
-      const grams = +prompt('Граммы:', '100');
-      if (!grams) return;
-      const date = new Date().toISOString().slice(0, 10);
-      const diary = await CalAPI.diary.get(date) || {};
-      if (!diary[meal]) diary[meal] = [];
-      diary[meal].push({
-        type: 'product', id: p.id, name: p.name, grams,
-        calories: Math.round((p.calories || 0) * grams / 100),
-        protein: +((p.protein || 0) * grams / 100).toFixed(1),
-        fat: +((p.fat || 0) * grams / 100).toFixed(1),
-        carbs: +((p.carbs || 0) * grams / 100).toFixed(1)
+
+    function openModal(type, id) {
+      pendingType = type;
+      pendingId = id;
+      let name = '', kcal = 0;
+      const unitSelect = document.getElementById('unitSelect');
+      unitSelect.innerHTML = '<option value="grams">г</option>';
+
+      if (type === 'product') {
+        const p = products.find(x => x.id == id);
+        if (p) {
+          name = p.name;
+          kcal = p.calories || 0;
+          pendingItem = p;
+          if (p.portionType && p.portionGrams) {
+            unitSelect.innerHTML += `<option value="portion">${p.portionType} (${p.portionGrams} г)</option>`;
+          }
+        }
+      } else {
+        const r = recipes.find(x => x.id == id);
+        if (r) {
+          name = r.name;
+          kcal = r.per100?.calories || 0;
+          pendingItem = r;
+          if (r.portionGrams) {
+            unitSelect.innerHTML += `<option value="portion">порция (${r.portionGrams} г)</option>`;
+          }
+        }
+      }
+      document.getElementById('modalName').textContent = name;
+      document.getElementById('modalKcal').textContent = kcal + ' ккал / 100 г';
+      document.getElementById('amountInput').value = 100;
+      dishCtrl = mountDishSubtract(document.getElementById('dishSub'), {
+        gramsGetter: function () {
+          const amount = +document.getElementById('amountInput').value;
+          const unit = document.getElementById('unitSelect').value;
+          if (unit === 'portion' && pendingItem) {
+            return amount * (pendingItem.portionGrams || 0);
+          }
+          return amount;
+        }
       });
-      await CalAPI.diary.save(date, diary);
+      document.getElementById('amountInput').oninput = function () { if (dishCtrl) dishCtrl.update(); };
+      document.getElementById('gramsModal').classList.add('show');
+      document.getElementById('amountInput').focus();
+    }
+
+    function closeModal() {
+      document.getElementById('gramsModal').classList.remove('show');
+    }
+
+    function confirmAdd() {
+      const amount = +document.getElementById('amountInput').value;
+      const unit = document.getElementById('unitSelect').value;
+      if (!amount || amount <= 0) { alert('Введи количество'); return; }
+
+      let grams = amount;
+      if (unit === 'portion' && pendingItem) {
+        grams = amount * (pendingItem.portionGrams || 0);
+      }
+      const net = netGramsOrAlert(dishCtrl, grams);
+      if (net == null) return;
+      grams = net;
+
+      let entry;
+      if (pendingType === 'product') {
+        const p = pendingItem;
+        entry = {
+          type: 'product', id: p.id, name: p.name, grams,
+          calories: Math.round((p.calories || 0) * grams / 100),
+          protein: +((p.protein || 0) * grams / 100).toFixed(1),
+          fat: +((p.fat || 0) * grams / 100).toFixed(1),
+          carbs: +((p.carbs || 0) * grams / 100).toFixed(1)
+        };
+      } else {
+        const r = pendingItem;
+        entry = {
+          type: 'recipe', id: r.id, name: r.name, grams,
+          calories: Math.round((r.per100?.calories || 0) * grams / 100),
+          protein: +((r.per100?.protein || 0) * grams / 100).toFixed(1),
+          fat: +((r.per100?.fat || 0) * grams / 100).toFixed(1),
+          carbs: +((r.per100?.carbs || 0) * grams / 100).toFixed(1)
+        };
+      }
+
+      const key = 'diary-' + localDateStr();
+      let diary = JSON.parse(localStorage.getItem(key) || '{}');
+      if (!diary[meal]) diary[meal] = [];
+      diary[meal].push(entry);
+      localStorage.setItem(key, JSON.stringify(diary));
+      closeModal();
       location.href = 'index.html';
     }
-    load();
+
+    render();
   </script>
 </body>
 </html>
