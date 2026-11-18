@@ -116,6 +116,19 @@ function localDateYMD(year, monthIndex, day) {
 
   window.__storageValuesEqual = storageValuesEqual;
 
+  // Compact JSON (no spaces) so Python/cloud writes match the site exactly.
+  function compactJson(value) {
+    if (value == null) return '';
+    var s = String(value);
+    if (!s) return s;
+    var t = s.trim();
+    if (t[0] !== '{' && t[0] !== '[') return s;
+    try {
+      return JSON.stringify(JSON.parse(s));
+    } catch (e) {
+      return s;
+    }
+  }
 
   function enqueue(op, key, value) {
     if (!isAppKey(key) && op !== 'clear') return;
@@ -136,7 +149,7 @@ function localDateYMD(year, monthIndex, day) {
   }
 
   hide('setItem', function (key, value) {
-    var next = value == null ? '' : String(value);
+    var next = compactJson(value == null ? '' : String(value));
     var prev = orig.getItem(key);
     // Skip no-op and semantic-equal writes (e.g. JSON spacing) so a remote
     // value is not immediately re-uploaded in a different typography.
