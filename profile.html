@@ -2,418 +2,80 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <script src="sync-shim.js?v=20261118-noloop">
-    function doLogin() {
-      if (window.google && google.accounts) {
-        google.accounts.id.initialize({
-          client_id: '261846159655-3d5mop7bgr7hk7kh2clbgvr383elfcri.apps.googleusercontent.com',
-          callback: (resp) => {
-            localStorage.setItem('gtoken', resp.credential);
-            document.getElementById('accountStatus').textContent = 'Вошли';
-          }
-        });
-        google.accounts.id.prompt();
-      } else {
-        alert('Google не загрузился. Обнови страницу.');
-      }
-    }
-    function doLogout() {
-      localStorage.removeItem('gtoken');
-      document.getElementById('accountStatus').textContent = 'Не вошли';
-    }
-    if (localStorage.getItem('gtoken')) {
-      document.getElementById('accountStatus').textContent = 'Вошли';
-    }
-
-  </script>
-  <script type="module" src="sync.js?v=20261118-noloop">
-    function doLogin() {
-      if (window.google && google.accounts) {
-        google.accounts.id.initialize({
-          client_id: '261846159655-3d5mop7bgr7hk7kh2clbgvr383elfcri.apps.googleusercontent.com',
-          callback: (resp) => {
-            localStorage.setItem('gtoken', resp.credential);
-            document.getElementById('accountStatus').textContent = 'Вошли';
-          }
-        });
-        google.accounts.id.prompt();
-      } else {
-        alert('Google не загрузился. Обнови страницу.');
-      }
-    }
-    function doLogout() {
-      localStorage.removeItem('gtoken');
-      document.getElementById('accountStatus').textContent = 'Не вошли';
-    }
-    if (localStorage.getItem('gtoken')) {
-      document.getElementById('accountStatus').textContent = 'Вошли';
-    }
-
-  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Профиль — Калории</title>
-  <link rel="stylesheet" href="style.css?v=20261118-noloop">
-  <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
-  <link rel="shortcut icon" href="favicon.ico">
-  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css?v=20261118-login2">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
-  <style>
-    #gisButtonHost { margin: 8px 0 4px; min-height: 44px; }
-    #gisButtonHost iframe { margin: 0 auto; }
-    .gis-fallback { font-size: 13px; color: var(--ink-soft); }
-    .goal-row {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 12px 0; border-bottom: 1px solid var(--sage-light);
-    }
-    .goal-row:last-child { border-bottom: none; }
-    .goal-input {
-      width: 80px; padding: 8px; border-radius: 10px; border: 1px solid var(--sage-light);
-      text-align: center; font-family: inherit; font-size: 15px; font-weight: 600;
-      background: var(--sage-light); color: var(--sage-dark);
-    }
-    .name-input {
-      width: 140px; padding: 8px; border-radius: 10px; border: 1px solid var(--sage-light);
-      text-align: center; font-family: inherit; font-size: 16px; font-weight: 600;
-      background: var(--sage-light); color: var(--sage-dark);
-    }
-    .save-btn {
-      width: 100%; padding: 14px; border: none; border-radius: 14px;
-      background: var(--sage); color: white; font-family: inherit;
-      font-size: 15px; font-weight: 600; margin-top: 12px; cursor: pointer;
-    }
-    .percent { color: var(--sage); font-weight: 700; font-size: 16px; }
-    .backup-secondary {
-      background: var(--white);
-      color: var(--sage-dark);
-      border: 1.5px solid var(--sage);
-      margin-top: 8px;
-    }
-    .backup-hint { font-size: 13px; color: var(--text-light); margin-bottom: 12px; }
-    .account-row { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
-    .account-photo {
-      width: 48px; height: 48px; border-radius: 50%; object-fit: cover;
-      background: var(--sage-light); flex-shrink: 0;
-    }
-    .account-photo.placeholder {
-      display: flex; align-items: center; justify-content: center;
-      font-size: 20px;
-    }
-    .account-email { font-weight: 600; color: var(--sage-dark); word-break: break-all; }
-    .account-name { font-size: 13px; color: var(--text-light); }
-    .account-status { font-size: 13px; color: var(--text-light); margin: 8px 0 12px; }
-    .account-hint { font-size: 13px; color: var(--text-light); margin-bottom: 12px; }
-    .account-error {
-      font-size: 13px; line-height: 1.4; color: #6b2a22;
-      background: #f6e4dc; border-radius: 12px; padding: 10px 12px;
-      margin: 0 0 12px;
-    }
-  </style>
   <script src="https://accounts.google.com/gsi/client" async></script>
+  <script src="api-client.js?v=20261118-login2"></script>
 </head>
 <body>
   <div class="app">
     <header class="header">
       <a href="index.html"><button class="icon-btn">←</button></a>
       <h1>Профиль</h1>
-      <div style="width:42px"></div>
     </header>
-
-    <div class="card" style="text-align:center; padding:24px;">
-      <div style="width:80px; height:80px; border-radius:50%; background:var(--sage-light); display:flex; align-items:center; justify-content:center; font-size:40px; margin:0 auto 12px;">👤</div>
-      <input type="text" id="name" class="name-input" value="Дарья">
-    </div>
-
-    <div class="card">
-      <div style="font-weight:700; margin-bottom:8px; color:var(--sage-dark);">О мне</div>
-      <div class="goal-row">
-        <span>Рост</span>
-        <div style="display:flex; align-items:center; gap:6px;">
-          <input type="number" id="height" class="goal-input" value="164">
-          <span style="font-size:13px; color:var(--text-light);">см</span>
-        </div>
+    <div style="padding:16px;">
+      <div class="card">
+        <h3>О тебе</h3>
+        <label>Имя</label><input id="name" value="Дарья" style="width:100%;padding:12px;margin:6px 0 12px;border-radius:12px;border:1px solid #ddd;">
+        <label>Рост (см)</label><input id="height" type="number" value="164" style="width:100%;padding:12px;margin:6px 0 12px;border-radius:12px;border:1px solid #ddd;">
+        <label>Текущий вес</label><input id="weight" type="number" step="0.1" value="77.4" style="width:100%;padding:12px;margin:6px 0 12px;border-radius:12px;border:1px solid #ddd;">
+        <label>Целевой вес</label><input id="target" type="number" step="0.1" value="65" style="width:100%;padding:12px;margin:6px 0 12px;border-radius:12px;border:1px solid #ddd;">
       </div>
-      <div class="goal-row">
-        <span>Текущий вес</span>
-        <div style="display:flex; align-items:center; gap:6px;">
-          <input type="number" step="0.1" id="weight" class="goal-input" value="77.4">
-          <span style="font-size:13px; color:var(--text-light);">кг</span>
-        </div>
+      <div class="card">
+        <h3>Цели</h3>
+        <label>Калории</label><input id="goal" type="number" value="1700" style="width:100%;padding:12px;margin:6px 0 12px;border-radius:12px;border:1px solid #ddd;">
+        <label>Белки %</label><input id="p" type="number" value="25" style="width:100%;padding:12px;margin:6px 0 12px;border-radius:12px;border:1px solid #ddd;">
+        <label>Жиры %</label><input id="f" type="number" value="40" style="width:100%;padding:12px;margin:6px 0 12px;border-radius:12px;border:1px solid #ddd;">
+        <label>Углеводы %</label><input id="c" type="number" value="35" style="width:100%;padding:12px;margin:6px 0 12px;border-radius:12px;border:1px solid #ddd;">
+        <button onclick="saveProfile()" style="width:100%;padding:14px;border:none;border-radius:14px;background:#6F7B52;color:white;font-weight:600;">Сохранить</button>
       </div>
-      <div class="goal-row">
-        <span>Целевой вес</span>
-        <div style="display:flex; align-items:center; gap:6px;">
-          <input type="number" step="0.1" id="target-weight" class="goal-input" value="65">
-          <span style="font-size:13px; color:var(--text-light);">кг</span>
-        </div>
+      <div class="card">
+        <h3>Аккаунт</h3>
+        <p id="status">Не вошли</p>
+        <div id="gbtn" style="margin:12px 0;"></div>
+        <button onclick="logout()" style="width:100%;padding:14px;border:none;border-radius:14px;background:#ccc;">Выйти</button>
       </div>
     </div>
-
-    <div class="card">
-      <div style="font-weight:700; margin-bottom:8px; color:var(--sage-dark);">Цель по калориям</div>
-      <div class="goal-row">
-        <span>Калории</span>
-        <div style="display:flex; align-items:center; gap:6px;">
-          <input type="number" id="calories" class="goal-input" value="1700">
-          <span style="font-size:13px; color:var(--text-light);">ккал</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div style="font-weight:700; margin-bottom:8px; color:var(--sage-dark);">БЖУ (проценты)</div>
-      <div class="goal-row">
-        <div>
-          <div>Углеводы</div>
-          <div id="carb-grams" style="font-size:12px; color:var(--text-light);">200 г</div>
-        </div>
-        <div style="display:flex; align-items:center; gap:6px;">
-          <input type="number" id="carb-pct" class="goal-input" value="35" oninput="recalc()">
-          <span class="percent">%</span>
-        </div>
-      </div>
-      <div class="goal-row">
-        <div>
-          <div>Белки</div>
-          <div id="protein-grams" style="font-size:12px; color:var(--text-light);">90 г</div>
-        </div>
-        <div style="display:flex; align-items:center; gap:6px;">
-          <input type="number" id="protein-pct" class="goal-input" value="25" oninput="recalc()">
-          <span class="percent">%</span>
-        </div>
-      </div>
-      <div class="goal-row">
-        <div>
-          <div>Жиры</div>
-          <div id="fat-grams" style="font-size:12px; color:var(--text-light);">70 г</div>
-        </div>
-        <div style="display:flex; align-items:center; gap:6px;">
-          <input type="number" id="fat-pct" class="goal-input" value="40" oninput="recalc()">
-          <span class="percent">%</span>
-        </div>
-      </div>
-      <div style="display:flex; justify-content:space-between; margin-top:10px; font-weight:600;">
-        <span>Всего</span>
-        <span id="total-pct" class="percent">100%</span>
-      </div>
-      <button class="save-btn" onclick="saveAll()">Сохранить</button>
-    </div>
-
-    <div class="card" id="accountCard">
-      <div style="font-weight:700; margin-bottom:8px; color:var(--sage-dark);">Аккаунт</div>
-      <div id="accountBody">
-        <p class="account-hint">Войдите через Google, чтобы данные совпадали на телефоне и компьютере.</p>
-        <button class="save-btn" type="button" onclick="doLogin()">Войти через Google</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <div style="font-weight:700; margin-bottom:8px; color:var(--sage-dark);">Резервная копия</div>
-      <p class="backup-hint">Скачайте файл со всеми данными или загрузите сохранённую копию.</p>
-      <button class="save-btn" type="button" onclick="downloadDataBackup()">Скачать копию данных</button>
-      <button class="save-btn backup-secondary" type="button" onclick="uploadDataBackup()">Загрузить копию</button>
-      <input type="file" id="backupFile" accept="application/json,.json" style="display:none" onchange="onBackupFile(this)">
-    </div>
-
     <nav class="bottom-nav">
-      <a href="index.html" class="nav-item"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 11.5 12 5l7.5 6.5"/><path d="M6.5 10.5V19h11v-8.5"/></svg></span>Сегодня</a>
-      <a href="products.html" class="nav-item"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19c6-1 11-5 13.5-13.5C10 5 5 10 5 19Z"/><path d="M8.5 14.5c2 0 5-2.5 6.5-6"/></svg></span>Продукты</a>
-      <a href="weight.html" class="nav-item"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="5.5" width="15" height="14.2" rx="3"/><rect x="8" y="8" width="8" height="2.3" rx=".7"/><circle cx="12" cy="14.4" r="2.5"/><path d="M12 14.4 13.3 12.8"/></svg></span>Вес</a>
-      <a href="menu.html" class="nav-item"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4.5h9.5A2.5 2.5 0 0 1 20 7v12.5H8A2.5 2.5 0 0 1 5.5 17V7A2.5 2.5 0 0 1 8 4.5Z"/><path d="M9.5 9.5h7M9.5 13h7M9.5 16.5h4.5"/></svg></span>Меню</a>
-      <a href="workouts.html" class="nav-item"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6.2 9.2v5.6M17.8 9.2v5.6"/><path d="M8.2 7.6v8.8M15.8 7.6v8.8"/><path d="M8.2 12h7.6"/><path d="M4.8 10.2h1.4v3.6H4.8zM17.8 10.2h1.4v3.6H17.8z"/></svg></span>Тренировки</a>
+      <a href="index.html" class="nav-item"><span class="nav-ic"></span>Сегодня</a>
+      <a href="products.html" class="nav-item"><span class="nav-ic"></span>Продукты</a>
+      <a href="weight.html" class="nav-item"><span class="nav-ic"></span>Вес</a>
+      <a href="menu.html" class="nav-item"><span class="nav-ic"></span>Меню</a>
+      <a href="workouts.html" class="nav-item"><span class="nav-ic"></span>Тренировки</a>
     </nav>
   </div>
-
   <script>
-    function recalc() {
-      const cal = +document.getElementById('calories').value || 0;
-      const carb = +document.getElementById('carb-pct').value || 0;
-      const protein = +document.getElementById('protein-pct').value || 0;
-      const fat = +document.getElementById('fat-pct').value || 0;
-      const total = carb + protein + fat;
-
-      document.getElementById('total-pct').textContent = total + '%';
-      document.getElementById('total-pct').style.color = total === 100 ? 'var(--sage)' : '#c44';
-
-      document.getElementById('carb-grams').textContent = Math.round(cal * carb / 100 / 4) + ' г';
-      document.getElementById('protein-grams').textContent = Math.round(cal * protein / 100 / 4) + ' г';
-      document.getElementById('fat-grams').textContent = Math.round(cal * fat / 100 / 9) + ' г';
+    const CLIENT_ID = '261846159655-3d5mop7bgr7hk7kh2clbgvr383elfcri.apps.googleusercontent.com';
+    function initGoogle() {
+      if (!window.google || !google.accounts) { setTimeout(initGoogle, 200); return; }
+      google.accounts.id.initialize({
+        client_id: CLIENT_ID,
+        callback: (resp) => {
+          localStorage.setItem('gtoken', resp.credential);
+          document.getElementById('status').textContent = 'Вошли';
+        }
+      });
+      google.accounts.id.renderButton(document.getElementById('gbtn'), { theme: 'outline', size: 'large', width: 280 });
+      if (localStorage.getItem('gtoken')) document.getElementById('status').textContent = 'Вошли';
     }
-
-    function saveAll() {
-      const total = (+document.getElementById('carb-pct').value) +
-                     (+document.getElementById('protein-pct').value) +
-                     (+document.getElementById('fat-pct').value);
-      if (total !== 100) {
-        alert('Сумма процентов должна быть 100%');
-        return;
-      }
-      localStorage.setItem('name', document.getElementById('name').value);
-      localStorage.setItem('height', document.getElementById('height').value);
-      localStorage.setItem('weight', document.getElementById('weight').value);
-      localStorage.setItem('target-weight', document.getElementById('target-weight').value);
-      localStorage.setItem('calories', document.getElementById('calories').value);
-      localStorage.setItem('carb-pct', document.getElementById('carb-pct').value);
-      localStorage.setItem('protein-pct', document.getElementById('protein-pct').value);
-      localStorage.setItem('fat-pct', document.getElementById('fat-pct').value);
+    function logout() { localStorage.removeItem('gtoken'); document.getElementById('status').textContent = 'Не вошли'; }
+    async function saveProfile() {
+      if (!localStorage.getItem('gtoken')) { alert('Сначала войди'); return; }
+      await CalAPI.profile.save({
+        name: document.getElementById('name').value,
+        height: +document.getElementById('height').value,
+        weight: +document.getElementById('weight').value,
+        target: +document.getElementById('target').value,
+        goal: +document.getElementById('goal').value,
+        p: +document.getElementById('p').value,
+        f: +document.getElementById('f').value,
+        c: +document.getElementById('c').value
+      });
       alert('Сохранено');
     }
-
-    // Load saved
-    if (localStorage.getItem('name')) document.getElementById('name').value = localStorage.getItem('name');
-    if (localStorage.getItem('height')) document.getElementById('height').value = localStorage.getItem('height');
-    if (localStorage.getItem('weight')) document.getElementById('weight').value = localStorage.getItem('weight');
-    if (localStorage.getItem('target-weight')) document.getElementById('target-weight').value = localStorage.getItem('target-weight');
-    if (localStorage.getItem('calories')) {
-      document.getElementById('calories').value = localStorage.getItem('calories');
-      document.getElementById('carb-pct').value = localStorage.getItem('carb-pct');
-      document.getElementById('protein-pct').value = localStorage.getItem('protein-pct');
-      document.getElementById('fat-pct').value = localStorage.getItem('fat-pct');
-    }
-    recalc();
-    document.getElementById('calories').addEventListener('input', recalc);
-
-    function statusLabel(status) {
-      switch (status) {
-        case 'signed-in': return 'синхронизировано';
-        case 'syncing': return 'синхронизация…';
-        case 'offline': return 'офлайн';
-        case 'signing-in': return 'входим…';
-        case 'error': return 'ошибка синхронизации';
-        case 'unconfigured': return 'синхронизация не настроена';
-        case 'idle': return 'подключаемся…';
-        default: return '';
-      }
-    }
-
-    function escapeHtml(s) {
-      return String(s || '').replace(/[&<>"']/g, function (c) {
-        return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
-      });
-    }
-
-    function renderAccount() {
-      const body = document.getElementById('accountBody');
-      if (!body) return;
-      const api = window.CalorieSync;
-      const status = api && api.getStatus ? api.getStatus() : 'idle';
-      const user = api && api.getUser ? api.getUser() : null;
-      const lastError = api && api.getLastError ? api.getLastError() : '';
-      const standalone = !!(api && api.isStandalone && api.isStandalone());
-      const ios = !!(api && api.isIOS && api.isIOS());
-      // Any signed-in Firebase user must show the account + «Выйти»,
-      // even while status is still idle/syncing after a redirect return.
-      const signedIn = !!user;
-
-      if (signedIn) {
-        const name = user.name || '';
-        const email = user.email || '';
-        const photo = user.photo || '';
-        const initial = (name || email || '?').trim().charAt(0).toUpperCase();
-        const photoHtml = photo
-          ? '<img class="account-photo" alt="" src="' + escapeHtml(photo) + '">'
-          : '<div class="account-photo placeholder">' + escapeHtml(initial) + '</div>';
-        const label = statusLabel(status) || 'синхронизировано';
-        body.innerHTML =
-          '<div class="account-row">' + photoHtml +
-            '<div>' +
-              (name ? '<div class="account-name">' + escapeHtml(name) + '</div>' : '') +
-              (email ? '<div class="account-email">' + escapeHtml(email) + '</div>' : '') +
-            '</div>' +
-          '</div>' +
-          '<div class="account-status">' + escapeHtml(label) + '</div>' +
-          (lastError && status === 'error' ? '<div class="account-error">' + escapeHtml(lastError) + '</div>' : '') +
-          '<button class="save-btn backup-secondary" type="button" onclick="accountSignOut()">Выйти</button>';
-        return;
-      }
-
-      if (status === 'signing-in') {
-        body.innerHTML = '<p class="account-hint">Входим через Google… Если сейчас откроется другое окно или Safari, вернитесь на эту страницу после входа.</p>';
-        return;
-      }
-
-      if (status === 'unconfigured') {
-        body.innerHTML = '<p class="account-hint">Синхронизация ещё не подключена.</p>';
-        return;
-      }
-
-      let html = '<p class="account-hint">Войдите через Google, чтобы данные совпадали на телефоне и компьютере.</p>';
-      if (standalone && ios) {
-        html += '<p class="account-hint">На iPhone из значка на экране «Домой» вход может не открыться. Откройте сайт во вкладке Safari и войдите там.</p>';
-      }
-      if (lastError) {
-        html += '<div class="account-error">' + escapeHtml(lastError) + '</div>';
-      }
-      const useGis = !!(window.CalorieSync && window.CalorieSync.isGisEnabled && window.CalorieSync.isGisEnabled());
-      if (useGis) {
-        html += '<div id="gisButtonHost"></div>';
-      } else {
-        html += '<button class="save-btn" type="button" onclick="doLogin()">Войти через Google</button>';
-      }
-      body.innerHTML = html;
-      if (useGis && window.CalorieSync.mountGoogleButton) {
-        window.CalorieSync.mountGoogleButton(document.getElementById('gisButtonHost'));
-      }
-    }
-
-     else {
-        const body = document.getElementById('accountBody');
-        if (body) {
-          body.innerHTML = '<p class="account-hint"></p>' +
-            '<button class="save-btn" type="button" onclick="doLogin()">Войти через Google</button>';
-        }
-      }
-    }
-
-    
-
-    function bindAccount() {
-      if (window.CalorieSync && window.CalorieSync.onStatusChange) {
-        window.CalorieSync.onStatusChange(renderAccount);
-      }
-      renderAccount();
-    }
-    if (window.CalorieSync) bindAccount();
-    document.addEventListener('calorie-sync-ready', bindAccount);
-    document.addEventListener('calorie-sync-status', renderAccount);
-
-    function downloadDataBackup() {
-      if (window.CalorieSync && window.CalorieSync.exportBackup) {
-        window.CalorieSync.exportBackup();
-        return;
-      }
-      alert('');
-    }
-
-    function uploadDataBackup() {
-      document.getElementById('backupFile').click();
-    }
-
-    
-      alert('');
-    }
-  
-    function doLogin() {
-      if (window.google && google.accounts) {
-        google.accounts.id.initialize({
-          client_id: '261846159655-3d5mop7bgr7hk7kh2clbgvr383elfcri.apps.googleusercontent.com',
-          callback: (resp) => {
-            localStorage.setItem('gtoken', resp.credential);
-            document.getElementById('accountStatus').textContent = 'Вошли';
-          }
-        });
-        google.accounts.id.prompt();
-      } else {
-        alert('Google не загрузился. Обнови страницу.');
-      }
-    }
-    function doLogout() {
-      localStorage.removeItem('gtoken');
-      document.getElementById('accountStatus').textContent = 'Не вошли';
-    }
-    if (localStorage.getItem('gtoken')) {
-      document.getElementById('accountStatus').textContent = 'Вошли';
-    }
-
+    initGoogle();
   </script>
 </body>
 </html>
