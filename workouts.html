@@ -14,7 +14,14 @@
       <a href="index.html"><button class="icon-btn">←</button></a>
       <h1>Тренировки</h1>
     </header>
-    <div style="padding:12px; text-align:center; color:#888;">Тренировки пока на старой системе.<br>Перепишу отдельно.</div>
+    <div style="padding:12px;">
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <button onclick="add('бассейн')" style="flex:1;padding:12px;border:none;border-radius:12px;background:#D6E2C8;">Бассейн</button>
+        <button onclick="add('семья')" style="flex:1;padding:12px;border:none;border-radius:12px;background:#D6E2C8;">Семья</button>
+        <button onclick="add('своя')" style="flex:1;padding:12px;border:none;border-radius:12px;background:#D6E2C8;">Своя</button>
+      </div>
+      <div id="list"></div>
+    </div>
     <nav class="bottom-nav">
       <a href="index.html" class="nav-item"><span class="nav-ic"></span>Сегодня</a>
       <a href="products.html" class="nav-item"><span class="nav-ic"></span>Продукты</a>
@@ -23,5 +30,23 @@
       <a href="workouts.html" class="nav-item active"><span class="nav-ic"></span>Тренировки</a>
     </nav>
   </div>
+  <script>
+    let workouts = [];
+    const date = new Date().toISOString().slice(0,10);
+    async function load() {
+      if (!CalAPI.getToken()) { document.getElementById('list').innerHTML = '<div style="text-align:center;padding:40px;">Войди на главной</div>'; return; }
+      workouts = JSON.parse(localStorage.getItem('workouts-'+date) || '[]');
+      render();
+    }
+    function render() {
+      document.getElementById('list').innerHTML = workouts.map(w => `<div style="background:#F3EDE0;border-radius:12px;padding:10px;margin-bottom:8px;">${w.type}</div>`).join('') || '<div style="text-align:center;color:#888;">Сегодня пусто</div>';
+    }
+    function add(type) {
+      workouts.push({ type, time: new Date().toISOString() });
+      localStorage.setItem('workouts-'+date, JSON.stringify(workouts));
+      render();
+    }
+    load();
+  </script>
 </body>
 </html>
