@@ -2,9 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <script src="sync-shim.js?v=20261118-noloop"></script>
-  <script src="app-ui.js?v=20261118-noloop"></script>
-  <script type="module" src="sync.js?v=20261118-noloop"></script>
+  <script src="api-client.js?v=20261118-api"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Рецепт — Калории</title>
   <link rel="stylesheet" href="style.css?v=20261118-noloop">
@@ -146,7 +144,7 @@
       if (e.target.type === 'number') e.preventDefault();
     }, { passive: false });
 
-    let products = JSON.parse(localStorage.getItem('products') || '[]');
+    let products = JSON.parse(await CalAPI.products.list() || '[]');
     let ingredients = [];
     let currentIngredientIndex = null;
     const params = new URLSearchParams(location.search);
@@ -307,7 +305,7 @@
         }
       };
 
-      let recipes = JSON.parse(localStorage.getItem('recipes') || '[]');
+      let recipes = JSON.parse(await CalAPI.recipes.list() || '[]');
       if (editId) {
         const idx = recipes.findIndex(r => r.id == editId);
         if (idx >= 0) recipes[idx] = recipe;
@@ -315,7 +313,7 @@
       } else {
         recipes.push(recipe);
       }
-      localStorage.setItem('recipes', JSON.stringify(recipes));
+      await CalAPI.recipes.save(recipes);
       alert('Рецепт сохранён');
       location.href = 'recipes.html';
     }
@@ -325,7 +323,7 @@
     });
 
     if (editId) {
-      const recipes = JSON.parse(localStorage.getItem('recipes') || '[]');
+      const recipes = JSON.parse(await CalAPI.recipes.list() || '[]');
       const r = recipes.find(x => x.id == editId);
       if (r) {
         document.getElementById('pageTitle').textContent = 'Редактировать';
