@@ -101,12 +101,7 @@
   </div>
 
   <script>
-    const defaultProducts = [
-      {id: 1, name: 'Сыр пармезан', category: 'Молочные', calories: 392, brand: ''},
-      {id: 2, name: 'Хлеб цельнозерновой', category: 'Выпечка', calories: 250, brand: ''},
-      {id: 3, name: 'Творог 5%', category: 'Молочные', calories: 121, brand: ''},
-      {id: 4, name: 'Яйцо', category: 'Другое', calories: 157, brand: ''}
-    ];
+    const defaultProducts = [];
 
     let products = JSON.parse(localStorage.getItem('products') || 'null') || defaultProducts;
     let pendingProduct = null;
