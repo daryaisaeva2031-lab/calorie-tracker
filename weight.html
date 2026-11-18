@@ -2,339 +2,50 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <script src="sync-shim.js?v=20261118-noloop"></script>
-  <script src="app-ui.js?v=20261118-noloop"></script>
-  <script type="module" src="sync.js?v=20261118-noloop"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Вес — Калории</title>
-  <link rel="stylesheet" href="style.css?v=20261118-noloop">
-  <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
-  <link rel="shortcut icon" href="favicon.ico">
-  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css?v=20261118-api">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
-  <style>
-    .weight-big {
-      background: var(--sage-light); border-radius: 16px; padding: 16px;
-      text-align: center; margin: 12px 0;
-    }
-    .weight-big .num { font-size: 36px; font-weight: 700; color: var(--sage-dark); }
-    .weight-stats { display: flex; justify-content: space-between; margin: 12px 0; }
-    .stat-box {
-      background: var(--white); border-radius: 12px; padding: 10px 14px; text-align: center;
-      box-shadow: var(--shadow); flex: 1; margin: 0 4px;
-    }
-    .stat-label { font-size: 12px; color: var(--text-light); }
-    .stat-value { font-size: 18px; font-weight: 700; color: var(--sage-dark); }
-    .graph-container {
-      background: var(--white); border-radius: 16px; padding: 12px; margin: 12px 0;
-      height: 180px; position: relative;
-    }
-    .history-item {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 10px 0; border-bottom: 1px solid var(--sage-light);
-    }
-    .add-modal {
-      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
-      z-index: 100; justify-content: center; align-items: center;
-    }
-    .add-modal.show { display: flex; }
-    .add-box {
-      background: var(--cream); border-radius: 20px; padding: 24px; width: 80%; max-width: 320px;
-    }
-    .weight-controls {
-      display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 16px;
-    }
-    .weight-controls input {
-      width: 120px; padding: 14px; border-radius: 12px; border: 1px solid var(--sage-light);
-      font-size: 22px; text-align: center; font-family: inherit; font-weight: 700;
-    }
-    .arrow-btn {
-      width: 44px; height: 44px; border-radius: 12px; border: none;
-      background: var(--sage-light); font-size: 20px; cursor: pointer;
-    }
-  </style>
+  <script src="api-client.js?v=20261118-api"></script>
 </head>
 <body>
   <div class="app">
     <header class="header">
       <a href="index.html"><button class="icon-btn">←</button></a>
       <h1>Вес</h1>
-      <button class="icon-btn" onclick="openAdd()">+</button>
+      <button class="icon-btn" onclick="addWeight()">+</button>
     </header>
-
-    <div class="weight-big">
-      <div class="num" id="currentWeight">77,4 кг</div>
-      <div style="font-size:13px; color:var(--text-light); margin-top:4px;">Текущий вес</div>
-    </div>
-
-    <div class="on-olive" style="display:flex; justify-content:space-between; font-size:13px; margin:8px 4px;">
-      <span>Сброшено: <b id="lost">—</b></span>
-      <span>Осталось: <b id="left">—</b></span>
-    </div>
-
-    <div class="card" style="padding:12px; margin:12px 0;">
-      <div class="chart-toolbar">
-        <div style="font-weight:700; color:var(--sage-dark);">График</div>
-        <div class="chart-zoom">
-          <button type="button" onclick="zoomChart(-1)" aria-label="Отдалить">−</button>
-          <button type="button" onclick="zoomChart(1)" aria-label="Приблизить">+</button>
-        </div>
-      </div>
-      <div class="chart-scroll" id="chartScroll">
-        <canvas id="weightChart"></canvas>
-      </div>
-    </div>
-
-    <div class="card">
-      <div style="font-weight:700; margin-bottom:10px; color:var(--sage-dark);">Прогноз</div>
-      <div class="forecast-row">
-        <div class="form-group">
-          <label class="form-label" style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Желаемый вес</label>
-          <input type="text" inputmode="decimal" class="form-input" id="desiredWeight" style="width:100%; padding:10px 12px; border-radius:12px; border:1px solid var(--sage-light); font-family:inherit; font-size:15px; background:white;" onchange="saveForecast()" onblur="saveForecast()">
-        </div>
-        <div class="form-group">
-          <label class="form-label" style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">К дате</label>
-          <input type="date" class="form-input" id="targetDate" style="width:100%; padding:10px 12px; border-radius:12px; border:1px solid var(--sage-light); font-family:inherit; font-size:15px; background:white;" onchange="saveForecast()">
-        </div>
-      </div>
-      <div class="forecast-stats" id="forecastStats"></div>
-    </div>
-
-    <div class="card">
-      <div style="font-weight:700; margin-bottom:8px; color:var(--sage-dark);">История</div>
-      <div id="historyList"></div>
-    </div>
-
+    <div id="list" style="padding:12px;"></div>
     <nav class="bottom-nav">
-      <a href="index.html" class="nav-item"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 11.5 12 5l7.5 6.5"/><path d="M6.5 10.5V19h11v-8.5"/></svg></span>Сегодня</a>
-      <a href="products.html" class="nav-item"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19c6-1 11-5 13.5-13.5C10 5 5 10 5 19Z"/><path d="M8.5 14.5c2 0 5-2.5 6.5-6"/></svg></span>Продукты</a>
-      <a href="weight.html" class="nav-item active"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="5.5" width="15" height="14.2" rx="3"/><rect x="8" y="8" width="8" height="2.3" rx=".7"/><circle cx="12" cy="14.4" r="2.5"/><path d="M12 14.4 13.3 12.8"/></svg></span>Вес</a>
-      <a href="menu.html" class="nav-item"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4.5h9.5A2.5 2.5 0 0 1 20 7v12.5H8A2.5 2.5 0 0 1 5.5 17V7A2.5 2.5 0 0 1 8 4.5Z"/><path d="M9.5 9.5h7M9.5 13h7M9.5 16.5h4.5"/></svg></span>Меню</a>
-      <a href="workouts.html" class="nav-item"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6.2 9.2v5.6M17.8 9.2v5.6"/><path d="M8.2 7.6v8.8M15.8 7.6v8.8"/><path d="M8.2 12h7.6"/><path d="M4.8 10.2h1.4v3.6H4.8zM17.8 10.2h1.4v3.6H17.8z"/></svg></span>Тренировки</a>
+      <a href="index.html" class="nav-item"><span class="nav-ic"></span>Сегодня</a>
+      <a href="products.html" class="nav-item"><span class="nav-ic"></span>Продукты</a>
+      <a href="weight.html" class="nav-item active"><span class="nav-ic"></span>Вес</a>
+      <a href="menu.html" class="nav-item"><span class="nav-ic"></span>Меню</a>
+      <a href="workouts.html" class="nav-item"><span class="nav-ic"></span>Тренировки</a>
     </nav>
   </div>
-
-  <div class="add-modal" id="addModal" onclick="if(event.target===this) closeAdd()">
-    <div class="add-box">
-      <div style="font-weight:700; margin-bottom:16px; text-align:center;">Текущий вес</div>
-      <div class="weight-controls">
-        <button class="arrow-btn" onclick="adjustWeight(-0.1)">−</button>
-        <input type="text" inputmode="decimal" id="newWeight" value="77.4">
-        <button class="arrow-btn" onclick="adjustWeight(0.1)">+</button>
-      </div>
-      <button onclick="addWeight()" style="width:100%; padding:12px; border:none; border-radius:12px; background:var(--sage); color:white; font-family:inherit; font-size:15px; font-weight:600;">Сохранить</button>
-    </div>
-  </div>
-
   <script>
-    let weights = JSON.parse(localStorage.getItem('weights')) || [
-      {date: '2026-09-01', value: 81.0},
-      {date: '2026-10-01', value: 77.1},
-      {date: '2026-10-03', value: 77.0},
-      {date: '2026-10-09', value: 77.4}
-    ];
-    let target = parseFloat(localStorage.getItem('target-weight')) || 65;
-    let targetDateStr = localStorage.getItem('target-date') || '';
-    let chartZoom = 1;
-
-    function fmtKg(n) {
-      return (Math.round(n * 10) / 10).toFixed(1).replace('.', ',');
-    }
-    function startWeight() {
-      return weights.length ? weights[0].value : 0;
-    }
-    function currentWeight() {
-      return weights.length ? weights[weights.length - 1].value : 0;
-    }
-
-    function openAdd() {
-      const current = currentWeight() || 77.4;
-      document.getElementById('newWeight').value = current.toFixed(1);
-      document.getElementById('addModal').classList.add('show');
-    }
-    function closeAdd() { document.getElementById('addModal').classList.remove('show'); }
-
-    function adjustWeight(delta) {
-      const input = document.getElementById('newWeight');
-      let val = parseFloat(input.value.replace(',', '.')) || 77.4;
-      val = Math.round((val + delta) * 10) / 10;
-      input.value = val.toFixed(1);
-    }
-
-    function addWeight() {
-      const raw = document.getElementById('newWeight').value.replace(',', '.');
-      const val = parseFloat(raw);
-      if (!val || val < 30 || val > 200) {
-        alert('Введи реальный вес');
-        return;
-      }
-      const today = localDateStr();
-      const existing = weights.findIndex(w => w.date === today);
-      if (existing >= 0) weights[existing].value = val;
-      else weights.push({date: today, value: val});
-      weights.sort((a,b) => a.date.localeCompare(b.date));
-      localStorage.setItem('weights', JSON.stringify(weights));
-      closeAdd();
+    let weights = [];
+    async function load() {
+      if (!CalAPI.getToken()) { document.getElementById('list').innerHTML = '<div style="text-align:center;padding:40px;">Войди на главной</div>'; return; }
+      weights = await CalAPI.weights.list() || [];
       render();
     }
-
-    function saveForecast() {
-      const raw = document.getElementById('desiredWeight').value.replace(',', '.');
-      const val = parseFloat(raw);
-      if (val && val >= 30 && val <= 200) {
-        target = val;
-        localStorage.setItem('target-weight', String(val));
-      }
-      targetDateStr = document.getElementById('targetDate').value || '';
-      if (targetDateStr) localStorage.setItem('target-date', targetDateStr);
-      else localStorage.removeItem('target-date');
-      renderForecast();
-      drawChart();
-    }
-
-    function renderForecast() {
-      const box = document.getElementById('forecastStats');
-      const current = currentWeight();
-      if (!targetDateStr) {
-        box.textContent = 'Укажите желаемый вес и дату, чтобы увидеть, сколько нужно сбрасывать.';
-        return;
-      }
-      const end = parseISODate(targetDateStr);
-      if (!end) { box.textContent = 'Проверьте дату.'; return; }
-      const today = new Date(); today.setHours(0,0,0,0);
-      const daysLeft = Math.round((end - today) / 86400000);
-      const delta = current - target;
-      if (daysLeft <= 0) {
-        box.textContent = Math.abs(delta) < 0.05
-          ? 'Желаемый вес уже достигнут.'
-          : 'Дата уже прошла. Обновите дату, чтобы пересчитать прогноз.';
-        return;
-      }
-      if (Math.abs(delta) < 0.05) {
-        box.textContent = 'Вы уже на желаемом весе.';
-        return;
-      }
-      const perWeek = delta / (daysLeft / 7);
-      const perMonth = delta / (daysLeft / 30.4375);
-      const verb = delta > 0 ? 'сбрасывать' : 'набирать';
-      const absW = Math.abs(perWeek);
-      const absM = Math.abs(perMonth);
-      box.innerHTML = 'До даты осталось <b>' + daysLeft + '</b> дн. Нужно ' + verb +
-        ' <b>' + fmtKg(absW) + ' кг/нед</b> и <b>' + fmtKg(absM) + ' кг/мес</b>.';
-    }
-
     function render() {
-      target = parseFloat(localStorage.getItem('target-weight')) || 65;
-      targetDateStr = localStorage.getItem('target-date') || '';
-      document.getElementById('desiredWeight').value = target.toFixed(1);
-      document.getElementById('targetDate').value = targetDateStr;
-
-      const current = currentWeight() || 0;
-      const start = startWeight() || current;
-      document.getElementById('currentWeight').textContent = fmtKg(current) + ' кг';
-      document.getElementById('lost').textContent = fmtKg(start - current) + ' кг';
-      document.getElementById('left').textContent = fmtKg(current - target) + ' кг';
-
-      const list = document.getElementById('historyList');
-      list.innerHTML = '';
-      [...weights].reverse().forEach((w, i, arr) => {
-        const prev = arr[i+1];
-        const diff = prev ? w.value - prev.value : 0;
-        const arrow = diff > 0 ? '↑' : diff < 0 ? '↓' : '';
-        const color = diff > 0 ? '#c44' : diff < 0 ? 'var(--sage)' : 'var(--text-light)';
-        list.innerHTML += `<div class="history-item">
-          <span>${formatDayMonthWeekday(w.date)}</span>
-          <span>${fmtKg(w.value)} кг <span style="color:${color}">${arrow}</span></span>
-        </div>`;
-      });
-
-      renderForecast();
-      drawChart();
+      const el = document.getElementById('list');
+      if (!weights.length) { el.innerHTML = '<div style="text-align:center;padding:40px;color:#888;">Пока нет записей</div>'; return; }
+      el.innerHTML = weights.slice().reverse().map(w => `<div class="food-item" style="margin-bottom:8px;">
+        <div style="flex:1;"><div style="font-weight:600;">${w.weight} кг</div><div style="font-size:12px;color:#888;">${w.date}</div></div>
+      </div>`).join('');
     }
-
-    function zoomChart(dir) {
-      chartZoom = dir > 0
-        ? Math.min(5, +(chartZoom * 1.4).toFixed(2))
-        : Math.max(0.8, +(chartZoom / 1.4).toFixed(2));
-      drawChart();
+    async function addWeight() {
+      const w = prompt('Вес (кг):');
+      if (!w) return;
+      weights.push({ date: new Date().toISOString().slice(0,10), weight: +w });
+      await CalAPI.weights.save(weights);
+      render();
     }
-
-    function drawChart() {
-      const wrap = document.getElementById('chartScroll');
-      const canvas = document.getElementById('weightChart');
-      if (!wrap || !canvas) return;
-      const dpr = window.devicePixelRatio || 1;
-      const cssH = 200;
-      const n = weights.length;
-      const minPx = 36 * chartZoom;
-      const cssW = Math.max(wrap.clientWidth || 320, n > 1 ? (n - 1) * minPx + 72 : wrap.clientWidth || 320);
-      canvas.style.width = cssW + 'px';
-      canvas.style.height = cssH + 'px';
-      canvas.width = Math.round(cssW * dpr);
-      canvas.height = Math.round(cssH * dpr);
-      const ctx = canvas.getContext('2d');
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.clearRect(0, 0, cssW, cssH);
-      if (!n) return;
-
-      const vals = weights.map(x => x.value);
-      const min = Math.min(...vals, target) - 1;
-      const max = Math.max(...vals, startWeight() || target) + 1;
-      const padL = 28, padR = 36, padT = 18, padB = 22;
-      const toX = i => n === 1 ? cssW / 2 : padL + (i / (n - 1)) * (cssW - padL - padR);
-      const toY = v => cssH - padB - ((v - min) / (max - min || 1)) * (cssH - padT - padB);
-
-      ctx.strokeStyle = '#A3B38B';
-      ctx.setLineDash([4, 4]);
-      ctx.beginPath();
-      ctx.moveTo(padL - 8, toY(target));
-      ctx.lineTo(cssW - 12, toY(target));
-      ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.fillStyle = '#6F7B52';
-      ctx.font = '600 11px Nunito, sans-serif';
-      ctx.textAlign = 'right';
-      ctx.fillText(fmtKg(target), cssW - 8, toY(target) - 5);
-
-      ctx.strokeStyle = '#6F7B52';
-      ctx.lineWidth = 2.2;
-      ctx.lineJoin = 'round';
-      ctx.beginPath();
-      weights.forEach((pt, i) => {
-        const x = toX(i), y = toY(pt.value);
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      });
-      ctx.stroke();
-
-      const spacing = n > 1 ? (cssW - padL - padR) / (n - 1) : cssW;
-      const showLabels = spacing >= 36 || n <= 8;
-      let lastLabelX = -999;
-      weights.forEach((pt, i) => {
-        const x = toX(i), y = toY(pt.value);
-        ctx.beginPath();
-        ctx.arc(x, y, 4, 0, Math.PI * 2);
-        ctx.fillStyle = '#6F7B52';
-        ctx.fill();
-        ctx.strokeStyle = '#F3EDE0';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-        if (showLabels) {
-          const isEdge = i === 0 || i === n - 1;
-          if (isEdge || x - lastLabelX >= 32) {
-            ctx.fillStyle = '#3F4630';
-            ctx.font = '600 10px Nunito, sans-serif';
-            ctx.textAlign = 'center';
-            const ty = y - 10 < 12 ? y + 16 : y - 10;
-            ctx.fillText(fmtKg(pt.value), x, ty);
-            lastLabelX = x;
-          }
-        }
-      });
-    }
-
-    window.addEventListener('resize', function () { drawChart(); });
-    render();
+    load();
   </script>
 </body>
 </html>
