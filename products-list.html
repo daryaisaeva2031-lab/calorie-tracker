@@ -2,9 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <script src="sync-shim.js?v=20261118-noloop"></script>
-  <script src="app-ui.js?v=20261118-noloop"></script>
-  <script type="module" src="sync.js?v=20261118-noloop"></script>
+  <script src="api-client.js?v=20261118-api"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Список продуктов — Калории</title>
   <link rel="stylesheet" href="style.css?v=20261118-noloop">
@@ -108,7 +106,9 @@
       {id: 4, name: 'Яйцо', category: 'Другое', calories: 157, brand: ''}
     ];
 
-    let products = JSON.parse(localStorage.getItem('products') || 'null') || defaultProducts;
+    let products = [];
+    async function loadProducts() { if (!CalAPI.getToken()) return; products = await CalAPI.products.list() || []; render(); }
+    loadProducts();
     let pendingProduct = null;
 
     let maxId = Math.max(0, ...products.map(p => p.id || 0));
@@ -133,7 +133,7 @@
       const next = JSON.stringify(products);
       const prev = localStorage.getItem('products');
       if (prev !== next && !(window.__storageValuesEqual && window.__storageValuesEqual(prev, next))) {
-        localStorage.setItem('products', next);
+        CalAPI.products.save(JSON.parse(next));
       }
     }
 
