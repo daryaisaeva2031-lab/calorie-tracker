@@ -120,34 +120,39 @@ function clearAuthError() {
   lastError = '';
 }
 
+function withErrorCode(message, err) {
+  const code = err && err.code;
+  if (!code) return message;
+  if (String(message).indexOf(code) !== -1) return message;
+  return message + ' (' + code + ')';
+}
+
 function friendlyAuthError(err) {
   const code = err && err.code;
   const raw = (err && (err.message || err.code)) || '';
+  let msg;
   if (code === 'auth/unauthorized-domain') {
-    return 'Этот адрес сайта не разрешён для входа Google. Нужно добавить его в Firebase.';
+    msg = 'Этот адрес сайта не разрешён для входа Google. Нужно добавить его в Firebase.';
+  } else if (code === 'auth/web-storage-unsupported') {
+    msg = 'Safari блокирует сохранение входа. Выйдите из режима «Частный доступ» и попробуйте снова.';
+  } else if (code === 'auth/network-request-failed') {
+    msg = 'Нет сети. Проверьте интернет и нажмите «Войти через Google» ещё раз.';
+  } else if (code === 'auth/operation-not-allowed') {
+    msg = 'Вход через Google не включён в проекте Firebase.';
+  } else if (code === 'auth/popup-blocked') {
+    msg = 'Окно входа было заблокировано. Разрешите всплывающие окна для этого сайта и нажмите ещё раз.';
+  } else if (code === 'auth/operation-not-supported-in-this-environment') {
+    msg = 'Вход через окно в этом режиме недоступен.';
+  } else if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
+    msg = 'Вход отменили до завершения.';
+  } else if (code === 'auth/redirect-cancelled-by-user') {
+    msg = 'Вход отменили до завершения.';
+  } else if (code === 'auth/account-exists-with-different-credential') {
+    msg = 'Этот адрес уже используется другим способом входа.';
+  } else {
+    msg = raw ? ('Не получилось войти: ' + raw) : 'Не получилось войти. Попробуйте ещё раз.';
   }
-  if (code === 'auth/web-storage-unsupported') {
-    return 'Safari блокирует сохранение входа. Выйдите из режима «Частный доступ» и попробуйте снова.';
-  }
-  if (code === 'auth/network-request-failed') {
-    return 'Нет сети. Проверьте интернет и нажмите «Войти через Google» ещё раз.';
-  }
-  if (code === 'auth/operation-not-allowed') {
-    return 'Вход через Google не включён в проекте Firebase.';
-  }
-  if (code === 'auth/popup-blocked') {
-    return 'Окно входа было заблокировано. Пробуем другой способ…';
-  }
-  if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
-    return 'Вход отменили до завершения.';
-  }
-  if (code === 'auth/redirect-cancelled-by-user') {
-    return 'Вход отменили до завершения.';
-  }
-  if (code === 'auth/account-exists-with-different-credential') {
-    return 'Этот адрес уже используется другим способом входа.';
-  }
-  return raw ? ('Не получилось войти: ' + raw) : 'Не получилось войти. Попробуйте ещё раз.';
+  return withErrorCode(msg, err);
 }
 
 function isIOS() {
@@ -426,42 +431,32 @@ function stopListener() {
   pendingKeys.clear();
 }
 
-function shouldUseRedirect() {
-  return isIOS() || isStandalone() || isMobile();
+function canFallbackToRedirect(code) {
+  return isStandalone() &&
+    (code === 'auth/popup-blocked' || code === 'auth/operation-not-supported-in-this-environment');
 }
 
-async function signIn() {
+function signIn() {
   if (!auth) {
     setAuthError('Синхронизация ещё загружается. Подождите секунду и нажмите ещё раз.');
-    return;
+    return Promise.resolve();
   }
   clearAuthError();
   setStatus('signing-in');
   const provider = new fb.GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account' });
-  const useRedirect = shouldUseRedirect();
-  try {
-    if (useRedirect) {
-      markRedirectPending();
-      await fb.signInWithRedirect(auth, provider);
-      return;
-    }
-    await fb.signInWithPopup(auth, provider);
-  } catch (err) {
+  // signInWithPopup must run in the same tick as the click (no awaits before it),
+  // otherwise Safari/Chrome drop the user-gesture and block the popup.
+  return fb.signInWithPopup(auth, provider).catch(function (err) {
     const code = err && err.code;
-    if (!useRedirect && (code === 'auth/popup-blocked' || code === 'auth/popup-closed-by-user' ||
-        code === 'auth/cancelled-popup-request' || code === 'auth/operation-not-supported-in-this-environment')) {
-      try {
-        markRedirectPending();
-        await fb.signInWithRedirect(auth, provider);
-        return;
-      } catch (err2) {
+    if (canFallbackToRedirect(code)) {
+      markRedirectPending();
+      return fb.signInWithRedirect(auth, provider).catch(function (err2) {
         console.warn('[sync] redirect sign-in failed:', err2 && err2.message);
         setAuthError(friendlyAuthError(err2));
-        return;
-      }
+      });
     }
-    console.warn('[sync] sign-in failed:', err && err.message);
+    console.warn('[sync] sign-in failed:', err && err.message, code || '');
     if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request' ||
         code === 'auth/redirect-cancelled-by-user') {
       clearRedirectPending();
@@ -470,7 +465,7 @@ async function signIn() {
       return;
     }
     setAuthError(friendlyAuthError(err));
-  }
+  });
 }
 
 async function signOutUser() {
@@ -642,10 +637,10 @@ async function init() {
     const pending = readRedirectPending();
     if (pending && !lastError) {
       clearRedirectPending();
+      // In a normal browser tab, a lost redirect (Safari ITP / authDomain mismatch)
+      // should not leave a sticky error — the next tap uses a popup.
       if (isStandalone() || pending.standalone) {
         setAuthError('На iPhone вход из приложения на экране «Домой» часто не завершается: Google открывается в Safari, и результат туда и попадает. Откройте сайт в Safari и войдите там, затем пользуйтесь им в Safari.');
-      } else {
-        setAuthError('Вход не завершился. Нажмите «Войти через Google» ещё раз.');
       }
     }
   }
