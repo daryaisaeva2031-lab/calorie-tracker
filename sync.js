@@ -56,6 +56,9 @@ const fb = {
 // Firebase auto-created "Web client (auto created by Google Service)",
 // discovered via Identity Toolkit createAuthUri for this project's API key.
 const GOOGLE_WEB_CLIENT_ID = '261846159655-3d5mop7bgr7hk7kh2clbgvr383elfcri.apps.googleusercontent.com';
+// Off until https://daryaisaeva2031-lab.github.io is added as an Authorized
+// JavaScript origin on that OAuth client (blocked on Google Cloud ToS).
+const USE_GIS_SIGNIN = false;
 
 // === FIREBASE_CONFIG ===
 // Replace these placeholder values with the real config from
@@ -489,9 +492,7 @@ function signIn() {
   }
   // Call signInWithPopup in this tick, before any setStatus/re-render.
   // Re-rendering the account card tears down the clicked button and iOS
-  // drops the user gesture (auth/popup-blocked). The Firebase SDK may still
-  // open the window after an async hop, which iOS Safari often blocks anyway;
-  // GIS (mountGoogleButton) is the reliable path there.
+  // drops the user gesture (auth/popup-blocked).
   return fb.signInWithPopup(auth, googleProvider).then(function () {
     clearAuthError();
   }).catch(function (err) {
@@ -575,6 +576,7 @@ function onGisCredential(response) {
 }
 
 function mountGoogleButton(host) {
+  if (!USE_GIS_SIGNIN) return Promise.resolve();
   if (!host) return Promise.resolve();
   host.innerHTML = '<div class="gis-fallback">Загружается вход Google…</div>';
   return loadGisClient().then(function () {
@@ -714,6 +716,7 @@ window.CalorieSync = {
   signIn,
   signInWithIdToken,
   mountGoogleButton,
+  isGisEnabled: () => USE_GIS_SIGNIN,
   getGoogleClientId: () => GOOGLE_WEB_CLIENT_ID,
   signOut: signOutUser,
   getStatus: () => status,

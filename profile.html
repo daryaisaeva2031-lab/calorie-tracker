@@ -2,16 +2,15 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <script src="sync-shim.js?v=20261118-gis"></script>
-  <script type="module" src="sync.js?v=20261118-gis"></script>
+  <script src="sync-shim.js?v=20261118-popup2"></script>
+  <script type="module" src="sync.js?v=20261118-popup2"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Профиль — Калории</title>
-  <link rel="stylesheet" href="style.css?v=20261118-gis">
+  <link rel="stylesheet" href="style.css?v=20261118-popup2">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
   <link rel="shortcut icon" href="favicon.ico">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     #gisButtonHost { margin: 8px 0 4px; min-height: 44px; }
     #gisButtonHost iframe { margin: 0 auto; }
@@ -156,7 +155,7 @@
       <div style="font-weight:700; margin-bottom:8px; color:var(--sage-dark);">Аккаунт</div>
       <div id="accountBody">
         <p class="account-hint">Войдите через Google, чтобы данные совпадали на телефоне и компьютере.</p>
-        <div id="gisButtonHost"></div>
+        <button class="save-btn" type="button" onclick="accountSignIn()">Войти через Google</button>
       </div>
     </div>
 
@@ -297,26 +296,28 @@
       if (lastError) {
         html += '<div class="account-error">' + escapeHtml(lastError) + '</div>';
       }
-      html += '<div id="gisButtonHost"></div>';
-      if (!ios) {
-        html += '<button class="save-btn backup-secondary" type="button" onclick="accountSignIn()">Войти через окно</button>';
+      const useGis = !!(window.CalorieSync && window.CalorieSync.isGisEnabled && window.CalorieSync.isGisEnabled());
+      if (useGis) {
+        html += '<div id="gisButtonHost"></div>';
+      } else {
+        html += '<button class="save-btn" type="button" onclick="accountSignIn()">Войти через Google</button>';
       }
       body.innerHTML = html;
-      if (window.CalorieSync && window.CalorieSync.mountGoogleButton) {
+      if (useGis && window.CalorieSync.mountGoogleButton) {
         window.CalorieSync.mountGoogleButton(document.getElementById('gisButtonHost'));
       }
     }
 
     function accountSignIn() {
-      // Popup fallback (desktop). Must call signIn() directly in this click
-      // tick and must not re-render the card first.
+      // Must call signInWithPopup in this click tick and must not re-render
+      // the card first (that tears down the button and iOS blocks the popup).
       if (window.CalorieSync && window.CalorieSync.signIn) {
         window.CalorieSync.signIn();
       } else {
         const body = document.getElementById('accountBody');
         if (body) {
           body.innerHTML = '<p class="account-hint">Подождите секунду и нажмите ещё раз.</p>' +
-            '<div id="gisButtonHost"></div>';
+            '<button class="save-btn" type="button" onclick="accountSignIn()">Войти через Google</button>';
         }
       }
     }
