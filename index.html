@@ -6,7 +6,7 @@
   <script type="module" src="sync.js?v=20261118-session"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Сегодня — Калории</title>
-  <link rel="stylesheet" href="style.css?v=20261118-session">
+  <link rel="stylesheet" href="style.css?v=20261118-del">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
@@ -436,9 +436,7 @@
       if (!items.length) {
         content.innerHTML = '<div style="text-align:center; color:var(--text-light); padding:20px;">Пока пусто</div>';
       } else {
-        content.innerHTML = items.map(i =>
-          `<div class="food-entry"><span>${i.name} (${i.grams} г)</span><b>${i.calories} ккал</b></div>`
-        ).join('');
+        content.innerHTML = items.map((i, idx) => entryRow(i, meal, idx, 'meal')).join('');
       }
       document.getElementById('mealModal').classList.add('show');
     }
@@ -453,8 +451,8 @@
           let mealK = 0;
           items.forEach(i => { mealK += i.calories || 0; });
           html += `<div class="meal-group"><div class="g-title">${meal} · ${fmtNum(mealK)} ккал</div>`;
-          items.forEach(i => {
-            html += `<div class="food-entry"><span>${i.name} (${i.grams} г)</span><b>${i.calories} ккал</b></div>`;
+          items.forEach((i, idx) => {
+            html += entryRow(i, meal, idx, 'day');
           });
           html += `</div>`;
         }
@@ -470,6 +468,23 @@
       }
       content.innerHTML = html || '<div style="text-align:center; color:var(--text-light); padding:20px;">День пустой</div>';
       document.getElementById('mealModal').classList.add('show');
+    }
+
+    function entryRow(i, meal, idx, view) {
+      return `<div class="food-entry"><span style="flex:1;">${i.name} (${i.grams} г)</span><b>${i.calories} ккал</b><button class="entry-del" onclick="deleteEntry('${meal}', ${idx}, '${view}')" aria-label="Удалить">×</button></div>`;
+    }
+
+    function deleteEntry(meal, idx, view) {
+      const items = currentDiary[meal] || [];
+      const it = items[idx];
+      if (!it || !confirm('Удалить «' + it.name + '»?')) return;
+      items.splice(idx, 1);
+      if (!items.length) delete currentDiary[meal];
+      const date = new Date();
+      date.setDate(date.getDate() + dayOffset);
+      localStorage.setItem('diary-' + localDateStr(date), JSON.stringify(currentDiary));
+      loadDiary();
+      if (view === 'day') showDay(); else showMeal(meal);
     }
 
     function closeMealModal() {

@@ -649,3 +649,5 @@ input[type="number"] {
   padding: 8px 0; border-bottom: 1px solid rgba(63,70,48,.08);
 }
 .warmup-row .nm { flex: 1; font-size: 14px; cursor: pointer; }
+
+.food-entry .entry-del { margin-left: 10px; width: 28px; height: 28px; flex: 0 0 28px; border: none; border-radius: 50%; background: var(--pale, #D6E2C8); color: #3F4630; font-size: 18px; line-height: 28px; padding: 0; cursor: pointer; }
