@@ -4,52 +4,37 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Вход — Калории</title>
-  <link rel="stylesheet" href="style.css?v=20261118-login3">
+  <link rel="stylesheet" href="style.css?v=20261118-login4">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <div class="app" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:20px;">
+  <div class="app" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:20px;text-align:center;">
     <h1 style="color:#F3EDE0;margin-bottom:24px;">Калории</h1>
-    <div id="status" style="color:#F3EDE0;margin-bottom:16px;">Загрузка...</div>
-    <div id="gbtn"></div>
-    <button onclick="tryRedirect()" style="margin-top:16px;padding:12px 24px;border:none;border-radius:12px;background:#F3EDE0;color:#3F4630;font-weight:600;">Войти через Google</button>
+    <div id="status" style="color:#F3EDE0;margin-bottom:16px;">Нажми для входа</div>
+    <button onclick="login()" style="padding:14px 32px;border:none;border-radius:14px;background:#F3EDE0;color:#3F4630;font-weight:700;font-size:16px;">Войти через Google</button>
   </div>
-  <script src="https://accounts.google.com/gsi/client" async></script>
   <script>
     const CLIENT_ID = '261846159655-3d5mop7bgr7hk7kh2clbgvr383elfcri.apps.googleusercontent.com';
-    function init() {
-      if (!window.google || !google.accounts) { setTimeout(init, 300); return; }
-      document.getElementById('status').textContent = 'Нажми кнопку';
-      google.accounts.id.initialize({
-        client_id: CLIENT_ID,
-        callback: (resp) => {
-          localStorage.setItem('gtoken', resp.credential);
-          document.getElementById('status').textContent = 'Вошли! Переход...';
-          setTimeout(() => location.href = 'index.html', 500);
-        },
-        ux_mode: 'redirect',
-        login_uri: location.origin + location.pathname
-      });
-      google.accounts.id.renderButton(document.getElementById('gbtn'), { theme: 'filled_black', size: 'large', width: 250 });
+    const REDIRECT = 'https://daryaisaeva2031-lab.github.io/calorie-tracker/login.html';
+
+    // Handle return from Google
+    const params = new URLSearchParams(location.hash.slice(1));
+    const token = params.get('id_token') || params.get('access_token');
+    if (token) {
+      localStorage.setItem('gtoken', token);
+      document.getElementById('status').textContent = 'Вошли! Переход...';
+      setTimeout(() => location.href = 'index.html', 500);
     }
-    function tryRedirect() {
-      if (window.google && google.accounts) {
-        google.accounts.id.prompt();
-      } else {
-        alert('Google не загрузился');
-      }
+
+    function login() {
+      const url = 'https://accounts.google.com/o/oauth2/v2/auth?' +
+        'client_id=' + CLIENT_ID +
+        '&redirect_uri=' + encodeURIComponent(REDIRECT) +
+        '&response_type=id_token' +
+        '&scope=openid email profile' +
+        '&nonce=' + Math.random().toString(36).slice(2);
+      location.href = url;
     }
-    // Check if returning from redirect
-    const hash = location.hash;
-    if (hash && hash.includes('id_token')) {
-      const params = new URLSearchParams(hash.slice(1));
-      const token = params.get('id_token');
-      if (token) {
-        localStorage.setItem('gtoken', token);
-        location.href = 'index.html';
-      }
-    }
-    init();
   </script>
 </body>
 </html>
