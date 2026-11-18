@@ -43,7 +43,8 @@ function localDateYMD(year, monthIndex, day) {
     dishes: true,
     warmups: true,
     familyBlocks: true,
-    'target-date': true
+    'target-date': true,
+    weekMenu: true
   };
 
   function isAppKey(key) {
@@ -80,6 +81,42 @@ function localDateYMD(year, monthIndex, day) {
   window.__isCalorieAppKey = isAppKey;
   window.__listCalorieAppKeys = listAppKeys;
 
+  function deepEqual(a, b) {
+    if (a === b) return true;
+    if (a && b && typeof a === 'object' && typeof b === 'object') {
+      if (Array.isArray(a) !== Array.isArray(b)) return false;
+      if (Array.isArray(a)) {
+        if (a.length !== b.length) return false;
+        for (var i = 0; i < a.length; i++) if (!deepEqual(a[i], b[i])) return false;
+        return true;
+      }
+      var keys = Object.keys(a);
+      if (keys.length !== Object.keys(b).length) return false;
+      for (var j = 0; j < keys.length; j++) {
+        var k = keys[j];
+        if (!Object.prototype.hasOwnProperty.call(b, k) || !deepEqual(a[k], b[k])) return false;
+      }
+      return true;
+    }
+    return typeof a === 'number' && typeof b === 'number' && isNaN(a) && isNaN(b);
+  }
+
+  function storageValuesEqual(a, b) {
+    if (a === b) return true;
+    if (a == null || b == null) return false;
+    var sa = String(a);
+    var sb = String(b);
+    if (sa === sb) return true;
+    try {
+      return deepEqual(JSON.parse(sa), JSON.parse(sb));
+    } catch (e) {
+      return false;
+    }
+  }
+
+  window.__storageValuesEqual = storageValuesEqual;
+
+
   function enqueue(op, key, value) {
     if (!isAppKey(key) && op !== 'clear') return;
     if (typeof window.__syncPush === 'function') {
@@ -99,8 +136,13 @@ function localDateYMD(year, monthIndex, day) {
   }
 
   hide('setItem', function (key, value) {
-    orig.setItem(key, value);
-    enqueue('set', String(key), value == null ? '' : String(value));
+    var next = value == null ? '' : String(value);
+    var prev = orig.getItem(key);
+    // Skip no-op and semantic-equal writes (e.g. JSON spacing) so a remote
+    // value is not immediately re-uploaded in a different typography.
+    if (prev != null && storageValuesEqual(prev, next)) return;
+    orig.setItem(key, next);
+    enqueue('set', String(key), next);
   });
 
   hide('removeItem', function (key) {
@@ -152,5 +194,24 @@ function localDateYMD(year, monthIndex, day) {
       return String(a.date).localeCompare(String(b.date));
     });
     localStorage.setItem('weights', JSON.stringify(weights));
+  })();
+
+  // Restore scroll after a sync-triggered reload so cards do not jump.
+  (function restoreScroll() {
+    try {
+      var path = sessionStorage.getItem('__calorieScrollPath');
+      var y = sessionStorage.getItem('__calorieScrollY');
+      if (path !== location.pathname || y == null) return;
+      sessionStorage.removeItem('__calorieScrollPath');
+      sessionStorage.removeItem('__calorieScrollY');
+      var top = parseInt(y, 10) || 0;
+      var apply = function () { window.scrollTo(0, top); };
+      apply();
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', apply);
+      }
+      window.addEventListener('load', apply);
+      requestAnimationFrame(apply);
+    } catch (e) {}
   })();
 })();

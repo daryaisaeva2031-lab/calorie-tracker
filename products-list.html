@@ -2,12 +2,12 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <script src="sync-shim.js?v=20261118-popup2"></script>
-  <script src="app-ui.js?v=20261118-popup2"></script>
-  <script type="module" src="sync.js?v=20261118-popup2"></script>
+  <script src="sync-shim.js?v=20261118-noloop"></script>
+  <script src="app-ui.js?v=20261118-noloop"></script>
+  <script type="module" src="sync.js?v=20261118-noloop"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Список продуктов — Калории</title>
-  <link rel="stylesheet" href="style.css?v=20261118-popup2">
+  <link rel="stylesheet" href="style.css?v=20261118-noloop">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
   <link rel="shortcut icon" href="favicon.ico">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -112,10 +112,12 @@
     let pendingProduct = null;
 
     let maxId = Math.max(0, ...products.map(p => p.id || 0));
+    let idsFixed = false;
     products.forEach((p, i) => {
       if (!p.id || products.filter(x => x.id === p.id).length > 1) {
         maxId++;
         p.id = maxId;
+        idsFixed = true;
       }
     });
     const seen = new Set();
@@ -123,10 +125,17 @@
       if (seen.has(p.id)) {
         maxId++;
         p.id = maxId;
+        idsFixed = true;
       }
       seen.add(p.id);
     });
-    localStorage.setItem('products', JSON.stringify(products));
+    if (idsFixed) {
+      const next = JSON.stringify(products);
+      const prev = localStorage.getItem('products');
+      if (prev !== next && !(window.__storageValuesEqual && window.__storageValuesEqual(prev, next))) {
+        localStorage.setItem('products', next);
+      }
+    }
 
     function render() {
       const q = (document.getElementById('search').value || '').toLowerCase();
@@ -233,6 +242,20 @@
       closeModal();
       alert('Добавлено!');
     }
+
+    window.__calorieOnSync = function (keys) {
+      if (!keys || !keys.length) return false;
+      const relevant = keys.some(function (k) { return k === 'products' || k === 'dishes'; });
+      if (!relevant) return false;
+      try {
+        const parsed = JSON.parse(localStorage.getItem('products') || 'null');
+        if (parsed) products = parsed;
+      } catch (e) {}
+      const y = window.scrollY || 0;
+      render();
+      window.scrollTo(0, y);
+      return true;
+    };
 
     render();
   </script>

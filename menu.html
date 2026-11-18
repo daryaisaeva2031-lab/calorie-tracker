@@ -2,11 +2,11 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <script src="sync-shim.js?v=20261118-menu1"></script>
-  <script type="module" src="sync.js?v=20261118-menu1"></script>
+  <script src="sync-shim.js?v=20261118-noloop"></script>
+  <script type="module" src="sync.js?v=20261118-noloop"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Меню — Калории</title>
-  <link rel="stylesheet" href="style.css?v=20261118-menu1">
+  <link rel="stylesheet" href="style.css?v=20261118-noloop">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
   <link rel="shortcut icon" href="favicon.ico">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -116,10 +116,22 @@
     renderTabs();
     renderMenu();
 
-    document.addEventListener('storage-synced', () => {
+    function refreshMenuFromStorage() {
       loadMenu();
+      const y = window.scrollY || 0;
+      renderTabs();
       renderMenu();
-    });
+      window.scrollTo(0, y);
+    }
+
+    window.__calorieOnSync = function (keys) {
+      if (!keys || !keys.length) return false;
+      if (keys.indexOf('weekMenu') === -1) return false;
+      refreshMenuFromStorage();
+      return true;
+    };
+
+    document.addEventListener('storage-synced', refreshMenuFromStorage);
   </script>
 </body>
 </html>

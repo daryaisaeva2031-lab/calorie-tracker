@@ -103,6 +103,33 @@ let pendingKeys = new Set();
 const debounceTimers = new Map();
 const dirtyKeys = new Map(); // key -> {op, value}
 
+function storageValuesEqual(a, b) {
+  if (typeof window.__storageValuesEqual === 'function') {
+    return window.__storageValuesEqual(a, b);
+  }
+  if (a === b) return true;
+  if (a == null || b == null) return false;
+  const sa = String(a);
+  const sb = String(b);
+  if (sa === sb) return true;
+  try {
+    return JSON.stringify(JSON.parse(sa)) === JSON.stringify(JSON.parse(sb));
+  } catch (e) {
+    return false;
+  }
+}
+
+function cloudValueToString(value) {
+  if (value == null) return '';
+  if (typeof value === 'string') return value;
+  try {
+    return JSON.stringify(value);
+  } catch (e) {
+    return String(value);
+  }
+}
+
+
 function isConfigReady() {
   return !!(
     firebaseConfig &&
@@ -334,7 +361,7 @@ if (Array.isArray(window.__syncQueue) && window.__syncQueue.length) {
 }
 
 function applyCloudSnapshot(snapshot) {
-  let changed = false;
+  const changedKeys = [];
   snapshot.docChanges().forEach((change) => {
     const key = change.doc.id;
     if (!isAppKey(key)) return;
@@ -351,14 +378,14 @@ function applyCloudSnapshot(snapshot) {
         pendingKeys.delete(key);
         if (orig.getItem(key) != null) {
           orig.removeItem(key);
-          changed = true;
+          changedKeys.push(key);
         }
       } else {
         const value = change.doc.data() ? change.doc.data().value : '';
-        const str = value == null ? '' : String(value);
-        if (orig.getItem(key) !== str) {
+        const str = cloudValueToString(value);
+        if (!storageValuesEqual(orig.getItem(key), str)) {
           orig.setItem(key, str);
-          changed = true;
+          changedKeys.push(key);
         }
         pendingKeys.delete(key);
       }
@@ -366,11 +393,11 @@ function applyCloudSnapshot(snapshot) {
       applyingRemote = false;
     }
   });
-  return changed;
+  return changedKeys;
 }
 
 function applyFullCloud(snapshot) {
-  let changed = false;
+  const changedKeys = [];
   const cloudKeys = new Set();
   snapshot.forEach((d) => {
     const key = d.id;
@@ -379,30 +406,45 @@ function applyFullCloud(snapshot) {
     // A write made on this page (before auth finished) is newer than cloud.
     if (dirtyKeys.has(key)) return;
     const value = d.data() ? d.data().value : '';
-    const str = value == null ? '' : String(value);
-    if (orig.getItem(key) !== str) {
+    const str = cloudValueToString(value);
+    if (!storageValuesEqual(orig.getItem(key), str)) {
       applyingRemote = true;
       try {
         orig.setItem(key, str);
       } finally {
         applyingRemote = false;
       }
-      changed = true;
+      changedKeys.push(key);
     }
   });
-  return { changed, cloudKeys };
+  return { changed: changedKeys.length > 0, cloudKeys, changedKeys };
 }
 
 let reloadScheduled = false;
-function scheduleReload() {
+function scheduleReload(changedKeys) {
+  const keys = Array.isArray(changedKeys) ? changedKeys.filter(Boolean) : [];
+  if (!keys.length) return;
+  const detail = { keys };
+  document.dispatchEvent(new CustomEvent('calorie-sync', { detail }));
+  document.dispatchEvent(new CustomEvent('storage-synced', { detail }));
+  if (typeof window.__calorieOnSync === 'function') {
+    try {
+      if (window.__calorieOnSync(keys) === true) return;
+    } catch (err) {
+      console.warn('[sync] page sync handler:', err && err.message);
+    }
+  }
   if (reloadScheduled) return;
   reloadScheduled = true;
   const tryReload = () => {
     if (isTyping()) {
-      document.dispatchEvent(new CustomEvent('storage-synced'));
       setTimeout(tryReload, 500);
       return;
     }
+    try {
+      sessionStorage.setItem('__calorieScrollY', String(window.scrollY || 0));
+      sessionStorage.setItem('__calorieScrollPath', location.pathname);
+    } catch (e) {}
     window.location.reload();
   };
   tryReload();
@@ -441,7 +483,7 @@ function startListener(uid) {
         // Cloud has data: cloud wins on conflicts, except keys written on
         // this page before auth finished. Local-only keys are then uploaded
         // so a day that existed only on this device is not dropped.
-        const { changed, cloudKeys } = applyFullCloud(snapshot);
+        const { changedKeys, cloudKeys } = applyFullCloud(snapshot);
         initialPullDone = true;
         const localOnly = listAppKeys().filter((k) => !cloudKeys.has(k));
         for (const key of localOnly) {
@@ -449,18 +491,18 @@ function startListener(uid) {
         }
         retryDirty();
         setStatus(navigator.onLine === false ? 'offline' : 'signed-in');
-        if (changed) scheduleReload();
+        if (changedKeys.length) scheduleReload(changedKeys);
         return;
       }
 
       if (snapshot.metadata.hasPendingWrites) {
         const changedPending = applyCloudSnapshot(snapshot);
-        if (changedPending) scheduleReload();
+        if (changedPending.length) scheduleReload(changedPending);
         return;
       }
 
       const changed = applyCloudSnapshot(snapshot);
-      if (changed) scheduleReload();
+      if (changed.length) scheduleReload(changed);
       if (dirtyKeys.size === 0) setStatus(navigator.onLine === false ? 'offline' : 'signed-in');
     },
     (err) => {
