@@ -202,7 +202,7 @@
       <div style="font-weight:700; margin-bottom:8px; color:var(--sage-dark);">Аккаунт</div>
       <div id="accountBody">
         <p class="account-hint">Войдите через Google, чтобы данные совпадали на телефоне и компьютере.</p>
-        <button class="save-btn" type="button" onclick="accountSignIn()">Войти через Google</button>
+        <button class="save-btn" type="button" onclick="doLogin()">Войти через Google</button>
       </div>
     </div>
 
@@ -347,7 +347,7 @@
       if (useGis) {
         html += '<div id="gisButtonHost"></div>';
       } else {
-        html += '<button class="save-btn" type="button" onclick="accountSignIn()">Войти через Google</button>';
+        html += '<button class="save-btn" type="button" onclick="doLogin()">Войти через Google</button>';
       }
       body.innerHTML = html;
       if (useGis && window.CalorieSync.mountGoogleButton) {
@@ -355,24 +355,16 @@
       }
     }
 
-    function accountSignIn() {
-      // Must call signInWithPopup in this click tick and must not re-render
-      // the card first (that tears down the button and iOS blocks the popup).
-      if (window.CalorieSync && window.CalorieSync.signIn) {
-        window.CalorieSync.signIn();
-      } else {
+     else {
         const body = document.getElementById('accountBody');
         if (body) {
-          body.innerHTML = '<p class="account-hint">Подождите секунду и нажмите ещё раз.</p>' +
-            '<button class="save-btn" type="button" onclick="accountSignIn()">Войти через Google</button>';
+          body.innerHTML = '<p class="account-hint"></p>' +
+            '<button class="save-btn" type="button" onclick="doLogin()">Войти через Google</button>';
         }
       }
     }
 
-    function accountSignOut() {
-      if (window.CalorieSync && window.CalorieSync.signOut) window.CalorieSync.signOut();
-      else alert('Подождите секунду и нажмите ещё раз.');
-    }
+    
 
     function bindAccount() {
       if (window.CalorieSync && window.CalorieSync.onStatusChange) {
@@ -389,22 +381,15 @@
         window.CalorieSync.exportBackup();
         return;
       }
-      alert('Подождите секунду и нажмите ещё раз.');
+      alert('');
     }
 
     function uploadDataBackup() {
       document.getElementById('backupFile').click();
     }
 
-    function onBackupFile(input) {
-      const file = input.files && input.files[0];
-      input.value = '';
-      if (!file) return;
-      if (window.CalorieSync && window.CalorieSync.importBackupFromFile) {
-        window.CalorieSync.importBackupFromFile(file);
-        return;
-      }
-      alert('Подождите секунду и нажмите ещё раз.');
+    
+      alert('');
     }
   
     function doLogin() {
