@@ -2,7 +2,8 @@
 const API = 'https://calorie-tracker.goldengloves59.workers.dev';
 const CLIENT_ID = '261846159655-3d5mop7bgr7hk7kh2clbgvr383elfcri.apps.googleusercontent.com';
 
-function getToken() { return localStorage.getItem('gtoken'); }
+// Prefer the 30-day worker session (set by sync.js); fall back to the Google ID token.
+function getToken() { return localStorage.getItem('gsession') || localStorage.getItem('gtoken'); }
 function setToken(t) { if (t) localStorage.setItem('gtoken', t); else localStorage.removeItem('gtoken'); }
 
 async function api(path, method = 'GET', body) {
@@ -13,7 +14,11 @@ async function api(path, method = 'GET', body) {
     headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
     body: body ? JSON.stringify(body) : undefined,
   });
-  if (r.status === 401) { setToken(null); throw new Error('auth'); }
+  if (r.status === 401) {
+    if (token === localStorage.getItem('gsession')) { localStorage.removeItem('gsession'); localStorage.removeItem('gsessionInfo'); }
+    else setToken(null);
+    throw new Error('auth');
+  }
   return r.json();
 }
 

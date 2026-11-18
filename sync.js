@@ -1,7 +1,9 @@
 // Cross-device sync for calorie-tracker via the Cloudflare Worker API.
 // Pages always render from localStorage (wrapped by sync-shim.js); this module
 // never blocks first paint. Sign-in: Google Identity Services ID token stored
-// in localStorage 'gtoken' (same as api-client.js), sent as Bearer token.
+// is exchanged at the worker (POST /auth/session) for a 30-day session id
+// stored in localStorage 'gsession' (+ 'gsessionInfo'), sent as Bearer token.
+// The raw 1-hour ID token 'gtoken' is only a fallback.
 //
 // Key → worker route mapping (values are stored as parsed JSON):
 //   products, recipes, dishes, weights, shopping → /api/<key>
@@ -62,9 +64,33 @@ function tokenPayload() {
   return t ? decodeJwt(t) : null;
 }
 
-function tokenValid() {
+function idTokenValid() {
   const p = tokenPayload();
   return !!(p && p.exp && p.exp * 1000 > Date.now() + 30 * 1000);
+}
+
+function getSession() { return orig.getItem('gsession'); }
+function getSessionInfo() { return readJsonOrig('gsessionInfo', null); }
+function clearSession() { orig.removeItem('gsession'); orig.removeItem('gsessionInfo'); }
+
+// Signed in = a session id (30 days, renewed by the worker) or a fresh ID token.
+function tokenValid() { return !!getSession() || idTokenValid(); }
+function authToken() { return getSession() || (idTokenValid() ? getToken() : null); }
+
+// Exchange a Google ID token for a long-lived worker session.
+async function exchangeForSession(idToken) {
+  const r = await fetch(WORKER_URL + '/auth/session', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ credential: idToken })
+  });
+  if (!r.ok) throw new Error('session HTTP ' + r.status);
+  const d = await r.json();
+  if (!d || !d.session) throw new Error('no session');
+  const p = decodeJwt(idToken) || {};
+  orig.setItem('gsession', d.session);
+  orig.setItem('gsessionInfo', JSON.stringify({ uid: p.sub || '', email: d.email || p.email || '', name: d.name || p.name || '', photo: p.picture || '', expires: d.expires }));
+  return d.session;
 }
 
 // ---------- dirty keys (persist across reloads / expired sessions) ----------
@@ -89,7 +115,11 @@ function isIOS() { return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navig
 function isStandalone() { return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true; }
 
 function getUserInfo() {
-  if (!tokenValid()) return null;
+  if (getSession()) {
+    const i = getSessionInfo() || {};
+    return { uid: i.uid || '', email: i.email || '', name: i.name || '', photo: i.photo || '' };
+  }
+  if (!idTokenValid()) return null;
   const p = tokenPayload();
   return { uid: p.sub, email: p.email || '', name: p.name || '', photo: p.picture || '' };
 }
@@ -106,13 +136,17 @@ function onlineStatus() { return navigator.onLine === false ? 'offline' : 'signe
 class AuthError extends Error {}
 
 async function api(path, method, body) {
-  if (!tokenValid()) throw new AuthError('expired');
+  const tok = authToken();
+  if (!tok) throw new AuthError('expired');
   const r = await fetch(WORKER_URL + path, {
     method: method || 'GET',
-    headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' },
+    headers: { 'Authorization': 'Bearer ' + tok, 'Content-Type': 'application/json' },
     body: body === undefined ? undefined : JSON.stringify(body)
   });
-  if (r.status === 401) throw new AuthError('auth');
+  if (r.status === 401) {
+    if (tok === getSession()) clearSession();
+    throw new AuthError('auth');
+  }
   if (!r.ok) throw new Error('HTTP ' + r.status);
   return r.json();
 }
@@ -393,7 +427,9 @@ function onGisCredential(response) {
   setToken(cred);
   lastError = '';
   setStatus('syncing');
-  pullAll();
+  exchangeForSession(cred)
+    .catch((err) => { console.warn('[sync] session exchange failed, using ID token:', err && err.message); })
+    .then(() => pullAll());
 }
 
 function initGis(autoSelect) {
@@ -436,15 +472,21 @@ function signIn() {
   });
 }
 
-// When the 1-hour Google token expires, try a silent re-sign-in once per tab.
+// Fallback only: when the session is gone/invalid, try a silent Google
+// re-sign-in once per tab (the session itself lasts 30 days).
 function trySilentSignIn() {
-  if (!getToken()) return;
+  if (getSession() || !getToken()) return;
   try { if (sessionStorage.getItem('__syncSilentTried')) return; sessionStorage.setItem('__syncSilentTried', '1'); } catch (e) {}
   loadGisClient().then(() => { initGis(true); google.accounts.id.prompt(); }).catch(() => {});
 }
 
 function signOutUser() {
   if (!confirm('Выйти из аккаунта? Данные на этом устройстве сохранятся.')) return;
+  const sid = getSession();
+  if (sid) {
+    fetch(WORKER_URL + '/auth/logout', { method: 'POST', headers: { 'Authorization': 'Bearer ' + sid } }).catch(() => {});
+  }
+  clearSession();
   setToken(null);
   try { if (window.google && google.accounts && google.accounts.id) google.accounts.id.disableAutoSelect(); } catch (e) {}
   lastError = '';
@@ -517,7 +559,10 @@ document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && tokenValid() && Date.now() - lastPullAt > PULL_MIN_INTERVAL_MS) pullAll();
 });
 
-if (tokenValid()) {
+if (!getSession() && idTokenValid()) {
+  // Signed in before sessions existed: upgrade the ID token to a 30-day session.
+  exchangeForSession(getToken()).catch(() => {}).then(() => pullAll());
+} else if (tokenValid()) {
   pullAll();
 } else {
   setStatus('unsigned');
