@@ -2,6 +2,8 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
+  <script src="sync-shim.js"></script>
+  <script type="module" src="sync.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Профиль — Калории</title>
   <link rel="stylesheet" href="style.css">
@@ -28,6 +30,13 @@
       font-size: 15px; font-weight: 600; margin-top: 12px; cursor: pointer;
     }
     .percent { color: var(--sage); font-weight: 700; font-size: 16px; }
+    .backup-secondary {
+      background: var(--white);
+      color: var(--sage-dark);
+      border: 1.5px solid var(--sage);
+      margin-top: 8px;
+    }
+    .backup-hint { font-size: 13px; color: var(--text-light); margin-bottom: 12px; }
   </style>
 </head>
 <body>
@@ -118,6 +127,14 @@
       <button class="save-btn" onclick="saveAll()">Сохранить</button>
     </div>
 
+    <div class="card">
+      <div style="font-weight:700; margin-bottom:8px; color:var(--sage-dark);">Резервная копия</div>
+      <p class="backup-hint">Скачайте файл со всеми данными или загрузите сохранённую копию.</p>
+      <button class="save-btn" type="button" onclick="downloadDataBackup()">Скачать копию данных</button>
+      <button class="save-btn backup-secondary" type="button" onclick="uploadDataBackup()">Загрузить копию</button>
+      <input type="file" id="backupFile" accept="application/json,.json" style="display:none" onchange="onBackupFile(this)">
+    </div>
+
     <nav class="bottom-nav">
       <a href="index.html" class="nav-item">🏠<span>Сегодня</span></a>
       <a href="products.html" class="nav-item">🥦<span>Продукты</span></a>
@@ -175,6 +192,29 @@
     }
     recalc();
     document.getElementById('calories').addEventListener('input', recalc);
+
+    function downloadDataBackup() {
+      if (window.CalorieSync && window.CalorieSync.exportBackup) {
+        window.CalorieSync.exportBackup();
+        return;
+      }
+      alert('Подождите секунду и нажмите ещё раз.');
+    }
+
+    function uploadDataBackup() {
+      document.getElementById('backupFile').click();
+    }
+
+    function onBackupFile(input) {
+      const file = input.files && input.files[0];
+      input.value = '';
+      if (!file) return;
+      if (window.CalorieSync && window.CalorieSync.importBackupFromFile) {
+        window.CalorieSync.importBackupFromFile(file);
+        return;
+      }
+      alert('Подождите секунду и нажмите ещё раз.');
+    }
   </script>
 </body>
 </html>
