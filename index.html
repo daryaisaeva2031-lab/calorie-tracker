@@ -234,7 +234,8 @@
     function changeDay(delta) {
       dayOffset += delta;
       updateDate();
-      loadDiary();
+      window.scrollTo(0, 0);
+    loadDiary();
     }
     function updateDate() {
       const date = new Date();
