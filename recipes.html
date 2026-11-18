@@ -2,213 +2,26 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <script src="sync-shim.js?v=20261118-noloop"></script>
-  <script src="app-ui.js?v=20261118-noloop"></script>
-  <script type="module" src="sync.js?v=20261118-noloop"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Рецепты — Калории</title>
-  <link rel="stylesheet" href="style.css?v=20261118-noloop">
-  <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
-  <link rel="shortcut icon" href="favicon.ico">
-  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css?v=20261118-api">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
-  <style>
-    .recipe-item { position: relative; }
-    .add-to-diary {
-      position: absolute; bottom: 8px; right: 10px;
-      width: 28px; height: 28px; border-radius: 50%;
-      background: var(--sage); color: white; border: none;
-      font-size: 16px; cursor: pointer; display: flex;
-      align-items: center; justify-content: center;
-    }
-    .modal-overlay {
-      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
-      z-index: 100; justify-content: center; align-items: center;
-    }
-    .modal-overlay.show { display: flex; }
-    .modal-box {
-      background: var(--cream); border-radius: 20px; width: 90%; max-width: 340px;
-      padding: 20px 16px; max-height: 85vh; overflow-y: auto;
-    }
-    .modal-select, .modal-input {
-      width: 100%; padding: 12px 36px 12px 12px; border-radius: 12px; border: 1px solid var(--sage-light);
-      font-family: inherit; font-size: 15px; margin: 6px 0; background: white;
-      appearance: none; -webkit-appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%237d9b7a' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-      background-repeat: no-repeat; background-position: right 12px center;
-    }
-    .modal-input { padding: 12px; background-image: none; }
-    .modal-btn {
-      width: 100%; padding: 12px; border: none; border-radius: 14px;
-      background: var(--sage); color: white; font-family: inherit;
-      font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 10px;
-    }
-  </style>
+  <script src="api-client.js?v=20261118-api"></script>
 </head>
 <body>
   <div class="app">
     <header class="header">
       <a href="products.html"><button class="icon-btn">←</button></a>
       <h1>Рецепты</h1>
-      <a href="add-recipe.html"><button class="icon-btn">+</button></a>
     </header>
-
-    <div class="search-box">
-      <span>🔍</span>
-      <input type="text" id="search" placeholder="Поиск рецептов..." oninput="render()">
-    </div>
-
-    <div id="recipesList"></div>
-
+    <div id="list" style="padding:12px; text-align:center; color:#888;">Рецепты пока пустые.</div>
     <nav class="bottom-nav">
-      <a href="index.html" class="nav-item"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 11.5 12 5l7.5 6.5"/><path d="M6.5 10.5V19h11v-8.5"/></svg></span>Сегодня</a>
-      <a href="products.html" class="nav-item"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19c6-1 11-5 13.5-13.5C10 5 5 10 5 19Z"/><path d="M8.5 14.5c2 0 5-2.5 6.5-6"/></svg></span>Продукты</a>
-      <a href="weight.html" class="nav-item"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="5.5" width="15" height="14.2" rx="3"/><rect x="8" y="8" width="8" height="2.3" rx=".7"/><circle cx="12" cy="14.4" r="2.5"/><path d="M12 14.4 13.3 12.8"/></svg></span>Вес</a>
-      <a href="menu.html" class="nav-item"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4.5h9.5A2.5 2.5 0 0 1 20 7v12.5H8A2.5 2.5 0 0 1 5.5 17V7A2.5 2.5 0 0 1 8 4.5Z"/><path d="M9.5 9.5h7M9.5 13h7M9.5 16.5h4.5"/></svg></span>Меню</a>
-      <a href="workouts.html" class="nav-item"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6.2 9.2v5.6M17.8 9.2v5.6"/><path d="M8.2 7.6v8.8M15.8 7.6v8.8"/><path d="M8.2 12h7.6"/><path d="M4.8 10.2h1.4v3.6H4.8zM17.8 10.2h1.4v3.6H17.8z"/></svg></span>Тренировки</a>
+      <a href="index.html" class="nav-item"><span class="nav-ic"></span>Сегодня</a>
+      <a href="products.html" class="nav-item active"><span class="nav-ic"></span>Продукты</a>
+      <a href="weight.html" class="nav-item"><span class="nav-ic"></span>Вес</a>
+      <a href="menu.html" class="nav-item"><span class="nav-ic"></span>Меню</a>
+      <a href="workouts.html" class="nav-item"><span class="nav-ic"></span>Тренировки</a>
     </nav>
   </div>
-
-  <div class="modal-overlay" id="addModal" onclick="if(event.target===this) closeModal()">
-    <div class="modal-box">
-      <div style="font-weight:700; text-align:center; font-size:17px; margin-bottom:8px;" id="modalRecipeName">Рецепт</div>
-      <div id="modalCal"></div>
-      <div class="dish-sub" id="dishSub"></div>
-      <select class="modal-select" id="modalMeal">
-        <option>Завтрак</option>
-        <option>Обед</option>
-        <option>Ужин</option>
-        <option>Перекус</option>
-      </select>
-      <div style="display:flex; gap:8px;">
-        <input type="number" class="modal-input" id="modalAmount" value="100" onfocus="this.value=''" style="flex:1;">
-        <select class="modal-select" id="modalUnit" style="width:auto; min-width:100px;" onchange="onUnitChange()">
-          <option value="grams">г</option>
-        </select>
-      </div>
-      <button class="modal-btn" onclick="confirmAdd()">Добавить</button>
-    </div>
-  </div>
-
-  <script>
-    let recipes = JSON.parse(localStorage.getItem('recipes') || '[]');
-    let pendingRecipe = null;
-
-    function macrosLine(r) {
-      const p = r.per100 || {};
-      return `${p.calories || 0} ккал / 100 г` +
-        `<div class="list-macros">Б ${p.protein || 0} · Ж ${p.fat || 0} · У ${p.carbs || 0}</div>`;
-    }
-
-    function render() {
-      const q = (document.getElementById('search').value || '').toLowerCase();
-      const list = document.getElementById('recipesList');
-      list.innerHTML = '';
-      if (!recipes.length) {
-        list.innerHTML = '<div style="text-align:center; color:var(--text-light); padding:40px;">Пока нет рецептов.<br>Нажми + чтобы создать</div>';
-        return;
-      }
-      recipes.filter(r => r.name.toLowerCase().includes(q)).forEach(r => {
-        list.innerHTML += `<div class="card meal-card recipe-item">
-          <div class="meal-icon">🥘</div>
-          <div class="meal-info">
-            <div class="meal-name">${escapeHtml(r.name)}</div>
-            <div class="meal-kcal">${macrosLine(r)}</div>
-          </div>
-          <button class="edit-recipe-btn" onclick="location.href='add-recipe.html?id=${r.id}'" aria-label="Редактировать">✏️</button>
-          <button class="add-to-diary" onclick="openAddModal(${r.id})">+</button>
-        </div>`;
-      });
-    }
-
-    let addDateStr = localDateStr();
-    let dishCtrl = null;
-
-    function renderAddCal() {
-      const box = document.getElementById('modalCal');
-      box._calYear = undefined;
-      box._calMonth = undefined;
-      renderMiniCalendar(box, addDateStr, function (ds) {
-        addDateStr = ds;
-        renderMiniCalendar(box, addDateStr, arguments.callee);
-      });
-    }
-
-    function mountSub() {
-      dishCtrl = mountDishSubtract(document.getElementById('dishSub'), {
-        gramsGetter: function () {
-          const amount = +document.getElementById('modalAmount').value;
-          const unit = document.getElementById('modalUnit').value;
-          if (unit === 'portion' && pendingRecipe && pendingRecipe.portionGrams) {
-            return amount * pendingRecipe.portionGrams;
-          }
-          return amount;
-        }
-      });
-      document.getElementById('modalAmount').oninput = function () { if (dishCtrl) dishCtrl.update(); };
-    }
-
-    function openAddModal(id) {
-      const r = recipes.find(x => x.id == id);
-      if (!r) return;
-      pendingRecipe = r;
-      document.getElementById('modalRecipeName').textContent = r.name;
-      const unitSelect = document.getElementById('modalUnit');
-      unitSelect.innerHTML = '<option value="grams">г</option>';
-      if (r.portionGrams) {
-        unitSelect.innerHTML += `<option value="portion">порция (${r.portionGrams} г)</option>`;
-      }
-      document.getElementById('modalAmount').value = 100;
-      addDateStr = localDateStr();
-      renderAddCal();
-      mountSub();
-      if (dishCtrl) dishCtrl.reset();
-      document.getElementById('addModal').classList.add('show');
-    }
-
-    function onUnitChange() {
-      const unit = document.getElementById('modalUnit').value;
-      document.getElementById('modalAmount').value = unit === 'portion' ? 1 : 100;
-      if (dishCtrl) dishCtrl.update();
-    }
-
-    function closeModal() {
-      document.getElementById('addModal').classList.remove('show');
-    }
-
-    function confirmAdd() {
-      const meal = document.getElementById('modalMeal').value;
-      const amount = +document.getElementById('modalAmount').value;
-      const unit = document.getElementById('modalUnit').value;
-      if (!amount || amount <= 0) { alert('Введи количество'); return; }
-
-      let grams = amount;
-      if (unit === 'portion' && pendingRecipe.portionGrams) {
-        grams = amount * pendingRecipe.portionGrams;
-      }
-      const net = netGramsOrAlert(dishCtrl, grams);
-      if (net == null) return;
-      grams = net;
-
-      const r = pendingRecipe;
-      const entry = {
-        type: 'recipe', id: r.id, name: r.name, grams,
-        calories: Math.round((r.per100?.calories || 0) * grams / 100),
-        protein: +((r.per100?.protein || 0) * grams / 100).toFixed(1),
-        fat: +((r.per100?.fat || 0) * grams / 100).toFixed(1),
-        carbs: +((r.per100?.carbs || 0) * grams / 100).toFixed(1)
-      };
-
-      const key = 'diary-' + addDateStr;
-      let diary = JSON.parse(localStorage.getItem(key) || '{}');
-      if (!diary[meal]) diary[meal] = [];
-      diary[meal].push(entry);
-      localStorage.setItem(key, JSON.stringify(diary));
-      closeModal();
-      alert('Добавлено!');
-    }
-
-    render();
-  </script>
 </body>
 </html>
