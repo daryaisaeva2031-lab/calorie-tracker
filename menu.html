@@ -2,15 +2,27 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <script src="sync-shim.js?v=20261118-popup2"></script>
-  <script type="module" src="sync.js?v=20261118-popup2"></script>
+  <script src="sync-shim.js?v=20261118-menu1"></script>
+  <script type="module" src="sync.js?v=20261118-menu1"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Меню — Калории</title>
-  <link rel="stylesheet" href="style.css?v=20261118-popup2">
+  <link rel="stylesheet" href="style.css?v=20261118-menu1">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
   <link rel="shortcut icon" href="favicon.ico">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    .day-tabs { display: flex; gap: 6px; overflow-x: auto; padding: 12px 16px; }
+    .day-tab { padding: 8px 14px; border-radius: 20px; background: var(--card); color: var(--ink); font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .day-tab.active { background: var(--olive); color: #fff; }
+    .meal-section { margin: 12px 16px; }
+    .meal-title { font-weight: 700; font-size: 16px; margin-bottom: 8px; color: var(--ink); }
+    .meal-item { display: flex; justify-content: space-between; padding: 10px 14px; background: var(--card); border-radius: 12px; margin-bottom: 6px; }
+    .meal-item-name { font-weight: 600; }
+    .meal-item-info { color: var(--muted); font-size: 13px; }
+    .day-total { text-align: center; padding: 12px; font-weight: 700; color: var(--olive); }
+    .empty { text-align: center; padding: 40px; color: var(--muted); }
+  </style>
 </head>
 <body>
   <div class="app">
@@ -20,37 +32,8 @@
       <div style="width:42px"></div>
     </header>
 
-    <div class="day-tabs">
-      <div class="day-tab active">Пн</div>
-      <div class="day-tab">Вт</div>
-      <div class="day-tab">Ср</div>
-      <div class="day-tab">Чт</div>
-      <div class="day-tab">Пт</div>
-      <div class="day-tab">Сб</div>
-      <div class="day-tab">Вс</div>
-    </div>
-
-    <div class="card meal-card">
-      <div class="meal-icon">🥣</div>
-      <div class="meal-info">
-        <div class="meal-name">Завтрак</div>
-        <div class="meal-kcal">Овсянка с ягодами · 320 ккал</div>
-      </div>
-    </div>
-    <div class="card meal-card">
-      <div class="meal-icon">🍲</div>
-      <div class="meal-info">
-        <div class="meal-name">Обед</div>
-        <div class="meal-kcal">Куриный суп · 450 ккал</div>
-      </div>
-    </div>
-    <div class="card meal-card">
-      <div class="meal-icon">🐟</div>
-      <div class="meal-info">
-        <div class="meal-name">Ужин</div>
-        <div class="meal-kcal">Лосось с овощами · 450 ккал</div>
-      </div>
-    </div>
+    <div class="day-tabs" id="dayTabs"></div>
+    <div id="menuContent"></div>
 
     <nav class="bottom-nav">
       <a href="index.html" class="nav-item"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 11.5 12 5l7.5 6.5"/><path d="M6.5 10.5V19h11v-8.5"/></svg></span>Сегодня</a>
@@ -60,5 +43,83 @@
       <a href="workouts.html" class="nav-item"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6.2 9.2v5.6M17.8 9.2v5.6"/><path d="M8.2 7.6v8.8M15.8 7.6v8.8"/><path d="M8.2 12h7.6"/><path d="M4.8 10.2h1.4v3.6H4.8zM17.8 10.2h1.4v3.6H17.8z"/></svg></span>Тренировки</a>
     </nav>
   </div>
+
+  <script>
+    const days = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Четверг 2.0', 'Пятница'];
+    const shortDays = ['Пн', 'Вт', 'Ср', 'Чт', 'Чт2', 'Пт'];
+    const meals = ['Завтрак', 'Обед', 'Ужин', 'Перекус'];
+    const mealIcons = { 'Завтрак': '🥣', 'Обед': '🍲', 'Ужин': '🍽️', 'Перекус': '🍫' };
+    let currentDay = 0;
+    let menuData = {};
+
+    function loadMenu() {
+      try {
+        const raw = localStorage.getItem('weekMenu');
+        menuData = raw ? JSON.parse(raw) : {};
+      } catch (e) {
+        menuData = {};
+      }
+    }
+
+    function renderTabs() {
+      const tabs = document.getElementById('dayTabs');
+      tabs.innerHTML = shortDays.map((d, i) =>
+        `<div class="day-tab ${i === currentDay ? 'active' : ''}" onclick="selectDay(${i})">${d}</div>`
+      ).join('');
+    }
+
+    function selectDay(i) {
+      currentDay = i;
+      renderTabs();
+      renderMenu();
+    }
+
+    function renderMenu() {
+      const content = document.getElementById('menuContent');
+      const dayName = days[currentDay];
+      const dayMenu = menuData[dayName] || {};
+
+      let html = '';
+      let dayTotal = 0;
+
+      meals.forEach(meal => {
+        const items = dayMenu[meal] || [];
+        if (items.length === 0) return;
+
+        const mealTotal = items.reduce((s, i) => s + (i.calories || 0), 0);
+        dayTotal += mealTotal;
+
+        html += `<div class="meal-section">
+          <div class="meal-title">${mealIcons[meal] || ''} ${meal} · ${mealTotal} ккал</div>
+          ${items.map(item => `
+            <div class="meal-item">
+              <div>
+                <div class="meal-item-name">${item.name}</div>
+                <div class="meal-item-info">${item.grams} г · ${item.portions} порц.</div>
+              </div>
+              <div style="font-weight:600;">${item.calories} ккал</div>
+            </div>
+          `).join('')}
+        </div>`;
+      });
+
+      if (!html) {
+        html = '<div class="empty">Нет данных для этого дня</div>';
+      } else {
+        html = `<div class="day-total">Итого: ${dayTotal} ккал</div>` + html;
+      }
+
+      content.innerHTML = html;
+    }
+
+    loadMenu();
+    renderTabs();
+    renderMenu();
+
+    document.addEventListener('storage-synced', () => {
+      loadMenu();
+      renderMenu();
+    });
+  </script>
 </body>
 </html>
