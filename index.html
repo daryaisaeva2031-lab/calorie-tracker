@@ -2,11 +2,11 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <script src="sync-shim.js?v=20261118-compact"></script>
-  <script type="module" src="sync.js?v=20261118-compact"></script>
+  <script src="sync-shim.js?v=20261118-noloop"></script>
+  <script type="module" src="sync.js?v=20261118-noloop"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Сегодня — Калории</title>
-  <link rel="stylesheet" href="style.css?v=20261118-compact">
+  <link rel="stylesheet" href="style.css?v=20261118-noloop">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
@@ -16,7 +16,104 @@
 </head>
 <body>
   <div class="app home-app">
-    <!-- content remains the same, only version query changed -->
+    <header class="header">
+      <button class="icon-btn" onclick="openCalendar()" aria-label="Календарь"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 3.5v3M16 3.5v3M3.5 9.5h17"/></svg></button>
+      <div class="titles">
+        <h1 class="title-row"><span id="dayTitle">Сегодня</span></h1>
+      </div>
+      <a href="profile.html" class="icon-btn" aria-label="Профиль"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.2"/><path d="M5.5 19c1.2-3.2 3.5-4.8 6.5-4.8S17.8 15.8 19 19"/></svg></a>
+    </header>
+    <section class="summary">
+      <div class="side-stat">
+        <div class="icon-3d"></div>
+        <div class="label">Съедено</div>
+        <div class="value" id="eaten">0</div>
+      </div>
+      <div class="ring" id="calorieRing">
+        <div class="ring-inner">
+          <div class="big" id="remaining">1700</div>
+          <div class="small">осталось</div>
+        </div>
+      </div>
+      <div class="side-stat">
+        <div class="icon-3d"></div>
+        <div class="label">Шаги</div>
+        <div class="value" id="stepsValue">—</div>
+      </div>
+    </section>
+    <div class="day-switch">
+      <button class="arrow" onclick="changeDay(-1)" aria-label="Вчера">←</button>
+      <div class="date" id="day-date">16 ноября</div>
+      <button class="arrow" onclick="changeDay(1)" aria-label="Завтра">→</button>
+    </div>
+    <div class="card">
+      <div class="macro">
+        <div class="macro-ic"></div>
+        <div class="macro-info">
+          <div class="macro-name">Белки</div>
+          <div class="bar"><div class="bar-fill" id="barP" style="width:0%"></div></div>
+        </div>
+        <div class="macro-nums" id="macroP">0 / 90 г</div>
+      </div>
+      <div class="macro">
+        <div class="macro-ic"></div>
+        <div class="macro-info">
+          <div class="macro-name">Жиры</div>
+          <div class="bar"><div class="bar-fill" id="barF" style="width:0%"></div></div>
+        </div>
+        <div class="macro-nums" id="macroF">0 / 70 г</div>
+      </div>
+      <div class="macro">
+        <div class="macro-ic"></div>
+        <div class="macro-info">
+          <div class="macro-name">Углеводы</div>
+          <div class="bar"><div class="bar-fill" id="barC" style="width:0%"></div></div>
+        </div>
+        <div class="macro-nums" id="macroC">0 / 200 г</div>
+      </div>
+    </div>
+    <div class="meal-head">
+      <h2>Приёмы пищи</h2>
+      <button class="day-btn" onclick="showDay()">Весь день</button>
+    </div>
+    <div id="mealsContainer"></div>
+    <nav class="bottom-nav">
+      <a href="index.html" class="nav-item active"><span class="nav-ic"></span>Сегодня</a>
+      <a href="products.html" class="nav-item"><span class="nav-ic"></span>Продукты</a>
+      <a href="weight.html" class="nav-item"><span class="nav-ic"></span>Вес</a>
+      <a href="menu.html" class="nav-item"><span class="nav-ic"></span>Меню</a>
+      <a href="workouts.html" class="nav-item"><span class="nav-ic"></span>Тренировки</a>
+    </nav>
   </div>
+  <script>
+    let dayOffset = 0;
+    const goal = 1700;
+    const meals = ['Завтрак', 'Обед', 'Ужин', 'Перекус'];
+    function loadDiary() {
+      const key = 'diary-' + (typeof localDateStr === 'function' ? localDateStr() : new Date().toISOString().slice(0,10));
+      let diary = {};
+      try { diary = JSON.parse(localStorage.getItem(key) || '{}'); } catch(e) {}
+      let totalK = 0, totalP = 0, totalF = 0, totalC = 0;
+      const container = document.getElementById('mealsContainer');
+      container.innerHTML = '';
+      meals.forEach(meal => {
+        const items = diary[meal] || [];
+        let mealK = 0;
+        items.forEach(i => { mealK += i.calories || 0; totalK += i.calories || 0; totalP += i.protein || 0; totalF += i.fat || 0; totalC += i.carbs || 0; });
+        container.innerHTML += `<div class="card meal" onclick="location.href='add.html?meal=${encodeURIComponent(meal)}'">
+          <div class="meal-info"><div class="meal-name">${meal}</div><div class="meal-kcal">${mealK} ккал</div></div>
+        </div>`;
+      });
+      document.getElementById('eaten').textContent = totalK;
+      document.getElementById('remaining').textContent = Math.max(0, goal - totalK);
+      document.getElementById('macroP').textContent = Math.round(totalP) + ' / 90 г';
+      document.getElementById('macroF').textContent = Math.round(totalF) + ' / 70 г';
+      document.getElementById('macroC').textContent = Math.round(totalC) + ' / 200 г';
+    }
+    function changeDay(d) { dayOffset += d; loadDiary(); }
+    function openCalendar() {}
+    function showDay() {}
+    loadDiary();
+  </script>
 </body>
 </html>
