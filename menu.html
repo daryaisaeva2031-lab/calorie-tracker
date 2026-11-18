@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Меню — Калории</title>
-  <link rel="stylesheet" href="style.css?v=20261118-api">
+  <link rel="stylesheet" href="style.css?v=20261118-menu">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
-  <script src="api-client.js?v=20261118-api"></script>
+  <script src="api-client.js?v=20261118-menu"></script>
 </head>
 <body>
   <div class="app">
@@ -23,15 +23,15 @@
       <a href="menu.html" class="nav-item active"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4.5h9.5A2.5 2.5 0 0 1 20 7v12.5H8A2.5 2.5 0 0 1 5.5 17V7A2.5 2.5 0 0 1 8 4.5Z"/><path d="M9.5 9.5h7M9.5 13h7M9.5 16.5h4.5"/></svg></span>Меню</a>
       <a href="workouts.html" class="nav-item"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6.2 9.2v5.6M17.8 9.2v5.6"/><path d="M8.2 7.6v8.8M15.8 7.6v8.8"/><path d="M8.2 12h7.6"/><path d="M4.8 10.2h1.4v3.6H4.8zM17.8 10.2h1.4v3.6H17.8z"/></svg></span>Тренировки</a>
     </nav>
-
   </div>
   <script>
     const days = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
     const meals = ['Завтрак','Обед','Ужин','Перекус'];
-    let menu = {}, selected = 0;
+    let menu = {}, selected = 0, products = [];
     async function load() {
       if (!CalAPI.getToken()) { document.getElementById('content').innerHTML = '<div style="text-align:center;padding:40px;">Войди на главной</div>'; return; }
       menu = JSON.parse(localStorage.getItem('weekMenu') || '{}');
+      products = await CalAPI.products.list() || [];
       renderDays();
       render();
     }
@@ -47,11 +47,30 @@
         const items = data[m] || [];
         const kcal = items.reduce((s,i) => s + (i.calories||0), 0);
         html += `<div style="background:#F3EDE0;border-radius:16px;padding:12px;margin-bottom:10px;">
-          <div style="font-weight:700;">${m} · ${kcal} ккал</div>
-          ${items.map(i => `<div style="font-size:13px;color:#666;margin-top:4px;">${i.name} · ${i.grams}г</div>`).join('') || '<div style="font-size:13px;color:#999;">пусто</div>'}
+          <div style="font-weight:700;display:flex;justify-content:space-between;">${m} <span>${kcal} ккал</span> <button onclick="addTo('${day}','${m}')" style="border:none;background:#6F7B52;color:white;border-radius:8px;padding:4px 10px;">+</button></div>
+          ${items.map((i,idx) => `<div style="font-size:13px;color:#666;margin-top:6px;display:flex;justify-content:space-between;">${i.name} · ${i.grams}г <button onclick="del('${day}','${m}',${idx})" style="border:none;background:none;color:#c00;">×</button></div>`).join('') || '<div style="font-size:13px;color:#999;margin-top:6px;">пусто</div>'}
         </div>`;
       });
-      document.getElementById('content').innerHTML = html || '<div style="text-align:center;color:#888;">Меню пустое</div>';
+      document.getElementById('content').innerHTML = html;
+    }
+    async function addTo(day, meal) {
+      if (!products.length) { alert('Сначала добавь продукты'); return; }
+      const name = prompt('Название продукта:\n' + products.slice(0,10).map(p=>p.name).join(', '));
+      if (!name) return;
+      const p = products.find(x => x.name.toLowerCase().includes(name.toLowerCase()));
+      if (!p) { alert('Не найден'); return; }
+      const grams = +prompt('Граммы:', '100');
+      if (!grams) return;
+      if (!menu[day]) menu[day] = {};
+      if (!menu[day][meal]) menu[day][meal] = [];
+      menu[day][meal].push({ name: p.name, grams, calories: Math.round((p.calories||0)*grams/100), protein: +((p.protein||0)*grams/100).toFixed(1), fat: +((p.fat||0)*grams/100).toFixed(1), carbs: +((p.carbs||0)*grams/100).toFixed(1) });
+      localStorage.setItem('weekMenu', JSON.stringify(menu));
+      render();
+    }
+    function del(day, meal, idx) {
+      menu[day][meal].splice(idx, 1);
+      localStorage.setItem('weekMenu', JSON.stringify(menu));
+      render();
     }
     load();
   </script>
