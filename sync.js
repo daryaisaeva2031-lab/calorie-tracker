@@ -278,7 +278,9 @@ if (Array.isArray(window.__syncQueue) && window.__syncQueue.length) {
 }
 
 // ---------- pull ----------
+function isDirtyNow(k) { return getDirty().has(k) || debounceTimers.has(k); }
 function applyCloud(key, cloudVal, changed) {
+  if (isDirtyNow(key)) return;
   const next = toLocalString(cloudVal);
   const prev = orig.getItem(key);
   if (next == null) return;
@@ -310,7 +312,7 @@ async function pullAll() {
 
       ROUTE_KEYS.forEach((k, i) => {
         const cloud = results[i];
-        if (dirty.has(k)) { toPush.add(k); return; }
+        if (isDirtyNow(k)) { toPush.add(k); return; }
         if (isEmptyValue(cloud)) {
           if (!isEmptyValue(parseLocal(orig.getItem(k)))) toPush.add(k);
           return;
@@ -320,7 +322,7 @@ async function pullAll() {
 
       Object.keys(kv).forEach((k) => {
         if (!isAppKey(k)) return;
-        if (dirty.has(k)) { toPush.add(k); return; }
+        if (isDirtyNow(k)) { toPush.add(k); return; }
         applyCloud(k, kv[k], changed);
       });
 
@@ -343,7 +345,7 @@ async function pullAll() {
       dateList.forEach((d, i) => {
         const key = 'diary-' + d;
         const cloud = diaries[i];
-        if (dirty.has(key)) { toPush.add(key); return; }
+        if (isDirtyNow(key)) { toPush.add(key); return; }
         if (isEmptyValue(cloud)) {
           if (orig.getItem(key) != null && !(d in remoteStamps)) toPush.add(key);
           return;
@@ -355,10 +357,10 @@ async function pullAll() {
         const r = routeFor(k);
         if (r.type === 'diary' && !(r.date in remoteStamps) && !dates.has(r.date)) toPush.add(k);
       });
-      dirty.forEach((k) => toPush.add(k));
+      getDirty().forEach((k) => toPush.add(k));
 
       for (const k of toPush) {
-        if (orig.getItem(k) == null && routeFor(k).type !== 'profile' && !dirty.has(k)) continue;
+        if (orig.getItem(k) == null && routeFor(k).type !== 'profile' && !isDirtyNow(k)) continue;
         await pushKey(k, true);
       }
       await flushProfile();
