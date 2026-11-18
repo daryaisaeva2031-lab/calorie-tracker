@@ -24,5 +24,6 @@ window.CalAPI = {
   weights: { list: () => api('/api/weights'), save: l => api('/api/weights', 'PUT', l) },
   recipes: { list: () => api('/api/recipes'), save: l => api('/api/recipes', 'PUT', l) },
   dishes: { list: () => api('/api/dishes'), save: l => api('/api/dishes', 'PUT', l) },
+  shopping: { list: () => api('/api/shopping'), save: l => api('/api/shopping', 'PUT', l) },
   profile: { get: () => api('/api/profile'), save: p => api('/api/profile', 'PUT', p) },
 };
