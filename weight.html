@@ -140,7 +140,7 @@
         alert('Введи реальный вес');
         return;
       }
-      const today = new Date().toISOString().slice(0,10);
+      const today = localDateStr();
       weights.push({date: today, value: val});
       weights.sort((a,b) => a.date.localeCompare(b.date));
       localStorage.setItem('weights', JSON.stringify(weights));

@@ -483,10 +483,8 @@ function exportBackup() {
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
-  const d = new Date();
-  const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
   a.href = URL.createObjectURL(blob);
-  a.download = 'calorie-tracker-backup-' + local + '.json';
+  a.download = 'calorie-tracker-backup-' + localDateStr() + '.json';
   document.body.appendChild(a);
   a.click();
   a.remove();

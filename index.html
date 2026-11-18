@@ -237,7 +237,7 @@
           el.classList.add('today');
         }
         if (d === selectedCalDay) el.classList.add('selected');
-        const dateStr = calYear + '-' + String(calMonth+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+        const dateStr = localDateYMD(calYear, calMonth, d);
         const wKey = 'workouts-' + dateStr;
         const wData = JSON.parse(localStorage.getItem(wKey) || '[]');
         let icons = '';
@@ -272,7 +272,7 @@
     function showDayInfo(day) {
       selectedCalDay = day;
       renderCalendar();
-      const dateStr = calYear + '-' + String(calMonth+1).padStart(2,'0') + '-' + String(day).padStart(2,'0');
+      const dateStr = localDateYMD(calYear, calMonth, day);
 
       const diary = JSON.parse(localStorage.getItem('diary-' + dateStr) || '{}');
       let totalK = 0;
@@ -281,9 +281,9 @@
       });
 
       const steps = localStorage.getItem('steps-' + dateStr) || '—';
-      const weightHistory = JSON.parse(localStorage.getItem('weightHistory') || '[]');
-      const dayWeight = weightHistory.find(w => w.date === dateStr);
-      const weight = dayWeight ? dayWeight.weight + ' кг' : '—';
+      const weights = JSON.parse(localStorage.getItem('weights') || '[]');
+      const dayWeight = weights.find(w => w.date === dateStr);
+      const weight = dayWeight ? String(dayWeight.value).replace('.', ',') + ' кг' : '—';
 
       const wData = JSON.parse(localStorage.getItem('workouts-' + dateStr) || '[]');
 
@@ -319,7 +319,7 @@
     function loadDiary() {
       const date = new Date();
       date.setDate(date.getDate() + dayOffset);
-      const dateStr = date.toISOString().slice(0,10);
+      const dateStr = localDateStr(date);
       const key = 'diary-' + dateStr;
       currentDiary = JSON.parse(localStorage.getItem(key) || '{}');
 
@@ -387,7 +387,7 @@
       });
       const date = new Date();
       date.setDate(date.getDate() + dayOffset);
-      const wKey = 'workouts-' + date.toISOString().slice(0,10);
+      const wKey = 'workouts-' + localDateStr(date);
       const wData = JSON.parse(localStorage.getItem(wKey) || '[]');
       if (wData.length) {
         html += `<div style="font-weight:600; margin-top:12px;">Тренировки</div>`;

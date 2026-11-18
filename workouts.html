@@ -307,7 +307,7 @@
     function changeDay(delta) { dayOffset += delta; loadDay(); }
     function loadDay() {
       const date = new Date(); date.setDate(date.getDate() + dayOffset);
-      const dateStr = date.toISOString().slice(0,10);
+      const dateStr = localDateStr(date);
       key = 'workouts-' + dateStr; stepsKey = 'steps-' + dateStr;
       workouts = JSON.parse(localStorage.getItem(key) || '[]');
       steps = localStorage.getItem(stepsKey) || '';
@@ -366,7 +366,7 @@
           el.classList.add('today');
         }
         if (d === selectedCalDay) el.classList.add('selected');
-        const dateStr = calYear + '-' + String(calMonth+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+        const dateStr = localDateYMD(calYear, calMonth, d);
         const wKey = 'workouts-' + dateStr;
         const wData = JSON.parse(localStorage.getItem(wKey) || '[]');
         let icons = '';
@@ -382,7 +382,7 @@
     function showDayInfo(day) {
       selectedCalDay = day;
       renderCalendar();
-      const dateStr = calYear + '-' + String(calMonth+1).padStart(2,'0') + '-' + String(day).padStart(2,'0');
+      const dateStr = localDateYMD(calYear, calMonth, day);
       const wData = JSON.parse(localStorage.getItem('workouts-' + dateStr) || '[]');
       const stepsVal = localStorage.getItem('steps-' + dateStr) || '—';
       let html = `<div style="font-weight:700; text-align:center; margin-bottom:8px;">${day} ${months[calMonth]}</div>`;
@@ -452,9 +452,9 @@
     function loadClass(load) { return ['','load-easy','load-mid','load-hard'][load] || ''; }
     function formatDate(dateStr) {
       if (!dateStr) return '';
-      const d = new Date(dateStr);
-      const yy = String(d.getFullYear()).slice(-2);
-      return String(d.getDate()).padStart(2,'0') + '.' + String(d.getMonth()+1).padStart(2,'0') + '.' + yy;
+      const parts = String(dateStr).split('-');
+      if (parts.length !== 3) return dateStr;
+      return parts[2].padStart(2,'0') + '.' + parts[1].padStart(2,'0') + '.' + String(parts[0]).slice(-2);
     }
     function renderAllBlocks() {
       const container = document.getElementById('familyContent');

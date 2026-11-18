@@ -159,7 +159,7 @@
 
       const date = new Date();
       date.setDate(date.getDate() + dayOffset);
-      const key = 'diary-' + date.toISOString().slice(0,10);
+      const key = 'diary-' + localDateStr(date);
       let diary = JSON.parse(localStorage.getItem(key) || '{}');
       if (!diary[meal]) diary[meal] = [];
       diary[meal].push(entry);
