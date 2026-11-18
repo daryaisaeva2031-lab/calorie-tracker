@@ -2,32 +2,136 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <script src="sync-shim.js?v=20261118-noloop"></script>
-  <script type="module" src="sync.js?v=20261118-noloop"></script>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="sync-shim.js?v=20261118-menu"></script>
+  <script type="module" src="sync.js?v=20261118-menu"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Меню — Калории</title>
-  <link rel="stylesheet" href="style.css?v=20261118-noloop">
+  <link rel="stylesheet" href="style.css?v=20261118-menu">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
   <link rel="shortcut icon" href="favicon.ico">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    .day-tabs { display: flex; gap: 6px; overflow-x: auto; padding: 12px 16px; }
-    .day-tab { padding: 8px 14px; border-radius: 20px; background: var(--card); color: var(--ink); font-weight: 600; cursor: pointer; white-space: nowrap; }
-    .day-tab.active { background: var(--olive); color: #fff; }
-    .meal-section { margin: 12px 16px; }
-    .meal-title { font-weight: 700; font-size: 16px; margin-bottom: 8px; color: var(--ink); }
-    .meal-item { display: flex; justify-content: space-between; padding: 10px 14px; background: var(--card); border-radius: 12px; margin-bottom: 6px; }
-    .meal-item-name { font-weight: 600; }
-    .meal-item-info { color: var(--muted); font-size: 13px; }
-    .day-total { text-align: center; padding: 12px; font-weight: 700; color: var(--olive); }
-    .empty { text-align: center; padding: 40px; color: var(--muted); }
+    .day-tabs {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 4px 2px 12px;
+      margin: 0 -2px 4px;
+      scrollbar-width: none;
+    }
+    .day-tabs::-webkit-scrollbar { display: none; }
+    .day-tab {
+      padding: 8px 16px;
+      border-radius: 20px;
+      background: rgba(243, 237, 224, 0.35);
+      color: var(--title);
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+      border: none;
+      font-family: inherit;
+    }
+    .day-tab.active {
+      background: var(--pale);
+      color: var(--ink);
+    }
+    .day-total {
+      background: var(--cream);
+      border-radius: 20px;
+      padding: 16px 14px 12px;
+      margin-bottom: 14px;
+      box-shadow: var(--card-shadow);
+    }
+    .day-total-kcal {
+      text-align: center;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--ink);
+      letter-spacing: -0.03em;
+      margin-bottom: 12px;
+    }
+    .day-total-kcal span { font-size: 13px; font-weight: 600; color: var(--ink-soft); }
+    .meal-card {
+      background: var(--cream);
+      border-radius: 20px;
+      padding: 14px 14px 6px;
+      margin-bottom: 12px;
+      box-shadow: var(--card-shadow);
+    }
+    .meal-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .meal-ic {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--pale);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .meal-title {
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--ink);
+      flex: 1;
+    }
+    .meal-kcal {
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--ink);
+    }
+    .meal-macros {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--ink-soft);
+      margin: -4px 0 8px 46px;
+    }
+    .meal-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-top: 1px solid rgba(63, 70, 48, 0.08);
+      gap: 8px;
+    }
+    .meal-item-name {
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--ink);
+    }
+    .meal-item-info {
+      color: var(--ink-soft);
+      font-size: 12px;
+      font-weight: 600;
+      margin-top: 1px;
+    }
+    .meal-item-kcal {
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--ink);
+      white-space: nowrap;
+    }
+    .empty {
+      text-align: center;
+      padding: 40px 16px;
+      color: var(--muted-on-hero);
+      font-weight: 600;
+    }
   </style>
 </head>
 <body>
   <div class="app">
     <header class="header">
-      <a href="index.html"><button class="icon-btn">←</button></a>
+      <a href="index.html"><button class="icon-btn" aria-label="Назад">←</button></a>
       <h1>Меню на неделю</h1>
       <div style="width:42px"></div>
     </header>
@@ -61,10 +165,27 @@
       }
     }
 
+    function getGoals() {
+      const cal = +(localStorage.getItem('calories') || 1700);
+      const pPct = +(localStorage.getItem('protein-pct') || 35);
+      const fPct = +(localStorage.getItem('fat-pct') || 25);
+      const cPct = +(localStorage.getItem('carb-pct') || 40);
+      return {
+        cal: cal || 1700,
+        p: Math.round(cal * pPct / 100 / 4) || 90,
+        f: Math.round(cal * fPct / 100 / 9) || 70,
+        c: Math.round(cal * cPct / 100 / 4) || 200
+      };
+    }
+
+    function fmt(n) {
+      return Math.round(n * 10) / 10;
+    }
+
     function renderTabs() {
       const tabs = document.getElementById('dayTabs');
       tabs.innerHTML = shortDays.map((d, i) =>
-        `<div class="day-tab ${i === currentDay ? 'active' : ''}" onclick="selectDay(${i})">${d}</div>`
+        `<button class="day-tab ${i === currentDay ? 'active' : ''}" onclick="selectDay(${i})">${d}</button>`
       ).join('');
     }
 
@@ -78,36 +199,84 @@
       const content = document.getElementById('menuContent');
       const dayName = days[currentDay];
       const dayMenu = menuData[dayName] || {};
+      const goals = getGoals();
 
       let html = '';
-      let dayTotal = 0;
+      let dayK = 0, dayP = 0, dayF = 0, dayC = 0;
+      const mealBlocks = [];
 
       meals.forEach(meal => {
         const items = dayMenu[meal] || [];
-        if (items.length === 0) return;
+        if (!items.length) return;
 
-        const mealTotal = items.reduce((s, i) => s + (i.calories || 0), 0);
-        dayTotal += mealTotal;
+        let mealK = 0, mealP = 0, mealF = 0, mealC = 0;
+        items.forEach(i => {
+          mealK += i.calories || 0;
+          mealP += i.protein || 0;
+          mealF += i.fat || 0;
+          mealC += i.carbs || 0;
+        });
+        dayK += mealK; dayP += mealP; dayF += mealF; dayC += mealC;
 
-        html += `<div class="meal-section">
-          <div class="meal-title">${mealIcons[meal] || ''} ${meal} · ${mealTotal} ккал</div>
-          ${items.map(item => `
+        mealBlocks.push({ meal, items, mealK, mealP, mealF, mealC });
+      });
+
+      if (!mealBlocks.length) {
+        content.innerHTML = '<div class="empty">Нет данных для этого дня</div>';
+        return;
+      }
+
+      const pPct = Math.min(100, (dayP / goals.p) * 100);
+      const fPct = Math.min(100, (dayF / goals.f) * 100);
+      const cPct = Math.min(100, (dayC / goals.c) * 100);
+
+      html += `<div class="day-total">
+        <div class="day-total-kcal">${Math.round(dayK)} <span>ккал</span></div>
+        <div class="macro">
+          <div class="macro-ic"><svg class="ico-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.5c2.8 3.6 5.5 6.6 5.5 9.3A5.5 5.5 0 0 1 12 19.3a5.5 5.5 0 0 1-5.5-5.5C6.5 11.1 9.2 8.1 12 4.5Z"/></svg></div>
+          <div class="macro-info">
+            <div class="macro-name">Белки</div>
+            <div class="bar"><div class="bar-fill" style="width:${pPct}%"></div></div>
+          </div>
+          <div class="macro-nums">${fmt(dayP)} / ${goals.p} г</div>
+        </div>
+        <div class="macro">
+          <div class="macro-ic"><svg class="ico-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5c2.2 2.8 4.2 5.3 4.2 7.5A4.2 4.2 0 0 1 12 16.7a4.2 4.2 0 0 1-4.2-4.2C7.8 10.3 9.8 7.8 12 5Z"/><path d="M16.8 15.8c.8.7 1.3 1.7 1.3 2.7A4 4 0 0 1 12 20"/></svg></div>
+          <div class="macro-info">
+            <div class="macro-name">Жиры</div>
+            <div class="bar"><div class="bar-fill f" style="width:${fPct}%"></div></div>
+          </div>
+          <div class="macro-nums">${fmt(dayF)} / ${goals.f} г</div>
+        </div>
+        <div class="macro">
+          <div class="macro-ic"><svg class="ico-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V9"/><path d="M12 9c0-2.4 1.6-4.2 3.2-4.6"/><path d="M12 11.2c2.2-.6 3.8 0 4 1.6-1.4.9-2.8.9-4 .2"/><path d="M12 11.2c-2.2-.6-3.8 0-4 1.6 1.4.9 2.8.9 4 .2"/><path d="M12 15c2.2-.6 3.8 0 4 1.6-1.4.9-2.8.9-4 .2"/><path d="M12 15c-2.2-.6-3.8 0-4 1.6 1.4.9 2.8.9 4 .2"/></svg></div>
+          <div class="macro-info">
+            <div class="macro-name">Углеводы</div>
+            <div class="bar"><div class="bar-fill c" style="width:${cPct}%"></div></div>
+          </div>
+          <div class="macro-nums">${fmt(dayC)} / ${goals.c} г</div>
+        </div>
+      </div>`;
+
+      mealBlocks.forEach(b => {
+        html += `<div class="meal-card">
+          <div class="meal-head">
+            <div class="meal-ic">${mealIcons[b.meal] || ''}</div>
+            <div class="meal-title">${b.meal}</div>
+            <div class="meal-kcal">${Math.round(b.mealK)} ккал</div>
+          </div>
+          <div class="meal-macros">Б ${fmt(b.mealP)} · Ж ${fmt(b.mealF)} · У ${fmt(b.mealC)}</div>
+          ${b.items.map(item => `
             <div class="meal-item">
               <div>
-                <div class="meal-item-name">${item.name}</div>
-                <div class="meal-item-info">${item.grams} г · ${item.portions} порц.</div>
+                <div class="meal-item-name">${item.name || ''}</div>
+                <div class="meal-item-info">${item.grams || 0} г · ${item.portions || 1} порц.</div>
               </div>
-              <div style="font-weight:600;">${item.calories} ккал</div>
+              <div class="meal-item-kcal">${item.calories || 0} ккал</div>
             </div>
           `).join('')}
         </div>`;
       });
-
-      if (!html) {
-        html = '<div class="empty">Нет данных для этого дня</div>';
-      } else {
-        html = `<div class="day-total">Итого: ${dayTotal} ккал</div>` + html;
-      }
 
       content.innerHTML = html;
     }
