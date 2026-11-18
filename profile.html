@@ -2,16 +2,20 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <script src="sync-shim.js?v=20261118-v2"></script>
-  <script type="module" src="sync.js?v=20261118-v2"></script>
+  <script src="sync-shim.js?v=20261118-gis"></script>
+  <script type="module" src="sync.js?v=20261118-gis"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Профиль — Калории</title>
-  <link rel="stylesheet" href="style.css?v=20261118-v2">
+  <link rel="stylesheet" href="style.css?v=20261118-gis">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
   <link rel="shortcut icon" href="favicon.ico">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
+    #gisButtonHost { margin: 8px 0 4px; min-height: 44px; }
+    #gisButtonHost iframe { margin: 0 auto; }
+    .gis-fallback { font-size: 13px; color: var(--ink-soft); }
     .goal-row {
       display: flex; justify-content: space-between; align-items: center;
       padding: 12px 0; border-bottom: 1px solid var(--sage-light);
@@ -152,7 +156,7 @@
       <div style="font-weight:700; margin-bottom:8px; color:var(--sage-dark);">Аккаунт</div>
       <div id="accountBody">
         <p class="account-hint">Войдите через Google, чтобы данные совпадали на телефоне и компьютере.</p>
-        <button class="save-btn" type="button" onclick="accountSignIn()">Войти через Google</button>
+        <div id="gisButtonHost"></div>
       </div>
     </div>
 
@@ -288,24 +292,31 @@
 
       let html = '<p class="account-hint">Войдите через Google, чтобы данные совпадали на телефоне и компьютере.</p>';
       if (standalone && ios) {
-        html += '<p class="account-hint">На iPhone надёжнее открыть сайт в Safari (не с экрана «Домой») и войти там.</p>';
+        html += '<p class="account-hint">На iPhone из значка на экране «Домой» вход может не открыться. Откройте сайт во вкладке Safari и войдите там.</p>';
       }
       if (lastError) {
         html += '<div class="account-error">' + escapeHtml(lastError) + '</div>';
       }
-      html += '<button class="save-btn" type="button" onclick="accountSignIn()">Войти через Google</button>';
+      html += '<div id="gisButtonHost"></div>';
+      if (!ios) {
+        html += '<button class="save-btn backup-secondary" type="button" onclick="accountSignIn()">Войти через окно</button>';
+      }
       body.innerHTML = html;
+      if (window.CalorieSync && window.CalorieSync.mountGoogleButton) {
+        window.CalorieSync.mountGoogleButton(document.getElementById('gisButtonHost'));
+      }
     }
 
     function accountSignIn() {
+      // Popup fallback (desktop). Must call signIn() directly in this click
+      // tick and must not re-render the card first.
       if (window.CalorieSync && window.CalorieSync.signIn) {
-        Promise.resolve(window.CalorieSync.signIn()).catch(function () {});
-        renderAccount();
+        window.CalorieSync.signIn();
       } else {
         const body = document.getElementById('accountBody');
         if (body) {
           body.innerHTML = '<p class="account-hint">Подождите секунду и нажмите ещё раз.</p>' +
-            '<button class="save-btn" type="button" onclick="accountSignIn()">Войти через Google</button>';
+            '<div id="gisButtonHost"></div>';
         }
       }
     }

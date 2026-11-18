@@ -1,41 +1,61 @@
 // Cross-device sync for calorie-tracker via Firebase Auth (Google) + Firestore.
 // Pages always render from localStorage; this module never blocks first paint.
 
-const FIREBASE_VERSION = '10.12.2';
-const FIREBASE_CDN = 'https://www.gstatic.com/firebasejs/' + FIREBASE_VERSION;
-let fb = null; // populated on first configured init via dynamic import
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import {
+  getAuth,
+  initializeAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithRedirect,
+  signInWithCredential,
+  getRedirectResult,
+  signOut,
+  setPersistence,
+  browserLocalPersistence,
+  indexedDBLocalPersistence,
+  browserPopupRedirectResolver,
+  onAuthStateChanged
+} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import {
+  getFirestore,
+  collection,
+  doc,
+  setDoc,
+  deleteDoc,
+  onSnapshot,
+  serverTimestamp
+} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
-async function loadFirebase() {
-  if (fb) return fb;
-  const [appMod, authMod, fsMod] = await Promise.all([
-    import(FIREBASE_CDN + '/firebase-app.js'),
-    import(FIREBASE_CDN + '/firebase-auth.js'),
-    import(FIREBASE_CDN + '/firebase-firestore.js')
-  ]);
-  fb = {
-    initializeApp: appMod.initializeApp,
-    getAuth: authMod.getAuth,
-    initializeAuth: authMod.initializeAuth,
-    GoogleAuthProvider: authMod.GoogleAuthProvider,
-    signInWithPopup: authMod.signInWithPopup,
-    signInWithRedirect: authMod.signInWithRedirect,
-    getRedirectResult: authMod.getRedirectResult,
-    signOut: authMod.signOut,
-    setPersistence: authMod.setPersistence,
-    browserLocalPersistence: authMod.browserLocalPersistence,
-    indexedDBLocalPersistence: authMod.indexedDBLocalPersistence,
-    browserPopupRedirectResolver: authMod.browserPopupRedirectResolver,
-    onAuthStateChanged: authMod.onAuthStateChanged,
-    getFirestore: fsMod.getFirestore,
-    collection: fsMod.collection,
-    doc: fsMod.doc,
-    setDoc: fsMod.setDoc,
-    deleteDoc: fsMod.deleteDoc,
-    onSnapshot: fsMod.onSnapshot,
-    serverTimestamp: fsMod.serverTimestamp
-  };
-  return fb;
-}
+// Static imports start loading as soon as this module is fetched (no click-time
+// dynamic import). Keep a single fb map so the rest of the file can stay sync.
+const fb = {
+  initializeApp,
+  getAuth,
+  initializeAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithRedirect,
+  signInWithCredential,
+  getRedirectResult,
+  signOut,
+  setPersistence,
+  browserLocalPersistence,
+  indexedDBLocalPersistence,
+  browserPopupRedirectResolver,
+  onAuthStateChanged,
+  getFirestore,
+  collection,
+  doc,
+  setDoc,
+  deleteDoc,
+  onSnapshot,
+  serverTimestamp
+};
+
+// Firebase auto-created "Web client (auto created by Google Service)",
+// discovered via Identity Toolkit createAuthUri for this project's API key.
+const GOOGLE_WEB_CLIENT_ID = '261846159655-3d5mop7bgr7hk7kh2clbgvr383elfcri.apps.googleusercontent.com';
 
 // === FIREBASE_CONFIG ===
 // Replace these placeholder values with the real config from
@@ -67,6 +87,7 @@ const orig = window.__syncOrigLocalStorage || {
 };
 
 let auth = null;
+let googleProvider = null;
 let db = null;
 let currentUid = null;
 let unsubKv = null;
@@ -87,6 +108,31 @@ function isConfigReady() {
     !String(firebaseConfig.apiKey).startsWith('YOUR_') &&
     !String(firebaseConfig.projectId).startsWith('YOUR_')
   );
+}
+
+function initFirebaseApp() {
+  if (auth || !isConfigReady()) return;
+  const app = fb.initializeApp(firebaseConfig);
+  try {
+    auth = fb.initializeAuth(app, {
+      persistence: [fb.indexedDBLocalPersistence, fb.browserLocalPersistence],
+      popupRedirectResolver: fb.browserPopupRedirectResolver
+    });
+  } catch (authInitErr) {
+    auth = fb.getAuth(app);
+    fb.setPersistence(auth, fb.browserLocalPersistence).catch(function (persErr) {
+      console.warn('[sync] persistence:', persErr && persErr.message);
+    });
+  }
+  googleProvider = new fb.GoogleAuthProvider();
+  googleProvider.setCustomParameters({ prompt: 'select_account' });
+  db = fb.getFirestore(app);
+}
+
+try {
+  initFirebaseApp();
+} catch (err) {
+  console.warn('[sync] Firebase eager init failed:', err && err.message);
 }
 
 function byteLength(str) {
@@ -437,21 +483,22 @@ function canFallbackToRedirect(code) {
 }
 
 function signIn() {
-  if (!auth) {
+  if (!auth || !googleProvider) {
     setAuthError('Синхронизация ещё загружается. Подождите секунду и нажмите ещё раз.');
     return Promise.resolve();
   }
-  clearAuthError();
-  setStatus('signing-in');
-  const provider = new fb.GoogleAuthProvider();
-  provider.setCustomParameters({ prompt: 'select_account' });
-  // signInWithPopup must run in the same tick as the click (no awaits before it),
-  // otherwise Safari/Chrome drop the user-gesture and block the popup.
-  return fb.signInWithPopup(auth, provider).catch(function (err) {
+  // Call signInWithPopup in this tick, before any setStatus/re-render.
+  // Re-rendering the account card tears down the clicked button and iOS
+  // drops the user gesture (auth/popup-blocked). The Firebase SDK may still
+  // open the window after an async hop, which iOS Safari often blocks anyway;
+  // GIS (mountGoogleButton) is the reliable path there.
+  return fb.signInWithPopup(auth, googleProvider).then(function () {
+    clearAuthError();
+  }).catch(function (err) {
     const code = err && err.code;
     if (canFallbackToRedirect(code)) {
       markRedirectPending();
-      return fb.signInWithRedirect(auth, provider).catch(function (err2) {
+      return fb.signInWithRedirect(auth, googleProvider).catch(function (err2) {
         console.warn('[sync] redirect sign-in failed:', err2 && err2.message);
         setAuthError(friendlyAuthError(err2));
       });
@@ -465,6 +512,109 @@ function signIn() {
       return;
     }
     setAuthError(friendlyAuthError(err));
+  });
+}
+
+function signInWithIdToken(idToken) {
+  if (!auth) {
+    setAuthError('Синхронизация ещё загружается. Подождите секунду и нажмите ещё раз.');
+    return Promise.resolve();
+  }
+  if (!idToken) {
+    setAuthError('Google не вернул данные входа.');
+    return Promise.resolve();
+  }
+  clearAuthError();
+  setStatus('signing-in');
+  const cred = fb.GoogleAuthProvider.credential(idToken);
+  return fb.signInWithCredential(auth, cred).then(function () {
+    clearAuthError();
+  }).catch(function (err) {
+    console.warn('[sync] GIS sign-in failed:', err && err.message, err && err.code || '');
+    setAuthError(friendlyAuthError(err));
+  });
+}
+
+function loadGisClient() {
+  if (window.google && google.accounts && google.accounts.id) return Promise.resolve();
+  if (loadGisClient._p) return loadGisClient._p;
+  loadGisClient._p = new Promise(function (resolve, reject) {
+    function ready() {
+      if (window.google && google.accounts && google.accounts.id) resolve();
+      else reject(new Error('Google Identity Services не загрузились'));
+    }
+    const existing = document.querySelector('script[src*="accounts.google.com/gsi/client"]');
+    if (existing) {
+      if (window.google && google.accounts && google.accounts.id) {
+        resolve();
+        return;
+      }
+      existing.addEventListener('load', ready);
+      existing.addEventListener('error', function () {
+        reject(new Error('Не удалось загрузить Google Identity Services'));
+      });
+      return;
+    }
+    const s = document.createElement('script');
+    s.src = 'https://accounts.google.com/gsi/client';
+    s.async = true;
+    s.defer = true;
+    s.onload = ready;
+    s.onerror = function () {
+      reject(new Error('Не удалось загрузить Google Identity Services'));
+    };
+    document.head.appendChild(s);
+  });
+  return loadGisClient._p;
+}
+
+let gisInitialized = false;
+
+function onGisCredential(response) {
+  signInWithIdToken(response && response.credential);
+}
+
+function mountGoogleButton(host) {
+  if (!host) return Promise.resolve();
+  host.innerHTML = '<div class="gis-fallback">Загружается вход Google…</div>';
+  return loadGisClient().then(function () {
+    if (!gisInitialized) {
+      google.accounts.id.initialize({
+        client_id: GOOGLE_WEB_CLIENT_ID,
+        callback: onGisCredential,
+        auto_select: false,
+        cancel_on_tap_outside: true,
+        context: 'signin',
+        itp_support: true,
+        use_fedcm_for_prompt: !isIOS()
+      });
+      gisInitialized = true;
+    }
+    host.innerHTML = '';
+    const width = Math.max(240, Math.min(host.clientWidth || 320, 400));
+    google.accounts.id.renderButton(host, {
+      type: 'standard',
+      theme: 'outline',
+      size: 'large',
+      text: 'signin_with',
+      shape: 'rectangular',
+      logo_alignment: 'left',
+      locale: 'ru',
+      width: width
+    });
+  }).catch(function (err) {
+    console.warn('[sync] GIS button:', err && err.message);
+    host.innerHTML = '';
+    const btn = document.createElement('button');
+    btn.className = 'save-btn';
+    btn.type = 'button';
+    btn.textContent = 'Войти через Google';
+    btn.addEventListener('click', function () { signIn(); });
+    host.appendChild(btn);
+    const hint = document.createElement('p');
+    hint.className = 'account-hint';
+    hint.textContent = (err && err.message) ? err.message : 'Не удалось загрузить кнопку Google.';
+    host.appendChild(hint);
   });
 }
 
@@ -562,12 +712,16 @@ window.CalorieSync = {
   isAppKey,
   listAppKeys,
   signIn,
+  signInWithIdToken,
+  mountGoogleButton,
+  getGoogleClientId: () => GOOGLE_WEB_CLIENT_ID,
   signOut: signOutUser,
   getStatus: () => status,
   getUser: getUserInfo,
   getLastError,
   isStandalone,
   isIOS,
+  isReady: () => !!(auth && googleProvider),
   onStatusChange: (fn) => {
     if (typeof fn === 'function') statusListeners.push(fn);
   }
@@ -589,22 +743,8 @@ async function init() {
   }
 
   try {
-    await loadFirebase();
-    const app = fb.initializeApp(firebaseConfig);
-    try {
-      auth = fb.initializeAuth(app, {
-        persistence: [fb.indexedDBLocalPersistence, fb.browserLocalPersistence],
-        popupRedirectResolver: fb.browserPopupRedirectResolver
-      });
-    } catch (authInitErr) {
-      auth = fb.getAuth(app);
-      try {
-        await fb.setPersistence(auth, fb.browserLocalPersistence);
-      } catch (persErr) {
-        console.warn('[sync] persistence:', persErr && persErr.message);
-      }
-    }
-    db = fb.getFirestore(app);
+    initFirebaseApp();
+    if (!auth) throw new Error('Firebase Auth не инициализировался');
   } catch (err) {
     console.warn('[sync] Firebase init failed:', err && err.message);
     setStatus('unconfigured');
