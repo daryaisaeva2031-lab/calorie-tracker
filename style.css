@@ -480,3 +480,172 @@ input[type="number"] {
   -moz-appearance: textfield;
   appearance: textfield;
 }
+
+/* Compact portion chips */
+.portion-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.portion-chip {
+  min-width: 86px;
+  max-width: 48%;
+  flex: 1 1 86px;
+  border: 1.5px solid transparent;
+  background: var(--beige, #F5F0E6);
+  color: var(--ink);
+  border-radius: 12px;
+  padding: 8px 8px 6px;
+  text-align: center;
+  cursor: pointer;
+  font-family: inherit;
+  box-shadow: none;
+}
+.portion-chip.is-on {
+  background: var(--pale);
+  border-color: var(--olive-accent, #7E8F6A);
+}
+.portion-chip .pch-emoji { font-size: 18px; line-height: 1; display: block; }
+.portion-chip .pch-name { display: block; font-size: 12px; font-weight: 700; margin-top: 2px; }
+.portion-chip .pch-meta {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  margin-top: 3px;
+  line-height: 1.25;
+  min-height: 1.25em;
+}
+.portion-edit { margin-top: 10px; }
+.portion-edit .form-label { margin-top: 8px; }
+
+/* Emoji picker */
+.emoji-btn {
+  width: 52px; height: 52px; border-radius: 16px; border: none;
+  background: var(--pale); font-size: 28px; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.emoji-picker {
+  display: flex; flex-wrap: wrap; gap: 4px;
+  max-height: 160px; overflow-y: auto;
+  margin-top: 8px; padding: 6px;
+  background: var(--beige, #F5F0E6); border-radius: 12px;
+}
+.emoji-opt {
+  width: 36px; height: 36px; border: none; border-radius: 10px;
+  background: transparent; font-size: 22px; cursor: pointer;
+}
+.emoji-opt.selected, .emoji-opt:hover { background: var(--pale); }
+
+/* Mini calendar inside modals */
+.mini-cal { margin: 8px 0; }
+.mini-cal-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px;
+}
+.mini-cal-title { font-size: 15px; font-weight: 700; color: var(--ink); }
+.mini-cal-grid { gap: 2px; }
+.mini-cal-grid .cal-day {
+  min-height: 34px; border: none; font-family: inherit;
+  background: transparent; padding: 0;
+}
+.mini-cal-head .arrow { width: 36px; height: 36px; }
+
+/* Dish subtract */
+.dish-sub { margin-top: 10px; }
+.dish-sub-row {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; font-weight: 600; color: var(--ink);
+  cursor: pointer;
+}
+.dish-sub-pick { margin-top: 8px; }
+.dish-sub-select {
+  width: 100%; padding: 10px 12px; border-radius: 12px;
+  border: 1px solid var(--sage-light); font-family: inherit; font-size: 14px;
+  background: var(--cream);
+}
+.dish-sub-preview { font-size: 12px; font-weight: 600; color: var(--ink-soft); margin-top: 6px; }
+.dish-sub-warn { color: #8B3A2A; }
+.dish-sub-empty { font-size: 12px; color: var(--ink-soft); }
+
+/* Workout comments */
+.w-comment {
+  font-size: 11px; font-weight: 600; color: var(--ink-soft);
+  margin-top: 3px; line-height: 1.3;
+  white-space: pre-wrap;
+}
+.w-comment.is-clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.w-comment-wrap { display: flex; align-items: flex-start; gap: 4px; }
+.w-comment-wrap .w-comment { flex: 1; min-width: 0; }
+.w-comment-toggle {
+  border: none; background: none; color: var(--ink);
+  cursor: pointer; font-size: 12px; padding: 0 2px; line-height: 1.2;
+  flex-shrink: 0;
+}
+
+/* Chart / forecast */
+.chart-toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; margin-bottom: 8px;
+}
+.chart-zoom {
+  display: flex; gap: 6px;
+}
+.chart-zoom button, .chart-tool-btn {
+  width: 36px; height: 32px; border: none; border-radius: 10px;
+  background: var(--pale); color: var(--ink);
+  font-family: inherit; font-weight: 700; cursor: pointer;
+}
+.chart-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
+}
+.chart-scroll canvas { display: block; }
+
+.forecast-row {
+  display: flex; gap: 8px; margin-bottom: 10px;
+}
+.forecast-row .form-group { flex: 1; min-width: 0; }
+.forecast-stats { font-size: 13px; line-height: 1.45; color: var(--ink); }
+.forecast-stats b { font-weight: 700; }
+
+/* Dishes / list actions */
+.row-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.row-actions button, .icon-action {
+  width: 32px; height: 32px; border: none; border-radius: 10px;
+  background: var(--pale); color: var(--ink); cursor: pointer;
+  font-size: 15px;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.icon-action.danger { background: #f6e4dc; color: #8B3A2A; }
+
+.list-macros { font-size: 11px; font-weight: 600; color: var(--ink-soft); margin-top: 2px; }
+
+.edit-recipe-btn {
+  width: 32px; height: 32px; border: none; border-radius: 10px;
+  background: var(--pale); color: var(--ink); cursor: pointer;
+  margin-right: 36px;
+  font-size: 15px;
+}
+
+/* Workout add-block form */
+.block-add {
+  margin-top: 12px; padding: 12px; border-radius: 12px;
+  background: var(--beige, #F5F0E6);
+}
+.block-edit-btns { display: flex; gap: 6px; margin-left: auto; }
+
+.warmup-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 0; border-bottom: 1px solid rgba(63,70,48,.08);
+}
+.warmup-row .nm { flex: 1; font-size: 14px; cursor: pointer; }

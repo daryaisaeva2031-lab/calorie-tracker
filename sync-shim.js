@@ -39,7 +39,11 @@ function localDateYMD(year, monthIndex, day) {
     calories: true,
     'carb-pct': true,
     'protein-pct': true,
-    'fat-pct': true
+    'fat-pct': true,
+    dishes: true,
+    warmups: true,
+    familyBlocks: true,
+    'target-date': true
   };
 
   function isAppKey(key) {

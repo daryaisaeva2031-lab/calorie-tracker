@@ -2,11 +2,12 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <script src="sync-shim.js?v=20261118-popup"></script>
-  <script type="module" src="sync.js?v=20261118-popup"></script>
+  <script src="sync-shim.js?v=20261118-v2"></script>
+  <script src="app-ui.js?v=20261118-v2"></script>
+  <script type="module" src="sync.js?v=20261118-v2"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Рецепт — Калории</title>
-  <link rel="stylesheet" href="style.css?v=20261118-popup">
+  <link rel="stylesheet" href="style.css?v=20261118-v2">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
   <link rel="shortcut icon" href="favicon.ico">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -63,7 +64,7 @@
   <div class="app">
     <header class="header">
       <a href="recipes.html"><button class="icon-btn">←</button></a>
-      <h1>Новый рецепт</h1>
+      <h1 id="pageTitle">Новый рецепт</h1>
       <div style="width:42px"></div>
     </header>
 
@@ -83,7 +84,8 @@
     <div class="card">
       <div class="form-group">
         <label class="form-label">Вес готового блюда (г)</label>
-        <input type="number" class="form-input" id="readyWeight" placeholder="Например 400" oninput="recalc()">
+        <input type="number" class="form-input" id="readyWeight" placeholder="Например 400" oninput="onReadyInput()">
+        <div class="dish-sub" id="dishSub"></div>
       </div>
       <div class="form-group">
         <label class="form-label">Порция (г)</label>
@@ -147,6 +149,14 @@
     let products = JSON.parse(localStorage.getItem('products') || '[]');
     let ingredients = [];
     let currentIngredientIndex = null;
+    const params = new URLSearchParams(location.search);
+    const editId = params.get('id') ? +params.get('id') : null;
+    let dishCtrl = null;
+
+    function onReadyInput() {
+      recalc();
+      if (dishCtrl) dishCtrl.update();
+    }
 
     function addIngredient() {
       ingredients.push({productId: '', name: '', grams: 100});
@@ -263,7 +273,12 @@
     function saveRecipe() {
       const name = document.getElementById('recipeName').value;
       if (!name) { alert('Введи название'); return; }
-      const ready = +document.getElementById('readyWeight').value || 0;
+      let ready = +document.getElementById('readyWeight').value || 0;
+      if (dishCtrl && dishCtrl.isOn()) {
+        const net = netGramsOrAlert(dishCtrl, ready);
+        if (net == null) return;
+        ready = net;
+      }
       const portion = +document.getElementById('portionGrams').value || 0;
 
       let totalK=0, totalP=0, totalF=0, totalC=0;
@@ -279,7 +294,7 @@
       const readyW = ready || 1;
 
       const recipe = {
-        id: Date.now(),
+        id: editId || Date.now(),
         name,
         ingredients,
         readyWeight: ready,
@@ -293,13 +308,40 @@
       };
 
       let recipes = JSON.parse(localStorage.getItem('recipes') || '[]');
-      recipes.push(recipe);
+      if (editId) {
+        const idx = recipes.findIndex(r => r.id == editId);
+        if (idx >= 0) recipes[idx] = recipe;
+        else recipes.push(recipe);
+      } else {
+        recipes.push(recipe);
+      }
       localStorage.setItem('recipes', JSON.stringify(recipes));
       alert('Рецепт сохранён');
       location.href = 'recipes.html';
     }
 
-    addIngredient();
+    dishCtrl = mountDishSubtract(document.getElementById('dishSub'), {
+      gramsGetter: function () { return +document.getElementById('readyWeight').value || 0; }
+    });
+
+    if (editId) {
+      const recipes = JSON.parse(localStorage.getItem('recipes') || '[]');
+      const r = recipes.find(x => x.id == editId);
+      if (r) {
+        document.getElementById('pageTitle').textContent = 'Редактировать';
+        document.getElementById('recipeName').value = r.name || '';
+        document.getElementById('readyWeight').value = r.readyWeight || '';
+        document.getElementById('portionGrams').value = r.portionGrams || '';
+        ingredients = (r.ingredients || []).map(ing => ({ productId: ing.productId, name: ing.name, grams: ing.grams }));
+        if (!ingredients.length) ingredients.push({productId: '', name: '', grams: 100});
+        renderIngredients();
+        recalc();
+      } else {
+        addIngredient();
+      }
+    } else {
+      addIngredient();
+    }
   </script>
 </body>
 </html>

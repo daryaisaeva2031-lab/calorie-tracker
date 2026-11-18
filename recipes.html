@@ -2,11 +2,12 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <script src="sync-shim.js?v=20261118-popup"></script>
-  <script type="module" src="sync.js?v=20261118-popup"></script>
+  <script src="sync-shim.js?v=20261118-v2"></script>
+  <script src="app-ui.js?v=20261118-v2"></script>
+  <script type="module" src="sync.js?v=20261118-v2"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Рецепты — Калории</title>
-  <link rel="stylesheet" href="style.css?v=20261118-popup">
+  <link rel="stylesheet" href="style.css?v=20261118-v2">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
   <link rel="shortcut icon" href="favicon.ico">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -27,7 +28,7 @@
     .modal-overlay.show { display: flex; }
     .modal-box {
       background: var(--cream); border-radius: 20px; width: 90%; max-width: 340px;
-      padding: 20px 16px;
+      padding: 20px 16px; max-height: 85vh; overflow-y: auto;
     }
     .modal-select, .modal-input {
       width: 100%; padding: 12px 36px 12px 12px; border-radius: 12px; border: 1px solid var(--sage-light);
@@ -71,11 +72,8 @@
   <div class="modal-overlay" id="addModal" onclick="if(event.target===this) closeModal()">
     <div class="modal-box">
       <div style="font-weight:700; text-align:center; font-size:17px; margin-bottom:8px;" id="modalRecipeName">Рецепт</div>
-      <select class="modal-select" id="modalDay">
-        <option value="0">Сегодня</option>
-        <option value="1">Завтра</option>
-        <option value="-1">Вчера</option>
-      </select>
+      <div id="modalCal"></div>
+      <div class="dish-sub" id="dishSub"></div>
       <select class="modal-select" id="modalMeal">
         <option>Завтрак</option>
         <option>Обед</option>
@@ -96,6 +94,12 @@
     let recipes = JSON.parse(localStorage.getItem('recipes') || '[]');
     let pendingRecipe = null;
 
+    function macrosLine(r) {
+      const p = r.per100 || {};
+      return `${p.calories || 0} ккал / 100 г` +
+        `<div class="list-macros">Б ${p.protein || 0} · Ж ${p.fat || 0} · У ${p.carbs || 0}</div>`;
+    }
+
     function render() {
       const q = (document.getElementById('search').value || '').toLowerCase();
       const list = document.getElementById('recipesList');
@@ -108,12 +112,40 @@
         list.innerHTML += `<div class="card meal-card recipe-item">
           <div class="meal-icon">🥘</div>
           <div class="meal-info">
-            <div class="meal-name">${r.name}</div>
-            <div class="meal-kcal">${r.per100?.calories || 0} ккал / 100 г</div>
+            <div class="meal-name">${escapeHtml(r.name)}</div>
+            <div class="meal-kcal">${macrosLine(r)}</div>
           </div>
+          <button class="edit-recipe-btn" onclick="location.href='add-recipe.html?id=${r.id}'" aria-label="Редактировать">✏️</button>
           <button class="add-to-diary" onclick="openAddModal(${r.id})">+</button>
         </div>`;
       });
+    }
+
+    let addDateStr = localDateStr();
+    let dishCtrl = null;
+
+    function renderAddCal() {
+      const box = document.getElementById('modalCal');
+      box._calYear = undefined;
+      box._calMonth = undefined;
+      renderMiniCalendar(box, addDateStr, function (ds) {
+        addDateStr = ds;
+        renderMiniCalendar(box, addDateStr, arguments.callee);
+      });
+    }
+
+    function mountSub() {
+      dishCtrl = mountDishSubtract(document.getElementById('dishSub'), {
+        gramsGetter: function () {
+          const amount = +document.getElementById('modalAmount').value;
+          const unit = document.getElementById('modalUnit').value;
+          if (unit === 'portion' && pendingRecipe && pendingRecipe.portionGrams) {
+            return amount * pendingRecipe.portionGrams;
+          }
+          return amount;
+        }
+      });
+      document.getElementById('modalAmount').oninput = function () { if (dishCtrl) dishCtrl.update(); };
     }
 
     function openAddModal(id) {
@@ -127,12 +159,17 @@
         unitSelect.innerHTML += `<option value="portion">порция (${r.portionGrams} г)</option>`;
       }
       document.getElementById('modalAmount').value = 100;
+      addDateStr = localDateStr();
+      renderAddCal();
+      mountSub();
+      if (dishCtrl) dishCtrl.reset();
       document.getElementById('addModal').classList.add('show');
     }
 
     function onUnitChange() {
       const unit = document.getElementById('modalUnit').value;
       document.getElementById('modalAmount').value = unit === 'portion' ? 1 : 100;
+      if (dishCtrl) dishCtrl.update();
     }
 
     function closeModal() {
@@ -140,7 +177,6 @@
     }
 
     function confirmAdd() {
-      const dayOffset = +document.getElementById('modalDay').value;
       const meal = document.getElementById('modalMeal').value;
       const amount = +document.getElementById('modalAmount').value;
       const unit = document.getElementById('modalUnit').value;
@@ -150,6 +186,9 @@
       if (unit === 'portion' && pendingRecipe.portionGrams) {
         grams = amount * pendingRecipe.portionGrams;
       }
+      const net = netGramsOrAlert(dishCtrl, grams);
+      if (net == null) return;
+      grams = net;
 
       const r = pendingRecipe;
       const entry = {
@@ -160,9 +199,7 @@
         carbs: +((r.per100?.carbs || 0) * grams / 100).toFixed(1)
       };
 
-      const date = new Date();
-      date.setDate(date.getDate() + dayOffset);
-      const key = 'diary-' + localDateStr(date);
+      const key = 'diary-' + addDateStr;
       let diary = JSON.parse(localStorage.getItem(key) || '{}');
       if (!diary[meal]) diary[meal] = [];
       diary[meal].push(entry);

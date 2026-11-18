@@ -2,11 +2,12 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <script src="sync-shim.js?v=20261118-popup"></script>
-  <script type="module" src="sync.js?v=20261118-popup"></script>
+  <script src="sync-shim.js?v=20261118-v2"></script>
+  <script src="app-ui.js?v=20261118-v2"></script>
+  <script type="module" src="sync.js?v=20261118-v2"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Тренировки — Калории</title>
-  <link rel="stylesheet" href="style.css?v=20261118-popup">
+  <link rel="stylesheet" href="style.css?v=20261118-v2">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
   <link rel="shortcut icon" href="favicon.ico">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -81,32 +82,37 @@
     .block-spokoinaya { background: #f0e8fa; }
     .day-info { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--sage-light); }
     .day-stat { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--sage-light); font-size: 14px; }
+    .header h1.page-title { flex: 1; text-align: center; }
+    .pool-choice { display: flex; gap: 8px; margin: 8px 0 12px; }
+    .pool-choice label {
+      flex: 1; text-align: center; padding: 10px; border-radius: 12px;
+      background: var(--beige, #F5F0E6); font-weight: 700; cursor: pointer;
+    }
+    .pool-choice input { display: none; }
+    .pool-choice label:has(input:checked) { background: var(--pale); outline: 2px solid var(--olive); }
+
   </style>
 </head>
 <body>
   <div class="app">
     <header class="header">
-      <div style="display:flex; align-items:center; gap:6px;">
-        <button class="icon-btn" onclick="changeDay(-1)">←</button>
-        <button class="icon-btn" onclick="openCalendar()">📅</button>
-        <button class="icon-btn" onclick="changeDay(1)">→</button>
-      </div>
-      <div style="text-align:center;">
-        <h1>Тренировки</h1>
-        <div id="dayTitle" class="on-olive" style="font-size:13px; margin-top:2px;">Сегодня</div>
-        <div id="todayDate" class="on-olive" style="font-size:12px;"></div>
-      </div>
-      <div style="width:90px;"></div>
+      <button class="icon-btn" onclick="openCalendar()" aria-label="Календарь"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 3.5v3M16 3.5v3M3.5 9.5h17"/></svg></button>
+      <h1 class="page-title">Тренировки</h1>
+      <div style="width:42px"></div>
     </header>
-    <div class="steps-row"><input type="number" class="steps-input" id="stepsInput" placeholder="Шаги"><button class="steps-btn" onclick="saveSteps()">Ок</button></div>
-    <div class="on-olive" style="font-size:13px; margin-bottom:16px;" id="stepsDisplay"></div>
-    <div class="workout-btns">
-      <button class="w-btn" onclick="addSimple('pool')"><span class="icon">💧</span><span class="title">БАССЕЙН</span></button>
-      <button class="w-btn" onclick="openFamily()"><span class="icon">💜</span><span class="title">СЕМЬЯ</span><span class="sub">силовые</span></button>
-      <button class="w-btn" onclick="openWarmup()"><span class="icon">💚</span><span class="title">СЕМЬЯ</span><span class="sub">разминки</span></button>
-      <button class="w-btn" onclick="openOwn()"><span class="icon">🌿</span><span class="title">СВОЯ</span><span class="sub">тренировка</span></button>
+    <div class="day-switch">
+      <button class="arrow" onclick="changeDay(-1)" aria-label="Предыдущий день"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5 9 12l5.5 5.5"/></svg></button>
+      <div class="date" id="day-date">Сегодня</div>
+      <button class="arrow" onclick="changeDay(1)" aria-label="Следующий день"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6.5 15 12l-5.5 5.5"/></svg></button>
     </div>
-    <div class="card"><div style="font-weight:600; margin-bottom:8px;" id="listTitle">На сегодня</div><div id="todayList"></div></div>
+    <div class="steps-row"><input type="number" class="steps-input" id="stepsInput" placeholder="Шаги"><button class="steps-btn" onclick="saveSteps()">Ок</button></div>
+    <div class="workout-btns">
+      <button class="w-btn" onclick="openPool()"><span class="icon">💧</span><span class="title">БАССЕЙН</span></button>
+      <button class="w-btn" onclick="openOwn()"><span class="icon">🌿</span><span class="title">СВОЯ</span><span class="sub">тренировка</span></button>
+      <button class="w-btn" onclick="openWarmup()"><span class="icon">💚</span><span class="title">СЕМЬЯ</span><span class="sub">разминки</span></button>
+      <button class="w-btn" onclick="openFamily()"><span class="icon">💜</span><span class="title">СЕМЬЯ</span><span class="sub">силовые</span></button>
+    </div>
+    <div class="card"><div style="display:flex; justify-content:space-between; align-items:baseline; gap:8px; margin-bottom:8px;"><div style="font-weight:600;" id="listTitle">На сегодня</div><div id="stepsDisplay" style="font-size:13px; font-weight:600; color:var(--ink-soft);"></div></div><div id="todayList"></div></div>
     <nav class="bottom-nav">
       <a href="index.html" class="nav-item"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 11.5 12 5l7.5 6.5"/><path d="M6.5 10.5V19h11v-8.5"/></svg></span>Сегодня</a>
       <a href="products.html" class="nav-item"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19c6-1 11-5 13.5-13.5C10 5 5 10 5 19Z"/><path d="M8.5 14.5c2 0 5-2.5 6.5-6"/></svg></span>Продукты</a>
@@ -170,12 +176,39 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="poolModal" onclick="if(event.target===this) closeModal('poolModal')">
+    <div class="modal-box">
+      <div style="font-weight:700; text-align:center; margin-bottom:12px;">Бассейн</div>
+      <div class="pool-choice">
+        <label><input type="radio" name="poolPlace" value="Кама" checked> Кама</label>
+        <label><input type="radio" name="poolPlace" value="Олимпия"> Олимпия</label>
+      </div>
+      <input type="number" class="steps-input" id="poolMeters" placeholder="Метры" style="width:100%; margin-bottom:8px;">
+      <textarea class="steps-input" id="poolComment" placeholder="Комментарий" style="width:100%; height:60px;"></textarea>
+      <button class="modal-btn" onclick="savePool()">Добавить</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="blockEditModal" style="z-index:200;" onclick="if(event.target===this) closeModal('blockEditModal')">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div style="font-weight:700; text-align:center; margin-bottom:12px;" id="editBlockTitle">Изменить блок</div>
+      <input type="text" class="steps-input" id="editBlockName" placeholder="Название" style="width:100%; margin-bottom:8px;">
+      <input type="text" class="steps-input" id="editBlockKg" placeholder="Кг, например 5–7 кг" style="width:100%; margin-bottom:8px;">
+      <input type="number" class="steps-input" id="editBlockDays" min="1" max="7" placeholder="Раз в неделю" style="width:100%; margin-bottom:8px;">
+      <button class="modal-btn" onclick="saveEditBlock()">Сохранить</button>
+    </div>
+  </div>
+
   <div class="modal-overlay" id="warmupModal" onclick="if(event.target===this) closeModal('warmupModal')">
     <div class="modal-box">
       <div style="font-weight:700; text-align:center; margin-bottom:12px;">Семья — разминки</div>
       <input type="text" class="steps-input" id="warmupSearch" placeholder="Начни писать..." style="width:100%; margin-bottom:8px;" oninput="filterWarmups()">
       <div id="warmupList" style="max-height:300px; overflow-y:auto;"></div>
-      <button class="modal-btn" onclick="closeModal('warmupModal')">Закрыть</button>
+      <div class="block-add" style="margin-top:10px;">
+        <input type="text" class="steps-input" id="newWarmupName" placeholder="Новая разминка" style="width:100%; margin-bottom:8px;">
+        <button class="modal-btn" onclick="addWarmupDef()">Добавить разминку</button>
+      </div>
+      <button class="modal-btn" onclick="closeModal('warmupModal')" style="margin-top:8px; background:var(--sage-light); color:var(--sage-dark);">Закрыть</button>
     </div>
   </div>
 
@@ -192,7 +225,7 @@
     const kgPresets = [1, 3, 5, 7];
     const loadNames = ['','легко','средне','трудно'];
     const loadClasses = ['','load-easy','load-mid','load-hard'];
-    const blocks = [
+    const DEFAULT_BLOCKS = [
       {id:'legkaya', name:'Лёгкая сила', kg:'2-3 кг', color:'#7ba3d4', days: 3},
       {id:'zhenstvennaya', name:'Женственная сила', kg:'4-5 кг', color:'#a8d4a8', days: 3},
       {id:'zhivaya', name:'Живая сила', kg:'5-7 кг', color:'#7cb87c', days: 3},
@@ -203,7 +236,7 @@
       {id:'spokoinaya', name:'Спокойная сила', kg:'14 кг', color:'#9b7ed9', days: 2}
     ];
     let allBlockData = {}, editingWorkoutId = null, editingBlockId = null, tempKgList = [], tempLoad = 0;
-    const warmups = [
+    const DEFAULT_WARMUPS = [
       'РАЗМИНКА #1 позвоночник, грудной сегмент',
       'РАЗМИНКА #2 тазобедренный сустав (тбс)',
       'РАЗМИНКА #3 позвоночник, равномерное движение',
@@ -307,6 +340,39 @@
       'РАЗМИНКА #101 у моря'
     ];
 
+    function loadFamilyBlockDefs() {
+      try {
+        const raw = localStorage.getItem('familyBlocks');
+        if (raw != null) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) return parsed;
+        }
+      } catch (e) {}
+      const seed = DEFAULT_BLOCKS.map(b => ({ id: b.id, name: b.name, kg: b.kg, color: b.color, days: b.days }));
+      localStorage.setItem('familyBlocks', JSON.stringify(seed));
+      return seed;
+    }
+    function persistFamilyBlocks() {
+      localStorage.setItem('familyBlocks', JSON.stringify(blocks));
+    }
+    let blocks = loadFamilyBlockDefs();
+
+    function loadWarmups() {
+      try {
+        const raw = localStorage.getItem('warmups');
+        if (raw != null) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) return parsed;
+        }
+      } catch (e) {}
+      return DEFAULT_WARMUPS.slice();
+    }
+    function persistWarmups() {
+      localStorage.setItem('warmups', JSON.stringify(warmups));
+    }
+    let warmups = loadWarmups();
+    let editingBlockDefId = null;
+
     function changeDay(delta) { dayOffset += delta; loadDay(); }
     function loadDay() {
       const date = new Date(); date.setDate(date.getDate() + dayOffset);
@@ -314,20 +380,22 @@
       key = 'workouts-' + dateStr; stepsKey = 'steps-' + dateStr;
       workouts = JSON.parse(localStorage.getItem(key) || '[]');
       steps = localStorage.getItem(stepsKey) || '';
-      document.getElementById('todayDate').textContent = date.getDate() + ' ' + months[date.getMonth()];
-      let title = 'Сегодня';
-      if (dayOffset === -1) title = 'Вчера';
-      else if (dayOffset === 1) title = 'Завтра';
-      else if (dayOffset !== 0) title = date.getDate() + ' ' + months[date.getMonth()];
-      document.getElementById('dayTitle').textContent = title;
+      let label = date.getDate() + ' ' + months[date.getMonth()];
+      if (dayOffset === 0) label = 'Сегодня, ' + label;
+      else if (dayOffset === -1) label = 'Вчера, ' + label;
+      else if (dayOffset === 1) label = 'Завтра, ' + label;
+      document.getElementById('day-date').textContent = label;
       document.getElementById('listTitle').textContent = dayOffset === 0 ? 'На сегодня' : 'Тренировки';
       render();
     }
     function openCalendar() {
-      selectedCalDay = null;
-      document.getElementById('dayInfo').style.display = 'none';
-      document.getElementById('goToDayBtn').style.display = 'none';
+      const viewed = new Date();
+      viewed.setDate(viewed.getDate() + dayOffset);
+      calMonth = viewed.getMonth();
+      calYear = viewed.getFullYear();
+      selectedCalDay = viewed.getDate();
       renderCalendar();
+      showDayInfo(selectedCalDay);
       document.getElementById('calOverlay').classList.add('show');
     }
     function closeCalendar() {
@@ -337,10 +405,22 @@
       calMonth += delta;
       if (calMonth > 11) { calMonth = 0; calYear++; }
       if (calMonth < 0) { calMonth = 11; calYear--; }
-      selectedCalDay = null;
-      document.getElementById('dayInfo').style.display = 'none';
-      document.getElementById('goToDayBtn').style.display = 'none';
-      renderCalendar();
+      const viewed = new Date(); viewed.setDate(viewed.getDate() + dayOffset);
+      const today = new Date();
+      if (viewed.getMonth() === calMonth && viewed.getFullYear() === calYear) {
+        selectedCalDay = viewed.getDate();
+        renderCalendar();
+        showDayInfo(selectedCalDay);
+      } else if (today.getMonth() === calMonth && today.getFullYear() === calYear) {
+        selectedCalDay = today.getDate();
+        renderCalendar();
+        showDayInfo(selectedCalDay);
+      } else {
+        selectedCalDay = null;
+        document.getElementById('dayInfo').style.display = 'none';
+        document.getElementById('goToDayBtn').style.display = 'none';
+        renderCalendar();
+      }
     }
     function renderCalendar() {
       document.getElementById('calMonthTitle').textContent = monthsNom[calMonth] + ' ' + calYear;
@@ -392,9 +472,10 @@
       html += `<div class="day-stat"><span>Шаги</span><b>${stepsVal}</b></div>`;
       if (wData.length) {
         html += `<div style="font-weight:600; margin-top:10px;">Тренировки</div>`;
-        wData.forEach(w => {
-          html += `<div style="display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid var(--sage-light); font-size:13px;">`;
-          html += `<span>${w.icon || ''}</span><div style="flex:1;">${w.name}</div></div>`;
+        wData.forEach((w, i) => {
+          const extra = (w.type === 'pool' && w.meters) ? `<div style="font-size:11px; color:var(--ink-soft);">${escapeHtml(String(w.meters))} м</div>` : '';
+          html += `<div style="display:flex; align-items:flex-start; gap:8px; padding:6px 0; border-bottom:1px solid var(--sage-light); font-size:13px;">`;
+          html += `<span>${w.icon || ''}</span><div style="flex:1; min-width:0;"><div>${escapeHtml(w.name || '')}</div>${extra}${commentBlock(w.comment, 'cal-'+dateStr+'-'+i)}</div></div>`;
         });
       } else {
         html += `<div style="color:var(--text-light); margin-top:10px; text-align:center; font-size:13px;">Тренировок нет</div>`;
@@ -428,15 +509,34 @@
               detailsHtml += ` <span class="load-badge"><span class="load-sq ${lc}"></span>${w.load}</span>`;
             }
             detailsHtml += `</div>`;
+          } else if (w.type === 'pool' && w.meters) {
+            detailsHtml = `<div class="workout-details">${escapeHtml(String(w.meters))} м</div>`;
           }
-          return `<div class="workout-item"><span>${w.icon || '💜'}</span><div style="flex:1;"><div>${w.name}</div>${detailsHtml}</div><button onclick="removeWorkout(${i})" style="border:none; background:none; color:#c00; cursor:pointer;">×</button></div>`;
+          return `<div class="workout-item"><span>${w.icon || '💜'}</span><div style="flex:1; min-width:0;"><div>${escapeHtml(w.name || '')}</div>${detailsHtml}${commentBlock(w.comment, 'w'+i)}</div><button onclick="removeWorkout(${i})" style="border:none; background:none; color:#c00; cursor:pointer;">×</button></div>`;
         }).join('');
       }
-      document.getElementById('stepsDisplay').textContent = steps ? 'Шаги: ' + steps : '';
+      document.getElementById('stepsDisplay').textContent = steps ? (steps + ' шагов') : '';
       document.getElementById('stepsInput').value = steps;
     }
     function save() { localStorage.setItem(key, JSON.stringify(workouts)); render(); }
-    function addSimple(type) { workouts.push({ type, name: 'Бассейн', icon: '💧' }); save(); }
+    function openPool() {
+      const kam = document.querySelector('input[name="poolPlace"][value="Кама"]');
+      if (kam) kam.checked = true;
+      document.getElementById('poolMeters').value = '';
+      document.getElementById('poolComment').value = '';
+      document.getElementById('poolModal').classList.add('show');
+    }
+    function savePool() {
+      const placeEl = document.querySelector('input[name="poolPlace"]:checked');
+      const place = placeEl ? placeEl.value : 'Кама';
+      const metersRaw = document.getElementById('poolMeters').value.trim();
+      const meters = metersRaw ? +metersRaw : 0;
+      if (metersRaw && !(meters > 0)) { alert('Введи метры'); return; }
+      const comment = document.getElementById('poolComment').value.trim();
+      workouts.push({ type: 'pool', name: 'Бассейн · ' + place, meters: meters || '', comment, icon: '💧' });
+      save();
+      closeModal('poolModal');
+    }
     function openFamily() { loadAllBlocks(); document.getElementById('familyModal').classList.add('show'); }
     function loadAllBlocks() {
       allBlockData = {};
@@ -463,7 +563,7 @@
       const container = document.getElementById('familyContent');
       let html = '';
       blocks.forEach(block => {
-        html += `<div class="block-section block-${block.id}"><div class="block-title" style="color:${block.color};">${block.name} <span style="font-weight:500; opacity:0.7;">${block.kg} · ${block.days}р/нед</span></div>`;
+        html += `<div class="block-section block-${block.id}"><div class="block-title" style="color:${block.color}; display:flex; align-items:center; gap:6px;"><span style="flex:1;">${escapeHtml(block.name)} <span style="font-weight:500; opacity:0.7;">${escapeHtml(block.kg || '')} · ${block.days}р/нед</span></span><span class="block-edit-btns"><button type="button" class="icon-action" data-edit-block="${block.id}" aria-label="Изменить">✏️</button><button type="button" class="icon-action danger" data-del-block="${block.id}" aria-label="Удалить">🗑</button></span></div>`;
         for (let w = 1; w <= 4; w++) {
           html += `<div class="week-row"><div class="week-label" style="background:${block.color};">Неделя ${w}</div>`;
           for (let d = 1; d <= block.days; d++) {
@@ -483,6 +583,13 @@
         }
         html += '</div>';
       });
+      html += `<div class="block-add">
+        <div style="font-weight:700; margin-bottom:8px;">Добавить блок</div>
+        <input type="text" class="steps-input" id="newBlockName" placeholder="Название" style="width:100%; margin-bottom:8px;">
+        <input type="text" class="steps-input" id="newBlockKg" placeholder="Кг, например 5–7 кг" style="width:100%; margin-bottom:8px;">
+        <input type="number" class="steps-input" id="newBlockDays" min="1" max="7" placeholder="Раз в неделю" style="width:100%; margin-bottom:8px;">
+        <button type="button" class="modal-btn" onclick="addFamilyBlock()">Добавить блок</button>
+      </div>`;
       container.innerHTML = html;
       container.querySelectorAll('.workout-plaque').forEach(el => {
         el.onclick = function(e) {
@@ -491,6 +598,56 @@
           openWorkoutDetail(this.dataset.block, this.dataset.id, parseInt(this.dataset.week), parseInt(this.dataset.day));
         };
       });
+      container.querySelectorAll('[data-edit-block]').forEach(el => {
+        el.onclick = function(e) { e.stopPropagation(); openEditBlock(el.getAttribute('data-edit-block')); };
+      });
+      container.querySelectorAll('[data-del-block]').forEach(el => {
+        el.onclick = function(e) { e.stopPropagation(); deleteFamilyBlock(el.getAttribute('data-del-block')); };
+      });
+    }
+    function addFamilyBlock() {
+      const name = (document.getElementById('newBlockName').value || '').trim();
+      const kg = (document.getElementById('newBlockKg').value || '').trim();
+      const days = +document.getElementById('newBlockDays').value;
+      if (!name) { alert('Введи название'); return; }
+      if (!days || days < 1 || days > 7) { alert('Сколько раз в неделю: от 1 до 7'); return; }
+      const palette = ['#7ba3d4','#a8d4a8','#7cb87c','#e8d44a','#e8a04a','#e07a6a','#e88bb8','#9b7ed9'];
+      const used = new Set(blocks.map(b => b.color));
+      const color = palette.find(c => !used.has(c)) || palette[blocks.length % palette.length];
+      const id = 'custom-' + Date.now();
+      blocks.push({ id, name, kg, color, days });
+      persistFamilyBlocks();
+      loadAllBlocks();
+    }
+    function openEditBlock(id) {
+      const b = blocks.find(x => x.id === id);
+      if (!b) return;
+      editingBlockDefId = id;
+      document.getElementById('editBlockName').value = b.name;
+      document.getElementById('editBlockKg').value = b.kg || '';
+      document.getElementById('editBlockDays').value = b.days;
+      document.getElementById('blockEditModal').classList.add('show');
+    }
+    function saveEditBlock() {
+      const name = (document.getElementById('editBlockName').value || '').trim();
+      const kg = (document.getElementById('editBlockKg').value || '').trim();
+      const days = +document.getElementById('editBlockDays').value;
+      if (!name) { alert('Введи название'); return; }
+      if (!days || days < 1 || days > 7) { alert('Сколько раз в неделю: от 1 до 7'); return; }
+      const b = blocks.find(x => x.id === editingBlockDefId);
+      if (b) { b.name = name; b.kg = kg; b.days = days; }
+      persistFamilyBlocks();
+      closeModal('blockEditModal');
+      renderAllBlocks();
+    }
+    function deleteFamilyBlock(id) {
+      const b = blocks.find(x => x.id === id);
+      if (!b) return;
+      if (!confirm('Удалить блок «' + b.name + '»?')) return;
+      blocks = blocks.filter(x => x.id !== id);
+      persistFamilyBlocks();
+      localStorage.removeItem('familyBlock-' + id);
+      loadAllBlocks();
     }
     function openWorkoutDetail(blockId, id, week, day) {
       editingBlockId = blockId;
@@ -573,6 +730,7 @@
     }
     function saveWorkoutDetail() {
       const data = getWorkout(editingBlockId, editingWorkoutId);
+      const prevDate = data.dateStr || '';
       data.kgList = [...tempKgList];
       data.kg = tempKgList.join('+');
       data.load = tempLoad;
@@ -580,22 +738,32 @@
       data.done = document.getElementById('workoutDone').checked;
       data.comment = document.getElementById('workoutComment').value;
       localStorage.setItem('familyBlock-' + editingBlockId, JSON.stringify(allBlockData[editingBlockId]));
-      if (data.done && data.dateStr) {
+      const match = editingWorkoutId.match(/w(\d+)d(\d+)/);
+      const week = match ? parseInt(match[1]) : null;
+      const day = match ? parseInt(match[2]) : null;
+      const isThis = tw => tw.block === editingBlockId && tw.week === week && tw.day === day;
+      if (prevDate && prevDate !== data.dateStr) {
+        const oldKey = 'workouts-' + prevDate;
+        let oldList = JSON.parse(localStorage.getItem(oldKey) || '[]');
+        localStorage.setItem(oldKey, JSON.stringify(oldList.filter(tw => !isThis(tw))));
+      }
+      if (match && data.dateStr) {
         const block = blocks.find(b => b.id === editingBlockId);
-        const match = editingWorkoutId.match(/w(\d+)d(\d+)/);
-        if (match) {
-          const week = parseInt(match[1]), day = parseInt(match[2]);
-          const targetKey = 'workouts-' + data.dateStr;
-          let targetWorkouts = JSON.parse(localStorage.getItem(targetKey) || '[]');
-          const exists = targetWorkouts.some(tw => tw.block === editingBlockId && tw.week === week && tw.day === day);
-          if (!exists) {
-            targetWorkouts.push({
-              type: 'family', name: block.name, icon: '💜', block: editingBlockId,
-              week, day, kg: data.kg || '', load: loadNames[data.load] || '', loadIdx: data.load
-            });
-            localStorage.setItem(targetKey, JSON.stringify(targetWorkouts));
-          }
+        const targetKey = 'workouts-' + data.dateStr;
+        let targetWorkouts = JSON.parse(localStorage.getItem(targetKey) || '[]');
+        if (data.done) {
+          const entry = {
+            type: 'family', name: block.name, icon: '💜', block: editingBlockId,
+            week, day, kg: data.kg || '', load: loadNames[data.load] || '', loadIdx: data.load,
+            comment: data.comment || ''
+          };
+          const idx = targetWorkouts.findIndex(isThis);
+          if (idx >= 0) targetWorkouts[idx] = Object.assign({}, targetWorkouts[idx], entry);
+          else targetWorkouts.push(entry);
+        } else {
+          targetWorkouts = targetWorkouts.filter(tw => !isThis(tw));
         }
+        localStorage.setItem(targetKey, JSON.stringify(targetWorkouts));
       }
       closeModal('workoutDetailModal');
       renderAllBlocks();
@@ -604,10 +772,37 @@
     function openWarmup() { filterWarmups(); document.getElementById('warmupModal').classList.add('show'); }
     function filterWarmups() {
       const q = (document.getElementById('warmupSearch').value || '').toLowerCase();
-      const filtered = warmups.filter(w => w.toLowerCase().includes(q));
-      document.getElementById('warmupList').innerHTML = filtered.map(w => `<div style="padding:10px; cursor:pointer; border-bottom:1px solid var(--sage-light);" onclick="addWarmup('${w}')">${w}</div>`).join('') || '<div style="padding:10px; color:var(--text-light);">Нет совпадений</div>';
+      const list = document.getElementById('warmupList');
+      const rows = [];
+      warmups.forEach((w, i) => {
+        if (q && w.toLowerCase().indexOf(q) === -1) return;
+        rows.push(`<div class="warmup-row"><div class="nm" data-i="${i}">${escapeHtml(w)}</div><button type="button" class="icon-action danger" data-del="${i}" aria-label="Удалить">🗑</button></div>`);
+      });
+      list.innerHTML = rows.join('') || '<div style="padding:10px; color:var(--text-light);">Нет совпадений</div>';
+      list.querySelectorAll('.nm').forEach(el => {
+        el.onclick = function () { addWarmup(warmups[+el.dataset.i]); };
+      });
+      list.querySelectorAll('[data-del]').forEach(el => {
+        el.onclick = function (e) { e.stopPropagation(); deleteWarmupDef(+el.dataset.del); };
+      });
     }
     function addWarmup(name) { workouts.push({ type: 'warmup', name, icon: '💚' }); save(); closeModal('warmupModal'); }
+    function addWarmupDef() {
+      const name = (document.getElementById('newWarmupName').value || '').trim();
+      if (!name) { alert('Введи название разминки'); return; }
+      warmups.push(name);
+      persistWarmups();
+      document.getElementById('newWarmupName').value = '';
+      filterWarmups();
+    }
+    function deleteWarmupDef(i) {
+      const name = warmups[i];
+      if (!name) return;
+      if (!confirm('Удалить разминку «' + name + '»?')) return;
+      warmups.splice(i, 1);
+      persistWarmups();
+      filterWarmups();
+    }
     function openOwn() { document.getElementById('ownName').value = ''; document.getElementById('ownComment').value = ''; document.getElementById('ownModal').classList.add('show'); }
     function saveOwn() {
       const name = document.getElementById('ownName').value.trim();

@@ -2,11 +2,12 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <script src="sync-shim.js?v=20261118-popup"></script>
-  <script type="module" src="sync.js?v=20261118-popup"></script>
+  <script src="sync-shim.js?v=20261118-v2"></script>
+  <script src="app-ui.js?v=20261118-v2"></script>
+  <script type="module" src="sync.js?v=20261118-v2"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Добавить — Калории</title>
-  <link rel="stylesheet" href="style.css?v=20261118-popup">
+  <link rel="stylesheet" href="style.css?v=20261118-v2">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
   <link rel="shortcut icon" href="favicon.ico">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -89,6 +90,7 @@
           <option value="grams">г</option>
         </select>
       </div>
+      <div class="dish-sub" id="dishSub"></div>
       <button class="add-btn-modal" onclick="confirmAdd()">Добавить</button>
     </div>
   </div>
@@ -105,28 +107,7 @@
     let pendingId = null;
     let pendingItem = null;
 
-    const nameIcons = {
-      'морков': '🥕', 'яблок': '🍎', 'банан': '🍌', 'огурец': '🥒',
-      'помидор': '🍅', 'картош': '🥔', 'лук': '🧅', 'чеснок': '🧄',
-      'яйц': '🥚', 'хлеб': '🍞', 'сыр': '🧀', 'творог': '🧀',
-      'молок': '🥛', 'куриц': '🍗', 'рыб': '🐟', 'мяс': '🥩',
-      'свинин': '🥩', 'говяд': '🥩', 'рис': '🍚', 'греч': '🍚',
-      'овс': '🥣', 'масл': '🧈', 'шоколад': '🍫', 'конфет': '🍬',
-      'ягод': '🍓', 'клубник': '🍓', 'авокад': '🥑', 'броккол': '🥦',
-      'салат': '🥗', 'тунец': '🍣', 'кревет': '🦀', 'кофе': '☕'
-    };
-    const categoryIcons = {
-      'Молочные': '🧀', 'Выпечка': '🍞', 'Мясо и рыба': '🍗',
-      'Овощи': '🥦', 'Фрукты и ягоды': '🍎', 'Крупы': '🌾',
-      'Сладости': '🍫', 'Домашнее': '🏠', 'Другое': '📦', 'Масло': '🧈'
-    };
-    function getIcon(name, category) {
-      const n = (name || '').toLowerCase();
-      for (const [key, icon] of Object.entries(nameIcons)) {
-        if (n.includes(key)) return icon;
-      }
-      return categoryIcons[category] || '🥗';
-    }
+    let dishCtrl = null;
 
     function setTab(tab, el) {
       currentTab = tab;
@@ -147,12 +128,12 @@
           return;
         }
         items.forEach(p => {
-          const icon = getIcon(p.name, p.category);
+          const icon = productIcon(p);
           list.innerHTML += `<div class="card food-item item" onclick="openModal('product', ${p.id})">
             <div class="food-icon">${icon}</div>
             <div class="food-info">
-              <div class="food-name">${p.name} <span class="cat-badge">${p.category || ''}</span></div>
-              ${p.brand ? `<div class="brand-name">${p.brand}</div>` : ''}
+              <div class="food-name">${escapeHtml(p.name)} <span class="cat-badge">${escapeHtml(p.category || '')}</span></div>
+              ${p.brand ? `<div class="brand-name">${escapeHtml(p.brand)}</div>` : ''}
               <div class="food-kcal">${p.calories || 0} ккал / 100 г</div>
             </div>
             <button class="add-btn">+</button>
@@ -168,7 +149,7 @@
           list.innerHTML += `<div class="card food-item item" onclick="openModal('recipe', ${r.id})">
             <div class="food-icon">🥘</div>
             <div class="food-info">
-              <div class="food-name">${r.name}</div>
+              <div class="food-name">${escapeHtml(r.name)}</div>
               <div class="food-kcal">${r.per100?.calories || 0} ккал / 100 г</div>
             </div>
             <button class="add-btn">+</button>
@@ -180,6 +161,7 @@
     function onUnitChange() {
       const unit = document.getElementById('unitSelect').value;
       document.getElementById('amountInput').value = unit === 'portion' ? 1 : 100;
+      if (dishCtrl) dishCtrl.update();
     }
 
     function openModal(type, id) {
@@ -213,6 +195,17 @@
       document.getElementById('modalName').textContent = name;
       document.getElementById('modalKcal').textContent = kcal + ' ккал / 100 г';
       document.getElementById('amountInput').value = 100;
+      dishCtrl = mountDishSubtract(document.getElementById('dishSub'), {
+        gramsGetter: function () {
+          const amount = +document.getElementById('amountInput').value;
+          const unit = document.getElementById('unitSelect').value;
+          if (unit === 'portion' && pendingItem) {
+            return amount * (pendingItem.portionGrams || 0);
+          }
+          return amount;
+        }
+      });
+      document.getElementById('amountInput').oninput = function () { if (dishCtrl) dishCtrl.update(); };
       document.getElementById('gramsModal').classList.add('show');
       document.getElementById('amountInput').focus();
     }
@@ -230,6 +223,9 @@
       if (unit === 'portion' && pendingItem) {
         grams = amount * (pendingItem.portionGrams || 0);
       }
+      const net = netGramsOrAlert(dishCtrl, grams);
+      if (net == null) return;
+      grams = net;
 
       let entry;
       if (pendingType === 'product') {

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <script src="sync-shim.js?v=20261118-v2"></script>
+  <script src="app-ui.js?v=20261118-v2"></script>
+  <script type="module" src="sync.js?v=20261118-v2"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Моя посуда — Калории</title>
+  <link rel="stylesheet" href="style.css?v=20261118-v2">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    .dish-item { display: flex; align-items: center; gap: 12px; }
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+      z-index: 100; justify-content: center; align-items: center;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-box {
+      background: var(--cream); border-radius: 20px; width: 90%; max-width: 340px;
+      padding: 20px 16px; max-height: 85vh; overflow-y: auto;
+    }
+    .form-label { font-size: 14px; font-weight: 600; color: var(--sage-dark); margin-bottom: 6px; display: block; }
+    .form-input {
+      width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--sage-light);
+      font-family: inherit; font-size: 15px; background: white; margin-bottom: 10px;
+    }
+    .modal-btn {
+      width: 100%; padding: 12px; border: none; border-radius: 14px;
+      background: var(--sage); color: white; font-family: inherit;
+      font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <a href="products.html"><button class="icon-btn">←</button></a>
+      <h1>Моя посуда</h1>
+      <button class="icon-btn" onclick="openEditor()">+</button>
+    </header>
+
+    <div id="dishesList"></div>
+
+    <nav class="bottom-nav">
+      <a href="index.html" class="nav-item"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 11.5 12 5l7.5 6.5"/><path d="M6.5 10.5V19h11v-8.5"/></svg></span>Сегодня</a>
+      <a href="products.html" class="nav-item active"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19c6-1 11-5 13.5-13.5C10 5 5 10 5 19Z"/><path d="M8.5 14.5c2 0 5-2.5 6.5-6"/></svg></span>Продукты</a>
+      <a href="weight.html" class="nav-item"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="5.5" width="15" height="14.2" rx="3"/><rect x="8" y="8" width="8" height="2.3" rx=".7"/><circle cx="12" cy="14.4" r="2.5"/><path d="M12 14.4 13.3 12.8"/></svg></span>Вес</a>
+      <a href="menu.html" class="nav-item"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4.5h9.5A2.5 2.5 0 0 1 20 7v12.5H8A2.5 2.5 0 0 1 5.5 17V7A2.5 2.5 0 0 1 8 4.5Z"/><path d="M9.5 9.5h7M9.5 13h7M9.5 16.5h4.5"/></svg></span>Меню</a>
+      <a href="workouts.html" class="nav-item"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6.2 9.2v5.6M17.8 9.2v5.6"/><path d="M8.2 7.6v8.8M15.8 7.6v8.8"/><path d="M8.2 12h7.6"/><path d="M4.8 10.2h1.4v3.6H4.8zM17.8 10.2h1.4v3.6H17.8z"/></svg></span>Тренировки</a>
+    </nav>
+  </div>
+
+  <div class="modal-overlay" id="dishModal" onclick="if(event.target===this) closeEditor()">
+    <div class="modal-box">
+      <div style="font-weight:700; text-align:center; font-size:17px; margin-bottom:12px;" id="dishModalTitle">Новая посуда</div>
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+        <button type="button" class="emoji-btn" id="dishEmojiBtn" onclick="toggleDishEmoji()">🍽️</button>
+        <div style="font-size:13px; color:var(--ink-soft);">Нажми, чтобы выбрать значок</div>
+      </div>
+      <div id="dishEmojiPicker" hidden></div>
+      <label class="form-label">Название</label>
+      <input type="text" class="form-input" id="dishName" placeholder="Например: Белая тарелка">
+      <label class="form-label">Вес (г)</label>
+      <input type="number" class="form-input" id="dishWeight" placeholder="Например 240">
+      <button class="modal-btn" onclick="saveDish()">Сохранить</button>
+    </div>
+  </div>
+
+  <script>
+    let dishes = loadDishes();
+    let editingId = null;
+    let currentEmoji = '🍽️';
+
+    function render() {
+      const list = document.getElementById('dishesList');
+      if (!dishes.length) {
+        list.innerHTML = '<div style="text-align:center; color:var(--text-light); padding:40px;">Пока нет посуды.<br>Нажми + чтобы добавить</div>';
+        return;
+      }
+      list.innerHTML = dishes.map(d => `
+        <div class="card dish-item">
+          <div class="food-icon">${d.emoji || '🍽️'}</div>
+          <div class="food-info" style="flex:1;">
+            <div class="food-name">${escapeHtml(d.name)}</div>
+            <div class="food-kcal">${d.weight} г</div>
+          </div>
+          <div class="row-actions">
+            <button type="button" class="icon-action" onclick="openEditor(${d.id})" aria-label="Изменить">✏️</button>
+            <button type="button" class="icon-action danger" onclick="deleteDish(${d.id})" aria-label="Удалить">🗑</button>
+          </div>
+        </div>`).join('');
+    }
+
+    function openEditor(id) {
+      editingId = id || null;
+      const d = id ? dishes.find(x => x.id === id) : null;
+      currentEmoji = (d && d.emoji) || '🍽️';
+      document.getElementById('dishModalTitle').textContent = d ? 'Изменить посуду' : 'Новая посуда';
+      document.getElementById('dishName').value = d ? d.name : '';
+      document.getElementById('dishWeight').value = d ? d.weight : '';
+      document.getElementById('dishEmojiBtn').textContent = currentEmoji;
+      document.getElementById('dishEmojiPicker').hidden = true;
+      document.getElementById('dishModal').classList.add('show');
+    }
+
+    function closeEditor() {
+      document.getElementById('dishModal').classList.remove('show');
+    }
+
+    function toggleDishEmoji() {
+      const box = document.getElementById('dishEmojiPicker');
+      box.hidden = !box.hidden;
+      if (!box.hidden) {
+        renderEmojiPicker(box, currentEmoji, DISH_EMOJI, function (em) {
+          currentEmoji = em;
+          document.getElementById('dishEmojiBtn').textContent = em;
+          renderEmojiPicker(box, currentEmoji, DISH_EMOJI, arguments.callee);
+        });
+      }
+    }
+
+    function saveDish() {
+      const name = document.getElementById('dishName').value.trim();
+      const weight = +document.getElementById('dishWeight').value;
+      if (!name) { alert('Введи название'); return; }
+      if (!(weight > 0)) { alert('Введи вес посуды в граммах'); return; }
+      if (editingId) {
+        const d = dishes.find(x => x.id === editingId);
+        if (d) { d.name = name; d.weight = weight; d.emoji = currentEmoji; }
+      } else {
+        const id = Math.max(0, ...dishes.map(x => x.id || 0)) + 1;
+        dishes.push({ id, name, weight, emoji: currentEmoji });
+      }
+      saveDishes(dishes);
+      closeEditor();
+      render();
+    }
+
+    function deleteDish(id) {
+      const d = dishes.find(x => x.id === id);
+      if (!d) return;
+      if (!confirm('Удалить «' + d.name + '»?')) return;
+      dishes = dishes.filter(x => x.id !== id);
+      saveDishes(dishes);
+      render();
+    }
+
+    render();
+  </script>
+</body>
+</html>
