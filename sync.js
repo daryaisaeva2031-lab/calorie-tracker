@@ -377,100 +377,27 @@ async function signOutUser() {
   }
 }
 
-function injectStyles() {
-  if (document.getElementById('sync-widget-style')) return;
-  const style = document.createElement('style');
-  style.id = 'sync-widget-style';
-  style.textContent = `
-    #sync-widget {
-      position: fixed;
-      top: 8px;
-      right: 8px;
-      z-index: 9999;
-      font-family: Nunito, system-ui, sans-serif;
-      font-size: 12px;
-    }
-    #sync-widget .sync-btn {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      border: none;
-      cursor: pointer;
-      background: var(--white, #fff);
-      color: var(--sage-dark, #4e6b4c);
-      box-shadow: 0 4px 16px rgba(90, 122, 87, 0.16);
-      border-radius: 20px;
-      padding: 6px 10px;
-      line-height: 1.2;
-      max-width: 220px;
-      text-align: left;
-    }
-    #sync-widget .sync-btn:hover { background: var(--sage-light, #e6eee4); }
-    #sync-widget .sync-icon { font-size: 15px; line-height: 1; }
-    #sync-widget .sync-label { font-weight: 600; color: var(--text, #3a4a38); }
-    #sync-widget .sync-btn.compact { padding: 6px 8px; max-width: none; }
-    #sync-widget .sync-btn.compact .sync-label { display: none; }
-    #sync-widget.offline .sync-icon { opacity: 0.55; }
-    #sync-widget.syncing .sync-icon { animation: syncPulse 1s ease-in-out infinite; }
-    @keyframes syncPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
-  `;
-  document.documentElement.appendChild(style);
+function getUserInfo() {
+  const u = auth && auth.currentUser;
+  if (!u) return null;
+  return {
+    uid: u.uid,
+    email: u.email || '',
+    name: u.displayName || '',
+    photo: u.photoURL || ''
+  };
 }
 
-function statusView() {
-  switch (status) {
-    case 'unconfigured':
-      return { icon: '☁️', label: 'Синхронизация не настроена', title: 'Синхронизация ещё не подключена', compact: true, action: 'none' };
-    case 'unsigned':
-      return { icon: '☁️', label: 'Войти через Google для синхронизации', title: 'Войти через Google для синхронизации', compact: false, action: 'signin' };
-    case 'signing-in':
-      return { icon: '☁️', label: 'Входим…', title: 'Вход в аккаунт', compact: false, action: 'none' };
-    case 'syncing':
-      return { icon: '☁️', label: 'Синхронизация…', title: 'Идёт синхронизация', compact: true, action: 'signout' };
-    case 'offline':
-      return { icon: '☁️', label: 'Нет сети', title: 'Нет сети. Данные сохраняются на устройстве', compact: false, action: 'signout' };
-    case 'error':
-      return { icon: '☁️', label: 'Ошибка синхронизации', title: 'Ошибка синхронизации. Нажмите, чтобы выйти или попробовать снова', compact: false, action: currentUid ? 'signout' : 'signin' };
-    case 'signed-in':
-      return { icon: '☁️', label: 'Синхронизировано', title: 'Вход выполнен. Нажмите, чтобы выйти', compact: true, action: 'signout' };
-    default:
-      return { icon: '☁️', label: '', title: '', compact: true, action: 'none' };
-  }
-}
+const statusListeners = [];
 
 function renderStatus() {
-  injectStyles();
-  let root = document.getElementById('sync-widget');
-  if (!root) {
-    root = document.createElement('div');
-    root.id = 'sync-widget';
-    const mount = () => {
-      if (!document.getElementById('sync-widget')) {
-        (document.body || document.documentElement).appendChild(root);
-      }
-    };
-    if (document.body) mount();
-    else document.addEventListener('DOMContentLoaded', mount);
-  }
-
-  const view = statusView();
-  root.className = status === 'syncing' ? 'syncing' : (status === 'offline' ? 'offline' : '');
-  root.innerHTML = '';
-  const btn = document.createElement('button');
-  btn.type = 'button';
-  btn.className = 'sync-btn' + (view.compact ? ' compact' : '');
-  btn.title = view.title;
-  btn.setAttribute('aria-label', view.title || view.label);
-  btn.innerHTML = '<span class="sync-icon">' + view.icon + '</span>' +
-    (view.label ? '<span class="sync-label">' + view.label + '</span>' : '');
-  btn.addEventListener('click', () => {
-    if (view.action === 'signin') signIn();
-    else if (view.action === 'signout') signOutUser();
-    else if (status === 'unconfigured') {
-      alert('Синхронизация ещё не подключена. Скоро данные будут общие на телефоне и компьютере.');
-    }
+  const leftover = document.getElementById('sync-widget');
+  if (leftover) leftover.remove();
+  const detail = { status, user: getUserInfo() };
+  document.dispatchEvent(new CustomEvent('calorie-sync-status', { detail }));
+  statusListeners.forEach((fn) => {
+    try { fn(detail); } catch (err) { console.warn('[sync] status listener', err); }
   });
-  root.appendChild(btn);
 }
 
 function exportBackup() {
@@ -530,8 +457,16 @@ window.CalorieSync = {
   exportBackup,
   importBackupFromFile,
   isAppKey,
-  listAppKeys
+  listAppKeys,
+  signIn,
+  signOut: signOutUser,
+  getStatus: () => status,
+  getUser: getUserInfo,
+  onStatusChange: (fn) => {
+    if (typeof fn === 'function') statusListeners.push(fn);
+  }
 };
+document.dispatchEvent(new CustomEvent('calorie-sync-ready'));
 
 function retryDirty() {
   if (!currentUid || !navigator.onLine) return;
@@ -542,8 +477,6 @@ function retryDirty() {
 }
 
 async function init() {
-  injectStyles();
-
   if (!isConfigReady()) {
     setStatus('unconfigured');
     return;
@@ -589,7 +522,6 @@ async function init() {
 }
 
 if (document.readyState === 'loading') {
-  injectStyles();
   document.addEventListener('DOMContentLoaded', () => { renderStatus(); });
 } else {
   renderStatus();
