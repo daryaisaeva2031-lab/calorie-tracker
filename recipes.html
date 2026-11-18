@@ -13,8 +13,9 @@
     <header class="header">
       <a href="products.html"><button class="icon-btn">←</button></a>
       <h1>Рецепты</h1>
+      <button class="icon-btn" onclick="add()">+</button>
     </header>
-    <div id="list" style="padding:12px; text-align:center; color:#888;">Рецепты пока пустые.</div>
+    <div id="list" style="padding:12px;"></div>
     <nav class="bottom-nav">
       <a href="index.html" class="nav-item"><span class="nav-ic"></span>Сегодня</a>
       <a href="products.html" class="nav-item active"><span class="nav-ic"></span>Продукты</a>
@@ -23,5 +24,24 @@
       <a href="workouts.html" class="nav-item"><span class="nav-ic"></span>Тренировки</a>
     </nav>
   </div>
+  <script>
+    let recipes = [];
+    async function load() {
+      if (!CalAPI.getToken()) { document.getElementById('list').innerHTML = '<div style="text-align:center;padding:40px;">Войди на главной</div>'; return; }
+      recipes = await CalAPI.recipes.list() || [];
+      render();
+    }
+    function render() {
+      document.getElementById('list').innerHTML = recipes.map(r => `<div style="background:#F3EDE0;border-radius:12px;padding:12px;margin-bottom:8px;"><div style="font-weight:600;">${r.name}</div><div style="font-size:12px;color:#888;">${r.per100?.calories||0} ккал/100г</div></div>`).join('') || '<div style="text-align:center;color:#888;">Пока нет рецептов</div>';
+    }
+    async function add() {
+      const name = prompt('Название блюда:');
+      if (!name) return;
+      recipes.push({ id: Date.now(), name, ingredients: [], per100: { calories: 0, protein: 0, fat: 0, carbs: 0 } });
+      await CalAPI.recipes.save(recipes);
+      render();
+    }
+    load();
+  </script>
 </body>
 </html>
