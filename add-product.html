@@ -2,296 +2,42 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <script src="sync-shim.js?v=20261118-noloop"></script>
-  <script src="app-ui.js?v=20261118-noloop"></script>
-  <script type="module" src="sync.js?v=20261118-noloop"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Продукт — Калории</title>
-  <link rel="stylesheet" href="style.css?v=20261118-noloop">
-  <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
-  <link rel="shortcut icon" href="favicon.ico">
-  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <title>Новый продукт — Калории</title>
+  <link rel="stylesheet" href="style.css?v=20261118-api">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
-  <style>
-    .form-group { margin-bottom: 16px; }
-    .form-label { font-size: 14px; font-weight: 600; color: var(--sage-dark); margin-bottom: 6px; display: block; }
-    .form-input, .form-select {
-      width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--sage-light);
-      font-family: inherit; font-size: 15px; background: white;
-    }
-    .macros-row { display: flex; gap: 10px; }
-    .macros-row .form-group { flex: 1; }
-    .portion-types {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;
-    }
-    .portion-card {
-      background: var(--sage-light); border-radius: 14px; padding: 16px; text-align: center;
-      cursor: pointer; border: 2px solid transparent;
-    }
-    .portion-card.selected { border-color: var(--sage); background: white; }
-    .save-btn {
-      width: 100%; padding: 14px; border: none; border-radius: 14px;
-      background: var(--sage); color: white; font-family: inherit;
-      font-size: 15px; font-weight: 600; margin-top: 16px; cursor: pointer;
-    }
-    .view-mode .form-input, .view-mode .form-select { background: var(--sage-light); pointer-events: none; }
-    .view-mode .portion-card { pointer-events: none; opacity: 0.7; }
-    .title-id { font-size: 12px; color: var(--muted-on-hero); text-align: center; margin-top: -8px; }
-  </style>
+  <script src="api-client.js?v=20261118-api"></script>
 </head>
 <body>
   <div class="app">
-    <header class="header" style="flex-direction: column; align-items: center; gap: 0;">
-      <div style="width:100%; display:flex; justify-content:space-between; align-items:center;">
-        <a href="products-list.html"><button class="icon-btn">←</button></a>
-        <h1 id="pageTitle">Продукт</h1>
-        <button class="icon-btn" id="editBtn" style="display:none;" onclick="enableEdit()">✏️</button>
-      </div>
-      <div id="titleId" class="title-id"></div>
+    <header class="header">
+      <a href="products.html"><button class="icon-btn">←</button></a>
+      <h1>Новый продукт</h1>
     </header>
-
-    <div id="formContainer">
-      <div class="card">
-        <div class="form-group">
-          <label class="form-label">Название продукта</label>
-          <div style="display:flex; gap:10px; align-items:center;">
-            <button type="button" class="emoji-btn" id="emojiBtn" onclick="toggleEmojiPicker()" aria-label="Значок">🥗</button>
-            <input type="text" class="form-input" id="name" placeholder="Например: Сыр пармезан" style="flex:1;" oninput="onNameChange()">
-          </div>
-          <div id="emojiPicker" hidden></div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Марка</label>
-          <input type="text" class="form-input" id="brand" placeholder="Компания производитель">
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Категория</label>
-          <select class="form-select" id="category">
-            <option value="">Выбери категорию</option>
-            <option>Молочные</option>
-            <option>Мясо и рыба</option>
-            <option>Овощи</option>
-            <option>Фрукты и ягоды</option>
-            <option>Выпечка</option>
-            <option>Крупы</option>
-            <option>Масло</option>
-            <option>Сладости</option>
-            <option>Домашнее</option>
-            <option>Другое</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Калории на 100 г</label>
-          <input type="number" class="form-input" id="calories" placeholder="0">
-        </div>
-
-        <div class="macros-row">
-          <div class="form-group">
-            <label class="form-label">Белки</label>
-            <input type="number" step="0.1" class="form-input" id="protein" placeholder="0">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Жиры</label>
-            <input type="number" step="0.1" class="form-input" id="fat" placeholder="0">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Углеводы</label>
-            <input type="number" step="0.1" class="form-input" id="carbs" placeholder="0">
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div style="font-weight:700; margin-bottom:8px; color:var(--sage-dark);">Размер порции</div>
-        <div class="portion-chips" id="portionChips"></div>
-        <div class="portion-edit" id="portionEdit" style="display:none;">
-          <label class="form-label">Сколько грамм в этой порции?</label>
-          <input type="number" class="form-input" id="portionSize" placeholder="Например 50" oninput="onPortionMeta()">
-          <label class="form-label">Комментарий</label>
-          <input type="text" class="form-input" id="portionComment" placeholder="Например: без кожуры" oninput="onPortionMeta()">
-        </div>
-      </div>
-
-      <button class="save-btn" id="saveBtn" onclick="saveProduct()">Сохранить</button>
+    <div style="padding:16px;">
+      <label>Название</label><input id="name" style="width:100%;padding:12px;margin:6px 0 12px;border-radius:12px;border:1px solid #ddd;">
+      <label>Ккал / 100г</label><input id="cal" type="number" style="width:100%;padding:12px;margin:6px 0 12px;border-radius:12px;border:1px solid #ddd;">
+      <label>Белки</label><input id="p" type="number" style="width:100%;padding:12px;margin:6px 0 12px;border-radius:12px;border:1px solid #ddd;">
+      <label>Жиры</label><input id="f" type="number" style="width:100%;padding:12px;margin:6px 0 12px;border-radius:12px;border:1px solid #ddd;">
+      <label>Углеводы</label><input id="c" type="number" style="width:100%;padding:12px;margin:6px 0 12px;border-radius:12px;border:1px solid #ddd;">
+      <button onclick="save()" style="width:100%;padding:14px;border:none;border-radius:14px;background:#6F7B52;color:white;font-weight:600;">Сохранить</button>
     </div>
-
-    <nav class="bottom-nav">
-      <a href="index.html" class="nav-item"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 11.5 12 5l7.5 6.5"/><path d="M6.5 10.5V19h11v-8.5"/></svg></span>Сегодня</a>
-      <a href="products.html" class="nav-item"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19c6-1 11-5 13.5-13.5C10 5 5 10 5 19Z"/><path d="M8.5 14.5c2 0 5-2.5 6.5-6"/></svg></span>Продукты</a>
-      <a href="weight.html" class="nav-item"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="5.5" width="15" height="14.2" rx="3"/><rect x="8" y="8" width="8" height="2.3" rx=".7"/><circle cx="12" cy="14.4" r="2.5"/><path d="M12 14.4 13.3 12.8"/></svg></span>Вес</a>
-      <a href="menu.html" class="nav-item"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4.5h9.5A2.5 2.5 0 0 1 20 7v12.5H8A2.5 2.5 0 0 1 5.5 17V7A2.5 2.5 0 0 1 8 4.5Z"/><path d="M9.5 9.5h7M9.5 13h7M9.5 16.5h4.5"/></svg></span>Меню</a>
-      <a href="workouts.html" class="nav-item"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6.2 9.2v5.6M17.8 9.2v5.6"/><path d="M8.2 7.6v8.8M15.8 7.6v8.8"/><path d="M8.2 12h7.6"/><path d="M4.8 10.2h1.4v3.6H4.8zM17.8 10.2h1.4v3.6H17.8z"/></svg></span>Тренировки</a>
-    </nav>
   </div>
-
   <script>
-    const params = new URLSearchParams(location.search);
-    const editId = params.get('id') ? +params.get('id') : null;
-    let selectedPortion = null;
-    let products = JSON.parse(localStorage.getItem('products') || '[]');
-    let isViewMode = false;
-    let currentEmoji = '';
-    let emojiPicked = false;
-    let portionCommentVal = '';
-
-    const PORTION_TYPES = [
-      {type:'штука', emoji:'🥚'},
-      {type:'кусок', emoji:'🥩'},
-      {type:'чашка', emoji:'☕'},
-      {type:'упаковка', emoji:'📦'},
-      {type:'порция', emoji:'🥣'},
-      {type:'банка', emoji:'🥫'}
-    ];
-
-    function defaultEmoji() {
-      return defaultFoodIcon(document.getElementById('name').value, document.getElementById('category').value);
-    }
-
-    function setEmoji(em, picked) {
-      currentEmoji = em;
-      if (picked) emojiPicked = true;
-      document.getElementById('emojiBtn').textContent = em || '🥗';
-    }
-
-    function onNameChange() {
-      if (!emojiPicked) setEmoji(defaultEmoji(), false);
-    }
-
-    function toggleEmojiPicker() {
-      if (isViewMode) return;
-      const box = document.getElementById('emojiPicker');
-      box.hidden = !box.hidden;
-      if (!box.hidden) {
-        function onPick(em) {
-          setEmoji(em, true);
-          renderEmojiPicker(box, currentEmoji, FOOD_EMOJI, onPick);
-        }
-        renderEmojiPicker(box, currentEmoji, FOOD_EMOJI, onPick);
-      }
-    }
-
-    function gramsNow() { return +document.getElementById('portionSize').value || 0; }
-
-    function renderChips() {
-      const box = document.getElementById('portionChips');
-      const grams = gramsNow();
-      const comment = (document.getElementById('portionComment')?.value || '').trim();
-      box.innerHTML = PORTION_TYPES.map(pt => {
-        const on = selectedPortion === pt.type && grams > 0;
-        let meta = '';
-        if (selectedPortion === pt.type) {
-          const bits = [];
-          if (grams > 0) bits.push(grams + ' г');
-          if (comment) bits.push(comment);
-          meta = bits.join(' · ');
-        }
-        return `<button type="button" class="portion-chip${on ? ' is-on' : ''}" data-type="${pt.type}">
-          <span class="pch-emoji">${pt.emoji}</span>
-          <span class="pch-name">${pt.type}</span>
-          <span class="pch-meta">${escapeHtml(meta)}</span>
-        </button>`;
-      }).join('');
-      box.querySelectorAll('.portion-chip').forEach(btn => {
-        btn.onclick = function () {
-          if (isViewMode) return;
-          selectPortion(btn.getAttribute('data-type'));
-        };
-      });
-      document.getElementById('portionEdit').style.display = selectedPortion ? 'block' : 'none';
-    }
-
-    function selectPortion(type) {
-      if (isViewMode) return;
-      if (selectedPortion === type) {
-        selectedPortion = null;
-      } else {
-        selectedPortion = type;
-      }
-      renderChips();
-    }
-
-    function onPortionMeta() { renderChips(); }
-
-    if (editId) {
-      const p = products.find(x => x.id === editId);
-      if (p) {
-        isViewMode = true;
-        document.getElementById('pageTitle').textContent = p.name;
-        document.getElementById('titleId').textContent = 'ID: ' + p.id;
-        document.getElementById('editBtn').style.display = 'block';
-        document.getElementById('formContainer').classList.add('view-mode');
-        document.getElementById('saveBtn').style.display = 'none';
-
-        document.getElementById('name').value = p.name || '';
-        document.getElementById('brand').value = p.brand || '';
-        document.getElementById('category').value = p.category || '';
-        document.getElementById('calories').value = p.calories || 0;
-        document.getElementById('protein').value = p.protein || 0;
-        document.getElementById('fat').value = p.fat || 0;
-        document.getElementById('carbs').value = p.carbs || 0;
-        if (p.emoji) { setEmoji(p.emoji, true); }
-        else { setEmoji(defaultEmoji(), false); }
-        if (p.portionType) {
-          selectedPortion = p.portionType;
-          document.getElementById('portionSize').value = p.portionGrams || 0;
-          document.getElementById('portionComment').value = p.portionComment || '';
-        }
-      }
-    } else {
-      setEmoji(defaultEmoji(), false);
-    }
-    document.getElementById('category').addEventListener('change', onNameChange);
-    renderChips();
-
-    function enableEdit() {
-      isViewMode = false;
-      document.getElementById('formContainer').classList.remove('view-mode');
-      document.getElementById('saveBtn').style.display = 'block';
-      document.getElementById('editBtn').style.display = 'none';
-      document.getElementById('pageTitle').textContent = 'Редактировать';
-      renderChips();
-    }
-
-    function saveProduct() {
-      const product = {
-        id: editId || (Math.max(0, ...products.map(p => p.id || 0)) + 1),
+    async function save() {
+      if (!CalAPI.getToken()) { alert('Войди на главной'); return; }
+      const products = await CalAPI.products.list() || [];
+      products.push({
+        id: Date.now(),
         name: document.getElementById('name').value,
-        brand: document.getElementById('brand').value,
-        category: document.getElementById('category').value,
-        calories: +document.getElementById('calories').value || 0,
-        protein: +document.getElementById('protein').value || 0,
-        fat: +document.getElementById('fat').value || 0,
-        carbs: +document.getElementById('carbs').value || 0,
-        portionType: selectedPortion,
-        portionGrams: selectedPortion ? (+document.getElementById('portionSize').value || 0) : 0,
-        portionComment: selectedPortion ? (document.getElementById('portionComment').value || '').trim() : '',
-        emoji: emojiPicked ? currentEmoji : (currentEmoji || '')
-      };
-
-      if (!product.name) {
-        alert('Введи название продукта');
-        return;
-      }
-      if (!emojiPicked) delete product.emoji;
-
-      if (editId) {
-        const idx = products.findIndex(x => x.id === editId);
-        if (idx >= 0) {
-          if (!emojiPicked && products[idx].emoji) product.emoji = products[idx].emoji;
-          products[idx] = product;
-        }
-        else products.push(product);
-      } else {
-        products.push(product);
-      }
-      localStorage.setItem('products', JSON.stringify(products));
-      alert('Сохранено');
-      location.href = 'products-list.html';
+        calories: +document.getElementById('cal').value || 0,
+        protein: +document.getElementById('p').value || 0,
+        fat: +document.getElementById('f').value || 0,
+        carbs: +document.getElementById('c').value || 0
+      });
+      await CalAPI.products.save(products);
+      location.href = 'products.html';
     }
-
   </script>
 </body>
 </html>
