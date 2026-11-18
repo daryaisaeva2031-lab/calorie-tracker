@@ -2,36 +2,20 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <script src="api-client.js?v=20261118-api"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Покупки — Калории</title>
-  <link rel="stylesheet" href="style.css?v=20261118-noloop">
-  <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
-  <link rel="shortcut icon" href="favicon.ico">
-  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css?v=20261118-shop">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="api-client.js?v=20261118-shop"></script>
 </head>
 <body>
   <div class="app">
     <header class="header">
       <a href="index.html"><button class="icon-btn">←</button></a>
-      <h1>Список покупок</h1>
-      <button class="icon-btn">+</button>
+      <h1>Покупки</h1>
+      <button class="icon-btn" onclick="addItem()">+</button>
     </header>
-
-    <div class="card">
-      <div style="font-weight:600; margin-bottom:10px;">Сегодня</div>
-      <div class="list-item" style="margin-bottom:8px;"><div class="checkbox"></div><div style="flex:1;">Молоко</div><div style="color:var(--text-light);">1 л</div></div>
-      <div class="list-item" style="margin-bottom:8px;"><div class="checkbox"></div><div style="flex:1;">Яйца</div><div style="color:var(--text-light);">10 шт</div></div>
-      <div class="list-item"><div class="checkbox"></div><div style="flex:1;">Хлеб</div><div style="color:var(--text-light);">1 шт</div></div>
-    </div>
-
-    <div class="card">
-      <div style="font-weight:600; margin-bottom:10px;">Овощи</div>
-      <div class="list-item" style="margin-bottom:8px;"><div class="checkbox"></div><div style="flex:1;">Огурцы</div><div style="color:var(--text-light);">3 шт</div></div>
-      <div class="list-item"><div class="checkbox"></div><div style="flex:1;">Помидоры</div><div style="color:var(--text-light);">4 шт</div></div>
-    </div>
-
+    <div id="list" style="padding:12px;"></div>
     <nav class="bottom-nav">
       <a href="index.html" class="nav-item"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 11.5 12 5l7.5 6.5"/><path d="M6.5 10.5V19h11v-8.5"/></svg></span>Сегодня</a>
       <a href="products.html" class="nav-item"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19c6-1 11-5 13.5-13.5C10 5 5 10 5 19Z"/><path d="M8.5 14.5c2 0 5-2.5 6.5-6"/></svg></span>Продукты</a>
@@ -40,5 +24,51 @@
       <a href="workouts.html" class="nav-item"><span class="nav-ic"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6.2 9.2v5.6M17.8 9.2v5.6"/><path d="M8.2 7.6v8.8M15.8 7.6v8.8"/><path d="M8.2 12h7.6"/><path d="M4.8 10.2h1.4v3.6H4.8zM17.8 10.2h1.4v3.6H17.8z"/></svg></span>Тренировки</a>
     </nav>
   </div>
+  <script>
+    let items = [];
+    async function load() {
+      if (!CalAPI.getToken()) { document.getElementById('list').innerHTML = '<div style="text-align:center;padding:40px;">Войди на главной</div>'; return; }
+      items = await CalAPI.shopping.list() || [];
+      render();
+    }
+    function render() {
+      const groups = {};
+      items.forEach(i => { if (!groups[i.group]) groups[i.group] = []; groups[i.group].push(i); });
+      let html = '';
+      for (const g in groups) {
+        html += `<div style="margin-bottom:16px;"><div style="font-weight:700;margin-bottom:8px;color:#F3EDE0;">${g}</div>`;
+        groups[g].forEach(i => {
+          html += `<div style="background:#F3EDE0;border-radius:12px;padding:10px;margin-bottom:6px;display:flex;align-items:center;gap:10px;">
+            <input type="checkbox" ${i.done?'checked':''} onchange="toggle(${i.id})" style="width:20px;height:20px;">
+            <div style="flex:1;${i.done?'text-decoration:line-through;opacity:.6':''}">${i.name} <span style="color:#888;font-size:13px;">${i.qty||''}</span></div>
+            <button onclick="del(${i.id})" style="border:none;background:none;color:#c00;font-size:18px;cursor:pointer;">×</button>
+          </div>`;
+        });
+        html += '</div>';
+      }
+      document.getElementById('list').innerHTML = html || '<div style="text-align:center;color:#888;padding:40px;">Список пуст</div>';
+    }
+    async function addItem() {
+      const name = prompt('Название:');
+      if (!name) return;
+      const qty = prompt('Количество:') || '';
+      const group = prompt('Группа (молочка, овощи, другое):') || 'Другое';
+      items.push({ id: Date.now(), name, qty, group, done: false });
+      await CalAPI.shopping.save(items);
+      render();
+    }
+    async function toggle(id) {
+      const i = items.find(x => x.id === id);
+      if (i) i.done = !i.done;
+      await CalAPI.shopping.save(items);
+      render();
+    }
+    async function del(id) {
+      items = items.filter(x => x.id !== id);
+      await CalAPI.shopping.save(items);
+      render();
+    }
+    load();
+  </script>
 </body>
 </html>
