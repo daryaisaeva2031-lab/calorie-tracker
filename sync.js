@@ -15,6 +15,7 @@ async function loadFirebase() {
   fb = {
     initializeApp: appMod.initializeApp,
     getAuth: authMod.getAuth,
+    initializeAuth: authMod.initializeAuth,
     GoogleAuthProvider: authMod.GoogleAuthProvider,
     signInWithPopup: authMod.signInWithPopup,
     signInWithRedirect: authMod.signInWithRedirect,
@@ -22,6 +23,8 @@ async function loadFirebase() {
     signOut: authMod.signOut,
     setPersistence: authMod.setPersistence,
     browserLocalPersistence: authMod.browserLocalPersistence,
+    indexedDBLocalPersistence: authMod.indexedDBLocalPersistence,
+    browserPopupRedirectResolver: authMod.browserPopupRedirectResolver,
     onAuthStateChanged: authMod.onAuthStateChanged,
     getFirestore: fsMod.getFirestore,
     collection: fsMod.collection,
@@ -68,6 +71,8 @@ let db = null;
 let currentUid = null;
 let unsubKv = null;
 let status = 'idle'; // idle | unsigned | signing-in | syncing | signed-in | offline | unconfigured | error
+let lastError = '';
+const REDIRECT_FLAG = '__syncRedirectPending';
 let applyingRemote = false;
 let initialPullDone = false;
 let pendingKeys = new Set();
@@ -100,6 +105,103 @@ function isTyping() {
 function setStatus(next) {
   status = next;
   renderStatus();
+}
+
+function getLastError() {
+  return lastError || '';
+}
+
+function setAuthError(message, nextStatus) {
+  lastError = message || 'Не получилось войти. Попробуйте ещё раз.';
+  setStatus(nextStatus || 'error');
+}
+
+function clearAuthError() {
+  lastError = '';
+}
+
+function friendlyAuthError(err) {
+  const code = err && err.code;
+  const raw = (err && (err.message || err.code)) || '';
+  if (code === 'auth/unauthorized-domain') {
+    return 'Этот адрес сайта не разрешён для входа Google. Нужно добавить его в Firebase.';
+  }
+  if (code === 'auth/web-storage-unsupported') {
+    return 'Safari блокирует сохранение входа. Выйдите из режима «Частный доступ» и попробуйте снова.';
+  }
+  if (code === 'auth/network-request-failed') {
+    return 'Нет сети. Проверьте интернет и нажмите «Войти через Google» ещё раз.';
+  }
+  if (code === 'auth/operation-not-allowed') {
+    return 'Вход через Google не включён в проекте Firebase.';
+  }
+  if (code === 'auth/popup-blocked') {
+    return 'Окно входа было заблокировано. Пробуем другой способ…';
+  }
+  if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
+    return 'Вход отменили до завершения.';
+  }
+  if (code === 'auth/redirect-cancelled-by-user') {
+    return 'Вход отменили до завершения.';
+  }
+  if (code === 'auth/account-exists-with-different-credential') {
+    return 'Этот адрес уже используется другим способом входа.';
+  }
+  return raw ? ('Не получилось войти: ' + raw) : 'Не получилось войти. Попробуйте ещё раз.';
+}
+
+function isIOS() {
+  const ua = navigator.userAgent || '';
+  return /iPad|iPhone|iPod/.test(ua) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+function isStandalone() {
+  return window.matchMedia('(display-mode: standalone)').matches ||
+    window.navigator.standalone === true;
+}
+
+function isMobile() {
+  const ua = navigator.userAgent || '';
+  if (isIOS()) return true;
+  if (/Android|Mobile|webOS|BlackBerry|IEMobile|Opera Mini/i.test(ua)) return true;
+  try {
+    return window.matchMedia('(max-width: 900px) and (pointer: coarse)').matches;
+  } catch (e) {
+    return false;
+  }
+}
+
+function markRedirectPending() {
+  try {
+    orig.setItem(REDIRECT_FLAG, JSON.stringify({
+      at: Date.now(),
+      href: String(location.href),
+      standalone: isStandalone(),
+      ios: isIOS()
+    }));
+  } catch (e) {}
+}
+
+function readRedirectPending() {
+  try {
+    const raw = orig.getItem(REDIRECT_FLAG);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (!data || !data.at) return null;
+    // Ignore stale flags older than 20 minutes.
+    if (Date.now() - data.at > 20 * 60 * 1000) {
+      clearRedirectPending();
+      return null;
+    }
+    return data;
+  } catch (e) {
+    return null;
+  }
+}
+
+function clearRedirectPending() {
+  try { orig.removeItem(REDIRECT_FLAG); } catch (e) {}
 }
 
 function kvCol(uid) {
@@ -325,43 +427,49 @@ function stopListener() {
 }
 
 function shouldUseRedirect() {
-  const ua = navigator.userAgent || '';
-  const isIOS = /iPad|iPhone|iPod/.test(ua) ||
-    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  const standalone = window.matchMedia('(display-mode: standalone)').matches ||
-    window.navigator.standalone === true;
-  return isIOS || standalone;
+  return isIOS() || isStandalone() || isMobile();
 }
 
 async function signIn() {
-  if (!auth) return;
+  if (!auth) {
+    setAuthError('Синхронизация ещё загружается. Подождите секунду и нажмите ещё раз.');
+    return;
+  }
+  clearAuthError();
   setStatus('signing-in');
   const provider = new fb.GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account' });
+  const useRedirect = shouldUseRedirect();
   try {
-    if (shouldUseRedirect()) {
+    if (useRedirect) {
+      markRedirectPending();
       await fb.signInWithRedirect(auth, provider);
       return;
     }
     await fb.signInWithPopup(auth, provider);
   } catch (err) {
     const code = err && err.code;
-    if (code === 'auth/popup-blocked' || code === 'auth/popup-closed-by-user' ||
-        code === 'auth/cancelled-popup-request') {
+    if (!useRedirect && (code === 'auth/popup-blocked' || code === 'auth/popup-closed-by-user' ||
+        code === 'auth/cancelled-popup-request' || code === 'auth/operation-not-supported-in-this-environment')) {
       try {
+        markRedirectPending();
         await fb.signInWithRedirect(auth, provider);
         return;
       } catch (err2) {
         console.warn('[sync] redirect sign-in failed:', err2 && err2.message);
-        setStatus('error');
-        alert('Не получилось войти. Попробуйте ещё раз.');
-        setStatus('unsigned');
+        setAuthError(friendlyAuthError(err2));
         return;
       }
     }
     console.warn('[sync] sign-in failed:', err && err.message);
-    alert('Не получилось войти. Попробуйте ещё раз.');
-    setStatus('unsigned');
+    if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request' ||
+        code === 'auth/redirect-cancelled-by-user') {
+      clearRedirectPending();
+      clearAuthError();
+      setStatus(auth && auth.currentUser ? 'signed-in' : 'unsigned');
+      return;
+    }
+    setAuthError(friendlyAuthError(err));
   }
 }
 
@@ -462,6 +570,9 @@ window.CalorieSync = {
   signOut: signOutUser,
   getStatus: () => status,
   getUser: getUserInfo,
+  getLastError,
+  isStandalone,
+  isIOS,
   onStatusChange: (fn) => {
     if (typeof fn === 'function') statusListeners.push(fn);
   }
@@ -485,9 +596,20 @@ async function init() {
   try {
     await loadFirebase();
     const app = fb.initializeApp(firebaseConfig);
-    auth = fb.getAuth(app);
+    try {
+      auth = fb.initializeAuth(app, {
+        persistence: [fb.indexedDBLocalPersistence, fb.browserLocalPersistence],
+        popupRedirectResolver: fb.browserPopupRedirectResolver
+      });
+    } catch (authInitErr) {
+      auth = fb.getAuth(app);
+      try {
+        await fb.setPersistence(auth, fb.browserLocalPersistence);
+      } catch (persErr) {
+        console.warn('[sync] persistence:', persErr && persErr.message);
+      }
+    }
     db = fb.getFirestore(app);
-    await fb.setPersistence(auth, fb.browserLocalPersistence);
   } catch (err) {
     console.warn('[sync] Firebase init failed:', err && err.message);
     setStatus('unconfigured');
@@ -505,18 +627,43 @@ async function init() {
   });
 
   try {
-    await fb.getRedirectResult(auth);
+    const result = await fb.getRedirectResult(auth);
+    if (result && result.user) {
+      clearRedirectPending();
+      clearAuthError();
+    }
   } catch (err) {
     console.warn('[sync] redirect result:', err && err.message);
+    clearRedirectPending();
+    setAuthError(friendlyAuthError(err));
+  }
+
+  if (!auth.currentUser) {
+    const pending = readRedirectPending();
+    if (pending && !lastError) {
+      clearRedirectPending();
+      if (isStandalone() || pending.standalone) {
+        setAuthError('На iPhone вход из приложения на экране «Домой» часто не завершается: Google открывается в Safari, и результат туда и попадает. Откройте сайт в Safari и войдите там, затем пользуйтесь им в Safari.');
+      } else {
+        setAuthError('Вход не завершился. Нажмите «Войти через Google» ещё раз.');
+      }
+    }
   }
 
   fb.onAuthStateChanged(auth, (user) => {
     if (user) {
+      clearRedirectPending();
+      if (status === 'error' && lastError) {
+        // Keep a sign-in error only when there is no user.
+        clearAuthError();
+      }
       currentUid = user.uid;
       startListener(user.uid);
     } else {
       stopListener();
-      setStatus('unsigned');
+      if (status !== 'error' && status !== 'signing-in' && status !== 'unconfigured') {
+        setStatus('unsigned');
+      }
     }
   });
 }
